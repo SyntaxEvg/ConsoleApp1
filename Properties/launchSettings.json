@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "copyFile": {
+      "commandName": "Project",
+      "commandLineArgs": "\"Y:\\3uToolsV3\\App\\test\" \"C:\\Users\\user\\source\\CAT\\CATSystem\""
+    }
+  }
+}

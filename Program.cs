@@ -155,12 +155,13 @@ class Program
             foreach (var replacement in Replacements)
             {
                 fileContent = fileContent.Replace(replacement.OldStr, replacement.NewStr);
-                var e = ContainsInvalidCharacters(fileContent);
-                if (e)
-                {
-                    var t = DecodeCyrillic(fileContent);//Windows-1252
-                }
+                
 
+            }
+            var e = ContainsInvalidCharacters(fileContent);
+            if (e)
+            {
+                var t = DecodeCyrillic(fileContent);//Windows-1252
             }
             using (FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {

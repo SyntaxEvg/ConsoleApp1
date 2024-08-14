@@ -162,6 +162,8 @@ class Program
             if (e)
             {
                 var t = DecodeCyrillic(fileContent);//Windows-1252
+                fileContent = t;
+
             }
             using (FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {

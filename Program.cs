@@ -152,15 +152,20 @@ class Program
                 fileStream.Read(content, 0, content.Length);
             }
             string fileContent = System.Text.Encoding.UTF8.GetString(content);
+            //foreach (var replacement in Replacements)
+            //{
+            //    fileContent = fileContent.Replace(replacement.OldStr, replacement.NewStr);
+            //}
             foreach (var replacement in Replacements)
             {
-                fileContent = fileContent.Replace(replacement.OldStr, replacement.NewStr);
-                
-
+                string pattern = $@"\b{Regex.Escape(replacement.OldStr)}\b";
+                fileContent = Regex.Replace(fileContent, pattern, replacement.NewStr);
             }
+
             var e = ContainsInvalidCharacters(fileContent);
             if (e)
             {
+                Log.Information($"cont");
                 var t = DecodeCyrillic(fileContent);//Windows-1252
                 fileContent = t;
 

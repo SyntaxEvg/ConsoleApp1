@@ -11,7 +11,7 @@ using copyFile;
 using Newtonsoft.Json;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text.RegularExpressions;
-
+using System.Net;
 
 class Program
 {
@@ -152,6 +152,9 @@ class Program
                 fileStream.Read(content, 0, content.Length);
             }
             string fileContent = System.Text.Encoding.UTF8.GetString(content);
+            fileContent = WebUtility.HtmlDecode(fileContent);
+
+
             //foreach (var replacement in Replacements)
             //{
             //    fileContent = fileContent.Replace(replacement.OldStr, replacement.NewStr);

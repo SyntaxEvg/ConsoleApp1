@@ -12,6 +12,9 @@ namespace copyFile
             [JsonProperty("Replacements", NullValueHandling = NullValueHandling.Ignore)]
             public List<Replacement> Replacements { get; set; } 
         
+            [JsonProperty("htmlEntities", NullValueHandling = NullValueHandling.Ignore)]
+            public Dictionary<string, string> htmlEntities { get; set; }
+
             [JsonProperty("IsReplacements", NullValueHandling = NullValueHandling.Ignore)]
             public bool IsReplacements { get; set; }
         }

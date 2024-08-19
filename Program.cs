@@ -13,9 +13,95 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Text.RegularExpressions;
 using System.Net;
 
+//Dictionary<char, string> charToHtmlEntity = new Dictionary<char, string>
+//        {
+//            {'À', "&Agrave;"},
+//            {'Á', "&Aacute;"},
+//            {'Â', "&Acirc;"},
+//            {'Ã', "&Atilde;"},
+//            {'Ä', "&Auml;"},
+//            {'Å', "&Aring;"},
+//            {'Æ', "&AElig;"},
+//            {'Ç', "&Ccedil;"},
+//            {'È', "&Egrave;"},
+//            {'É', "&Eacute;"},
+//            {'Ê', "&Ecirc;"},
+//            {'Ë', "&Euml;"},
+//            {'Ì', "&Igrave;"},
+//            {'Í', "&Iacute;"},
+//            {'Î', "&Icirc;"},
+//            {'Ï', "&Iuml;"},
+//            {'Ð', "&ETH;"},
+//            {'Ñ', "&Ntilde;"},
+//            {'Ò', "&Ograve;"},
+//            {'Ó', "&Oacute;"},
+//            {'Ô', "&Ocirc;"},
+//            {'Õ', "&Otilde;"},
+//            {'Ö', "&Ouml;"},
+//            {'Ø', "&Oslash;"},
+//            {'Ù', "&Ugrave;"},
+//            {'Ú', "&Uacute;"},
+//            {'Û', "&Ucirc;"},
+//            {'Ü', "&Uuml;"},
+//            {'Ý', "&Yacute;"},
+//            {'Þ', "&THORN;"},
+//            {'ß', "&szlig;"},
+//            {'à', "&agrave;"},
+//            {'á', "&aacute;"},
+//            {'â', "&acirc;"},
+//            {'ã', "&atilde;"},
+//            {'ä', "&auml;"},
+//            {'å', "&aring;"},
+//            {'æ', "&aelig;"},
+//            {'ç', "&ccedil;"},
+//            {'è', "&egrave;"},
+//            {'é', "&eacute;"},
+//            {'ê', "&ecirc;"},
+//            {'ë', "&euml;"},
+//            {'ì', "&igrave;"},
+//            {'í', "&iacute;"},
+//            {'î', "&icirc;"},
+//            {'ï', "&iuml;"},
+//            {'ð', "&eth;"},
+//            {'ñ', "&ntilde;"},
+//            {'ò', "&ograve;"},
+//            {'ó', "&oacute;"},
+//            {'ô', "&ocirc;"},
+//            {'õ', "&otilde;"},
+//            {'ö', "&ouml;"},
+//            {'ø', "&oslash;"},
+//            {'ù', "&ugrave;"},
+//            {'ú', "&uacute;"},
+//            {'û', "&ucirc;"},
+//            {'ü', "&uuml;"},
+//            {'ý', "&yacute;"},
+//            {'þ', "&thorn;"},
+//            {'ÿ', "&yuml;"}
+//        };
+
+
+
+
+
+
+
 class Program
 {
     public const string invalidChars = "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ";
+
+    static Dictionary<string, string> htmlEntities;
+    
+    static string ReplaceHtmlEntities(string input)
+    {
+        return Regex.Replace(input, "&[a-zA-Z]+;", match =>
+        {
+            string entity = match.Value;
+            return htmlEntities.ContainsKey(entity) ? htmlEntities[entity] : entity;
+        });
+    }
+
+
+
     static bool ContainsInvalidCharacters(string text)
     {
         return text.Any(c => invalidChars.Contains(c));
@@ -68,6 +154,7 @@ class Program
             var myConfig = JsonConvert.DeserializeObject<FileConfig>(json);
             Replacements = myConfig.FileSettings.Replacements;
             IsReplacements = myConfig.FileSettings.IsReplacements;
+            htmlEntities = myConfig.FileSettings.htmlEntities;
 
             if (args.Length < 2)
             {
@@ -152,27 +239,27 @@ class Program
                 fileStream.Read(content, 0, content.Length);
             }
             string fileContent = System.Text.Encoding.UTF8.GetString(content);
-            fileContent = WebUtility.HtmlDecode(fileContent);
+            fileContent = ReplaceHtmlEntities(fileContent);
 
 
-            //foreach (var replacement in Replacements)
-            //{
-            //    fileContent = fileContent.Replace(replacement.OldStr, replacement.NewStr);
-            //}
             foreach (var replacement in Replacements)
             {
-                string pattern = $@"\b{Regex.Escape(replacement.OldStr)}\b";
-                fileContent = Regex.Replace(fileContent, pattern, replacement.NewStr);
+                fileContent = fileContent.Replace(replacement.OldStr, replacement.NewStr);
             }
+            //foreach (var replacement in Replacements)
+            //{
+            //    string pattern = $@"\b{Regex.Escape(replacement.OldStr)}\b";
+            //    fileContent = Regex.Replace(fileContent, pattern, replacement.NewStr);
+            //}
 
-            var e = ContainsInvalidCharacters(fileContent);
-            if (e)
-            {
-                Log.Information($"cont");
-                var t = DecodeCyrillic(fileContent);//Windows-1252
-                fileContent = t;
+            //var e = ContainsInvalidCharacters(fileContent);
+            //if (e)
+            //{
+            //    //Log.Information($"cont");
+            //    var t = DecodeCyrillic(fileContent);//Windows-1252
+            //    fileContent = t;
 
-            }
+            //}
             using (FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
             {
                 byte[] updatedContent = System.Text.Encoding.UTF8.GetBytes(fileContent);

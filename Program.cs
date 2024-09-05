@@ -241,7 +241,9 @@ class Program
             string fileContent = System.Text.Encoding.UTF8.GetString(content);
 
             fileContent = HtmlDecode(fileContent);
+            fileContent = ConvertToRussian(fileContent);
             fileContent = ReplaceHtmlEntities(fileContent);
+            
             
 
             foreach (var replacement in Replacements)

@@ -34,7 +34,31 @@ class Program
         //string encodedString = "&#1046;&#1091;&#1088;&#1085;&#1072;&#1083; &#1040;&#1058;&#1055;";
         return WebUtility.HtmlDecode(input);
     }
+    static string Convert1252_1251(string input)
+    {
+        //string input = "Ãèäðîñèñòåìà» (ãèäðàâëè÷åñêèé è òåïëîâîé ðàñ÷åò íàïîðíûõ òðóáîïðîâîäîâ ðàçíîîáð";
+        //byte[] bytes = Encoding.GetEncoding("Windows-1252").GetBytes(input);
+        //string output = Encoding.GetEncoding("Windows-1251").GetString(bytes);
+        // Создаем кодировки
+        Encoding win1251 = Encoding.GetEncoding("Windows-1251");
+        Encoding utf8 = Encoding.UTF8;
 
+        // Преобразуем посимвольно
+        return new string(input.Select(c =>
+        {
+            // Если символ в диапазоне, который нуждается в конвертации
+            if (c >= '\u0080' && c <= '\u00FF')
+            {
+                // Конвертируем символ
+                byte[] bytes = new byte[] { (byte)c };
+                string converted = win1251.GetString(bytes);
+                return utf8.GetString(win1251.GetBytes(converted))[0];
+            }
+            // Иначе оставляем символ без изменений
+            return c;
+        }).ToArray());
+        //return output;
+    }
 
 
     static bool ContainsInvalidCharacters(string text)
@@ -131,14 +155,14 @@ class Program
             foreach (string file in Directory.EnumerateFiles(inputFolder, "*", SearchOption.AllDirectories))
             {
                 // Проверяем, имеет ли файл текстовое расширение
-                if (IsReplacements && textFileExtensions.Contains(Path.GetExtension(file).ToLower()))
+                var ext = Path.GetExtension(file).ToLower();
+                if (IsReplacements && textFileExtensions.Contains(ext))
                 {
-                    ReplaceInFile(file);
+                    ReplaceInFile(file, ext);
                 }
 
                 string relativePath = Path.GetRelativePath(inputFolder, file);
                 string destinationFile = Path.Combine(outputFolder, relativePath);
-                // Создаем папки для каждого файла, если необходимо
                 if (!Directory.Exists(Path.GetDirectoryName(destinationFile)))
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(destinationFile));
@@ -163,7 +187,7 @@ class Program
         Log.Information($"Deplay File OK");
     }
 
-    static void ReplaceInFile(string filePath)
+    static void ReplaceInFile(string filePath, string ext)
     {
         try
         {
@@ -174,9 +198,10 @@ class Program
                 fileStream.Read(content, 0, content.Length);
             }
             string fileContent = System.Text.Encoding.UTF8.GetString(content);
-            
-            fileContent = ReplaceHtmlEntities(fileContent);
+
             fileContent = HtmlDecode(fileContent);
+            fileContent = ReplaceHtmlEntities(fileContent);
+            
 
             foreach (var replacement in Replacements)
             {

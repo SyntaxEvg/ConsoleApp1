@@ -197,10 +197,7 @@ class Program
             {
                 // Проверяем, имеет ли файл текстовое расширение
                 var ext = Path.GetExtension(file).ToLower();
-                if (IsReplacements && textFileExtensions.Contains(ext))
-                {
-                    ReplaceInFile(file, ext);
-                }
+               
 
                 string relativePath = Path.GetRelativePath(inputFolder, file);
                 string destinationFile = Path.Combine(outputFolder, relativePath);
@@ -211,6 +208,11 @@ class Program
                 try
                 {
                     File.Copy(file, destinationFile, true);
+                    Thread.Sleep(1);
+                    if (IsReplacements && textFileExtensions.Contains(ext))
+                    {
+                        ReplaceInFile(destinationFile, ext);
+                    }
                     //Log.Information($"file {relativePath} ok copy.");
                 }
                 catch (Exception ex)
@@ -240,8 +242,8 @@ class Program
             }
             string fileContent = System.Text.Encoding.UTF8.GetString(content);
 
-            fileContent = HtmlDecode(fileContent);
-            fileContent = ConvertToRussian(fileContent);
+            //fileContent = HtmlDecode(fileContent);
+            //fileContent = ConvertToRussian(fileContent);
             fileContent = ReplaceHtmlEntities(fileContent);
             
             

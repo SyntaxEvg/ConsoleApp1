@@ -17,11 +17,40 @@ using System.Net;
 
 class Program
 {
+    public static Encoding[] encodings = new Encoding[]
+        {
+            Encoding.GetEncoding("Windows-1252"),
+            Encoding.GetEncoding("Windows-1251"),
+            Encoding.GetEncoding("ISO-8859-5")
+        };
+
     public const string invalidChars = "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ";
 
     static Dictionary<string, string> htmlEntities;
-    
-    static string ReplaceHtmlEntities(string input)
+
+    static string ConvertToRussian(string input)
+    {
+        string bestResult = input;
+        int maxRussianChars = 0;
+
+        foreach (var encoding in encodings)
+        {
+            string result = Convert1252_1251(input, encoding);
+            int russianChars = result.Count(c => (c >= 'А' && c <= 'я') || c == 'Ё' || c == 'ё');
+
+            if (russianChars > maxRussianChars)
+            {
+                maxRussianChars = russianChars;
+                bestResult = result;
+            }
+        }
+
+        return bestResult;
+    }
+
+
+
+        static string ReplaceHtmlEntities(string input)
     {
         return Regex.Replace(input, "&[a-zA-Z]+;", match =>
         {
@@ -34,29 +63,41 @@ class Program
         //string encodedString = "&#1046;&#1091;&#1088;&#1085;&#1072;&#1083; &#1040;&#1058;&#1055;";
         return WebUtility.HtmlDecode(input);
     }
-    static string Convert1252_1251(string input)
+    static string Convert1252_1251(string input, Encoding encoding)
     {
-        //string input = "Ãèäðîñèñòåìà» (ãèäðàâëè÷åñêèé è òåïëîâîé ðàñ÷åò íàïîðíûõ òðóáîïðîâîäîâ ðàçíîîáð";
-        //byte[] bytes = Encoding.GetEncoding("Windows-1252").GetBytes(input);
-        //string output = Encoding.GetEncoding("Windows-1251").GetString(bytes);
-        // Создаем кодировки
-        Encoding win1251 = Encoding.GetEncoding("Windows-1251");
         Encoding utf8 = Encoding.UTF8;
 
-        // Преобразуем посимвольно
         return new string(input.Select(c =>
         {
-            // Если символ в диапазоне, который нуждается в конвертации
             if (c >= '\u0080' && c <= '\u00FF')
             {
-                // Конвертируем символ
                 byte[] bytes = new byte[] { (byte)c };
-                string converted = win1251.GetString(bytes);
-                return utf8.GetString(win1251.GetBytes(converted))[0];
+                string converted = encoding.GetString(bytes);
+                return utf8.GetString(encoding.GetBytes(converted))[0];
             }
-            // Иначе оставляем символ без изменений
             return c;
         }).ToArray());
+        ////string input = "Ãèäðîñèñòåìà» (ãèäðàâëè÷åñêèé è òåïëîâîé ðàñ÷åò íàïîðíûõ òðóáîïðîâîäîâ ðàçíîîáð";
+        ////byte[] bytes = Encoding.GetEncoding("Windows-1252").GetBytes(input);
+        ////string output = Encoding.GetEncoding("Windows-1251").GetString(bytes);
+        //// Создаем кодировки
+        //Encoding win1251 = Encoding.GetEncoding("Windows-1251");
+        //Encoding utf8 = Encoding.UTF8;
+
+        //// Преобразуем посимвольно
+        //return new string(input.Select(c =>
+        //{
+        //    // Если символ в диапазоне, который нуждается в конвертации
+        //    if (c >= '\u0080' && c <= '\u00FF')
+        //    {
+        //        // Конвертируем символ
+        //        byte[] bytes = new byte[] { (byte)c };
+        //        string converted = win1251.GetString(bytes);
+        //        return utf8.GetString(win1251.GetBytes(converted))[0];
+        //    }
+        //    // Иначе оставляем символ без изменений
+        //    return c;
+        //}).ToArray());
         //return output;
     }
 

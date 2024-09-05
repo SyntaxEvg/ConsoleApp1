@@ -13,76 +13,6 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Text.RegularExpressions;
 using System.Net;
 
-//Dictionary<char, string> charToHtmlEntity = new Dictionary<char, string>
-//        {
-//            {'À', "&Agrave;"},
-//            {'Á', "&Aacute;"},
-//            {'Â', "&Acirc;"},
-//            {'Ã', "&Atilde;"},
-//            {'Ä', "&Auml;"},
-//            {'Å', "&Aring;"},
-//            {'Æ', "&AElig;"},
-//            {'Ç', "&Ccedil;"},
-//            {'È', "&Egrave;"},
-//            {'É', "&Eacute;"},
-//            {'Ê', "&Ecirc;"},
-//            {'Ë', "&Euml;"},
-//            {'Ì', "&Igrave;"},
-//            {'Í', "&Iacute;"},
-//            {'Î', "&Icirc;"},
-//            {'Ï', "&Iuml;"},
-//            {'Ð', "&ETH;"},
-//            {'Ñ', "&Ntilde;"},
-//            {'Ò', "&Ograve;"},
-//            {'Ó', "&Oacute;"},
-//            {'Ô', "&Ocirc;"},
-//            {'Õ', "&Otilde;"},
-//            {'Ö', "&Ouml;"},
-//            {'Ø', "&Oslash;"},
-//            {'Ù', "&Ugrave;"},
-//            {'Ú', "&Uacute;"},
-//            {'Û', "&Ucirc;"},
-//            {'Ü', "&Uuml;"},
-//            {'Ý', "&Yacute;"},
-//            {'Þ', "&THORN;"},
-//            {'ß', "&szlig;"},
-//            {'à', "&agrave;"},
-//            {'á', "&aacute;"},
-//            {'â', "&acirc;"},
-//            {'ã', "&atilde;"},
-//            {'ä', "&auml;"},
-//            {'å', "&aring;"},
-//            {'æ', "&aelig;"},
-//            {'ç', "&ccedil;"},
-//            {'è', "&egrave;"},
-//            {'é', "&eacute;"},
-//            {'ê', "&ecirc;"},
-//            {'ë', "&euml;"},
-//            {'ì', "&igrave;"},
-//            {'í', "&iacute;"},
-//            {'î', "&icirc;"},
-//            {'ï', "&iuml;"},
-//            {'ð', "&eth;"},
-//            {'ñ', "&ntilde;"},
-//            {'ò', "&ograve;"},
-//            {'ó', "&oacute;"},
-//            {'ô', "&ocirc;"},
-//            {'õ', "&otilde;"},
-//            {'ö', "&ouml;"},
-//            {'ø', "&oslash;"},
-//            {'ù', "&ugrave;"},
-//            {'ú', "&uacute;"},
-//            {'û', "&ucirc;"},
-//            {'ü', "&uuml;"},
-//            {'ý', "&yacute;"},
-//            {'þ', "&thorn;"},
-//            {'ÿ', "&yuml;"}
-//        };
-
-
-
-
-
 
 
 class Program
@@ -98,6 +28,11 @@ class Program
             string entity = match.Value;
             return htmlEntities.ContainsKey(entity) ? htmlEntities[entity] : entity;
         });
+    }
+    static string HtmlDecode(string input)
+    {
+        //string encodedString = "&#1046;&#1091;&#1088;&#1085;&#1072;&#1083; &#1040;&#1058;&#1055;";
+        return WebUtility.HtmlDecode(input);
     }
 
 
@@ -239,6 +174,7 @@ class Program
                 fileStream.Read(content, 0, content.Length);
             }
             string fileContent = System.Text.Encoding.UTF8.GetString(content);
+            fileContent = HtmlDecode(fileContent);
             fileContent = ReplaceHtmlEntities(fileContent);
 
 

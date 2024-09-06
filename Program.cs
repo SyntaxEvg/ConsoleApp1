@@ -56,29 +56,6 @@ class Program
     }
 
 
-
-    static string ConvertToRussian(string input)
-    {
-        string bestResult = input;
-        int maxRussianChars = 0;
-
-        foreach (var encoding in encodings)
-        {
-            string result = Convert1252_1251(input, encoding);
-            int russianChars = result.Count(c => (c >= 'А' && c <= 'я') || c == 'Ё' || c == 'ё');
-
-            if (russianChars > maxRussianChars)
-            {
-                maxRussianChars = russianChars;
-                bestResult = result;
-            }
-        }
-
-        return bestResult;
-    }
-
-
-
         static string ReplaceHtmlEntities(string input)
     {
         return Regex.Replace(input, "&[a-zA-Z]+;", match =>

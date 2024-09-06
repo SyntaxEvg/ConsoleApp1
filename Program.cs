@@ -17,37 +17,40 @@ using System.Net;
 
 class Program
 {
-    public static Encoding[] encodings = new Encoding[]
-        {
-            Encoding.GetEncoding("Windows-1252"),
-            Encoding.GetEncoding("Windows-1251"),
-            Encoding.GetEncoding("ISO-8859-5")
-        };
 
     public const string invalidChars = "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ";
+    private static readonly Dictionary<string, string> DecodedCache = new Dictionary<string, string>();
 
     private static readonly Regex UnicodeEscapeRegex = new Regex(@"\\u00[0-9A-Za-z]{2}", RegexOptions.Compiled);
 
-
     static Dictionary<string, string> htmlEntities;
 
-    static string DecodeUnicodeEscapes(string encodedText)
+        static string DecodeUnicodeEscapes(string encodedText)
     {
         StringBuilder resultBuilder = new StringBuilder(encodedText);
-        MatchCollection matchess = UnicodeEscapeRegex.Matches(encodedText);
+        MatchCollection matches =  UnicodeEscapeRegex.Matches(encodedText);
         // Проходим по совпадениям в обратном порядке, чтобы индексы оставались верными
-        for (int i = matchess.Count - 1; i >= 0; i--)
+        for (int i = matches.Count - 1; i >= 0; i--)
         {
-            Match match = matchess[i];
-            //Console.WriteLine($"Найдено: {match.Value} на позиции {match.Index}");
-            string a = System.Text.RegularExpressions.Regex.Unescape(match.Value);
-            byte[] b = Encoding.GetEncoding("UTF-8").GetBytes(a);
-            string c = Encoding.UTF8.GetString(b);
-            //Console.WriteLine(c);
-            byte[] d = Encoding.GetEncoding(1252).GetBytes(c);
-            string t = Encoding.GetEncoding(1251).GetString(d);
+            Match match = matches[i];
+            string unicodeEscape = match.Value;
+
+            string decodedValue;
+            if (!DecodedCache.TryGetValue(unicodeEscape, out decodedValue))
+            {
+                // Если значение не найдено в кэше, выполняем преобразование
+                string a = Regex.Unescape(unicodeEscape);
+                byte[] b = Encoding.UTF8.GetBytes(a);
+                string c = Encoding.UTF8.GetString(b);
+                byte[] d = Encoding.GetEncoding(1252).GetBytes(c);
+                decodedValue = Encoding.GetEncoding(1251).GetString(d);
+
+                // Сохраняем результат в кэше
+                DecodedCache[unicodeEscape] = decodedValue;
+            }
+
             resultBuilder.Remove(match.Index, match.Length);
-            resultBuilder.Insert(match.Index, t);
+            resultBuilder.Insert(match.Index, decodedValue);
         }
         return resultBuilder.ToString();
     }

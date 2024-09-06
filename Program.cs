@@ -26,7 +26,33 @@ class Program
 
     public const string invalidChars = "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ";
 
+    private static readonly Regex UnicodeEscapeRegex = new Regex(@"\\u00[0-9A-Za-z]{2}", RegexOptions.Compiled);
+
+
     static Dictionary<string, string> htmlEntities;
+
+    static string DecodeUnicodeEscapes(string encodedText)
+    {
+        StringBuilder resultBuilder = new StringBuilder(encodedText);
+        MatchCollection matchess = UnicodeEscapeRegex.Matches(encodedText);
+        // Проходим по совпадениям в обратном порядке, чтобы индексы оставались верными
+        for (int i = matchess.Count - 1; i >= 0; i--)
+        {
+            Match match = matchess[i];
+            //Console.WriteLine($"Найдено: {match.Value} на позиции {match.Index}");
+            string a = System.Text.RegularExpressions.Regex.Unescape(match.Value);
+            byte[] b = Encoding.GetEncoding("UTF-8").GetBytes(a);
+            string c = Encoding.UTF8.GetString(b);
+            //Console.WriteLine(c);
+            byte[] d = Encoding.GetEncoding(1252).GetBytes(c);
+            string t = Encoding.GetEncoding(1251).GetString(d);
+            resultBuilder.Remove(match.Index, match.Length);
+            resultBuilder.Insert(match.Index, t);
+        }
+        return resultBuilder.ToString();
+    }
+
+
 
     static string ConvertToRussian(string input)
     {
@@ -242,16 +268,13 @@ class Program
             }
             string fileContent = System.Text.Encoding.UTF8.GetString(content);
 
-            //fileContent = HtmlDecode(fileContent);
-            //fileContent = ConvertToRussian(fileContent);
             fileContent = ReplaceHtmlEntities(fileContent);
             
-            
-
             foreach (var replacement in Replacements)
             {
                 fileContent = fileContent.Replace(replacement.OldStr, replacement.NewStr);
             }
+            fileContent = DecodeUnicodeEscapes(fileContent);
             //foreach (var replacement in Replacements)
             //{
             //    string pattern = $@"\b{Regex.Escape(replacement.OldStr)}\b";

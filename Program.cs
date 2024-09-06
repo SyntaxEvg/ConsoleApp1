@@ -18,38 +18,57 @@ using System.Net;
 class Program
 {
 
+
     public const string invalidChars = "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ";
-    private static readonly Dictionary<string, string> DecodedCache = new Dictionary<string, string>();
 
     private static readonly Regex UnicodeEscapeRegex = new Regex(@"\\u00[0-9A-Za-z]{2}", RegexOptions.Compiled);
 
+
     static Dictionary<string, string> htmlEntities;
 
-        static string DecodeUnicodeEscapes(string encodedText)
+    static string DecodeUnicodeEscapes(string encodedText)
     {
         StringBuilder resultBuilder = new StringBuilder(encodedText);
-        MatchCollection matches =  UnicodeEscapeRegex.Matches(encodedText);
-        for (int i = matches.Count - 1; i >= 0; i--)
+        MatchCollection matchess = UnicodeEscapeRegex.Matches(encodedText);
+        // Проходим по совпадениям в обратном порядке, чтобы индексы оставались верными
+        for (int i = matchess.Count - 1; i >= 0; i--)
         {
-            Match match = matches[i];
-            string unicodeEscape = match.Value;
-
-            string decodedValue;
-            if (!DecodedCache.TryGetValue(unicodeEscape, out decodedValue))
-            {
-                string a = Regex.Unescape(unicodeEscape);
-                byte[] b = Encoding.UTF8.GetBytes(a);
-                string c = Encoding.UTF8.GetString(b);
-                byte[] d = Encoding.GetEncoding(1252).GetBytes(c);
-                decodedValue = Encoding.GetEncoding(1251).GetString(d);
-                DecodedCache[unicodeEscape] = decodedValue;
-            }
-
+            Match match = matchess[i];
+            //Console.WriteLine($"Найдено: {match.Value} на позиции {match.Index}");
+            string a = System.Text.RegularExpressions.Regex.Unescape(match.Value);
+            byte[] b = Encoding.GetEncoding("UTF-8").GetBytes(a);
+            string c = Encoding.UTF8.GetString(b);
+            //Console.WriteLine(c);
+            byte[] d = Encoding.GetEncoding(1252).GetBytes(c);
+            string t = Encoding.GetEncoding(1251).GetString(d);
             resultBuilder.Remove(match.Index, match.Length);
-            resultBuilder.Insert(match.Index, decodedValue);
+            resultBuilder.Insert(match.Index, t);
         }
         return resultBuilder.ToString();
     }
+
+
+
+    //static string ConvertToRussian(string input)
+    //{
+    //    string bestResult = input;
+    //    int maxRussianChars = 0;
+
+    //    foreach (var encoding in encodings)
+    //    {
+    //        string result = Convert1252_1251(input, encoding);
+    //        int russianChars = result.Count(c => (c >= 'А' && c <= 'я') || c == 'Ё' || c == 'ё');
+
+    //        if (russianChars > maxRussianChars)
+    //        {
+    //            maxRussianChars = russianChars;
+    //            bestResult = result;
+    //        }
+    //    }
+
+    //    return bestResult;
+    //}
+
 
 
         static string ReplaceHtmlEntities(string input)
@@ -65,7 +84,45 @@ class Program
         //string encodedString = "&#1046;&#1091;&#1088;&#1085;&#1072;&#1083; &#1040;&#1058;&#1055;";
         return WebUtility.HtmlDecode(input);
     }
-    
+    static string Convert1252_1251(string input, Encoding encoding)
+    {
+        Encoding utf8 = Encoding.UTF8;
+
+        return new string(input.Select(c =>
+        {
+            if (c >= '\u0080' && c <= '\u00FF')
+            {
+                byte[] bytes = new byte[] { (byte)c };
+                string converted = encoding.GetString(bytes);
+                return utf8.GetString(encoding.GetBytes(converted))[0];
+            }
+            return c;
+        }).ToArray());
+        ////string input = "Ãèäðîñèñòåìà» (ãèäðàâëè÷åñêèé è òåïëîâîé ðàñ÷åò íàïîðíûõ òðóáîïðîâîäîâ ðàçíîîáð";
+        ////byte[] bytes = Encoding.GetEncoding("Windows-1252").GetBytes(input);
+        ////string output = Encoding.GetEncoding("Windows-1251").GetString(bytes);
+        //// Создаем кодировки
+        //Encoding win1251 = Encoding.GetEncoding("Windows-1251");
+        //Encoding utf8 = Encoding.UTF8;
+
+        //// Преобразуем посимвольно
+        //return new string(input.Select(c =>
+        //{
+        //    // Если символ в диапазоне, который нуждается в конвертации
+        //    if (c >= '\u0080' && c <= '\u00FF')
+        //    {
+        //        // Конвертируем символ
+        //        byte[] bytes = new byte[] { (byte)c };
+        //        string converted = win1251.GetString(bytes);
+        //        return utf8.GetString(win1251.GetBytes(converted))[0];
+        //    }
+        //    // Иначе оставляем символ без изменений
+        //    return c;
+        //}).ToArray());
+        //return output;
+    }
+
+
     static bool ContainsInvalidCharacters(string text)
     {
         return text.Any(c => invalidChars.Contains(c));
@@ -161,7 +218,7 @@ class Program
             {
                 // Проверяем, имеет ли файл текстовое расширение
                 var ext = Path.GetExtension(file).ToLower();
-                var isExt =textFileExtensions.Contains(ext);
+                var isExt = textFileExtensions.Contains(ext);
 
                 string relativePath = Path.GetRelativePath(inputFolder, file);
                 string destinationFile = Path.Combine(outputFolder, relativePath);
@@ -174,14 +231,12 @@ class Program
                     File.Copy(file, destinationFile, true);
                     if (isExt)
                     {
-                        Thread.Sleep(1); 
+                        Thread.Sleep(1);
                         if (IsReplacements)
                         {
                             ReplaceInFile(destinationFile, ext);
                         }
                     }
-                   
-                    
                     //Log.Information($"file {relativePath} ok copy.");
                 }
                 catch (Exception ex)

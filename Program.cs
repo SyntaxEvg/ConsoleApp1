@@ -29,7 +29,6 @@ class Program
     {
         StringBuilder resultBuilder = new StringBuilder(encodedText);
         MatchCollection matches =  UnicodeEscapeRegex.Matches(encodedText);
-        // Проходим по совпадениям в обратном порядке, чтобы индексы оставались верными
         for (int i = matches.Count - 1; i >= 0; i--)
         {
             Match match = matches[i];
@@ -38,14 +37,11 @@ class Program
             string decodedValue;
             if (!DecodedCache.TryGetValue(unicodeEscape, out decodedValue))
             {
-                // Если значение не найдено в кэше, выполняем преобразование
                 string a = Regex.Unescape(unicodeEscape);
                 byte[] b = Encoding.UTF8.GetBytes(a);
                 string c = Encoding.UTF8.GetString(b);
                 byte[] d = Encoding.GetEncoding(1252).GetBytes(c);
                 decodedValue = Encoding.GetEncoding(1251).GetString(d);
-
-                // Сохраняем результат в кэше
                 DecodedCache[unicodeEscape] = decodedValue;
             }
 
@@ -69,45 +65,7 @@ class Program
         //string encodedString = "&#1046;&#1091;&#1088;&#1085;&#1072;&#1083; &#1040;&#1058;&#1055;";
         return WebUtility.HtmlDecode(input);
     }
-    static string Convert1252_1251(string input, Encoding encoding)
-    {
-        Encoding utf8 = Encoding.UTF8;
-
-        return new string(input.Select(c =>
-        {
-            if (c >= '\u0080' && c <= '\u00FF')
-            {
-                byte[] bytes = new byte[] { (byte)c };
-                string converted = encoding.GetString(bytes);
-                return utf8.GetString(encoding.GetBytes(converted))[0];
-            }
-            return c;
-        }).ToArray());
-        ////string input = "Ãèäðîñèñòåìà» (ãèäðàâëè÷åñêèé è òåïëîâîé ðàñ÷åò íàïîðíûõ òðóáîïðîâîäîâ ðàçíîîáð";
-        ////byte[] bytes = Encoding.GetEncoding("Windows-1252").GetBytes(input);
-        ////string output = Encoding.GetEncoding("Windows-1251").GetString(bytes);
-        //// Создаем кодировки
-        //Encoding win1251 = Encoding.GetEncoding("Windows-1251");
-        //Encoding utf8 = Encoding.UTF8;
-
-        //// Преобразуем посимвольно
-        //return new string(input.Select(c =>
-        //{
-        //    // Если символ в диапазоне, который нуждается в конвертации
-        //    if (c >= '\u0080' && c <= '\u00FF')
-        //    {
-        //        // Конвертируем символ
-        //        byte[] bytes = new byte[] { (byte)c };
-        //        string converted = win1251.GetString(bytes);
-        //        return utf8.GetString(win1251.GetBytes(converted))[0];
-        //    }
-        //    // Иначе оставляем символ без изменений
-        //    return c;
-        //}).ToArray());
-        //return output;
-    }
-
-
+    
     static bool ContainsInvalidCharacters(string text)
     {
         return text.Any(c => invalidChars.Contains(c));
@@ -203,7 +161,7 @@ class Program
             {
                 // Проверяем, имеет ли файл текстовое расширение
                 var ext = Path.GetExtension(file).ToLower();
-               
+                var isExt =textFileExtensions.Contains(ext);
 
                 string relativePath = Path.GetRelativePath(inputFolder, file);
                 string destinationFile = Path.Combine(outputFolder, relativePath);
@@ -214,11 +172,16 @@ class Program
                 try
                 {
                     File.Copy(file, destinationFile, true);
-                    Thread.Sleep(1);
-                    if (IsReplacements && textFileExtensions.Contains(ext))
+                    if (isExt)
                     {
-                        ReplaceInFile(destinationFile, ext);
+                        Thread.Sleep(1); 
+                        if (IsReplacements)
+                        {
+                            ReplaceInFile(destinationFile, ext);
+                        }
                     }
+                   
+                    
                     //Log.Information($"file {relativePath} ok copy.");
                 }
                 catch (Exception ex)

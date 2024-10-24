@@ -12,21 +12,36 @@ using Newtonsoft.Json;
 using static System.Net.Mime.MediaTypeNames;
 using System.Text.RegularExpressions;
 using System.Net;
-
+using System.Linq;
+using System.IO.Pipes;
+using copyFile.Extensions;
+using System.Threading.Tasks;
 
 
 class Program
 {
-
-
+    public static List<Replacement> Replacements = new List<Replacement>();
+    /// <summary>
+    /// сообщает статус из конфига о поддержке замены
+    /// </summary>
+    public static bool IsReplacements;
+    private static ParserHtml parserHtml;
+    private static string inputFolder;
+    private static string outputFolder;
     public const string invalidChars = "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ";
-
     private static readonly Regex UnicodeEscapeRegex = new Regex(@"\\u00[0-9A-Za-z]{2}", RegexOptions.Compiled);
-
-
     static Dictionary<string, string> htmlEntities;
+    static List<SearchTextBySelector> searchTextBySelector;
+    private static string[] priorityGroups;
+    private static Dictionary<string, string[]> extensionMapping;
+    private static string[] priorityExtensions;
+    /// <summary>
+    /// Означает что документ был найден и дополнительный поиск и открытие больше не требуется. разработ для поиска по таблицам 
+    /// </summary>
+    public static bool isSeacrhComplited =false;
+    internal static List<Replacement> ReplacementsInner =new();
 
-    static string DecodeUnicodeEscapes(string encodedText)
+    static void DecodeUnicodeEscapes(ref string? encodedText)
     {
         StringBuilder resultBuilder = new StringBuilder(encodedText);
         MatchCollection matchess = UnicodeEscapeRegex.Matches(encodedText);
@@ -44,110 +59,74 @@ class Program
             resultBuilder.Remove(match.Index, match.Length);
             resultBuilder.Insert(match.Index, t);
         }
-        return resultBuilder.ToString();
+        encodedText = resultBuilder.ToString();
     }
 
-
-
-    //static string ConvertToRussian(string input)
-    //{
-    //    string bestResult = input;
-    //    int maxRussianChars = 0;
-
-    //    foreach (var encoding in encodings)
-    //    {
-    //        string result = Convert1252_1251(input, encoding);
-    //        int russianChars = result.Count(c => (c >= 'А' && c <= 'я') || c == 'Ё' || c == 'ё');
-
-    //        if (russianChars > maxRussianChars)
-    //        {
-    //            maxRussianChars = russianChars;
-    //            bestResult = result;
-    //        }
-    //    }
-
-    //    return bestResult;
-    //}
-
-
-
-        static string ReplaceHtmlEntities(string input)
+    static void ReplaceHtmlEntities(ref string? input)
     {
-        return Regex.Replace(input, "&[a-zA-Z]+;", match =>
+       var inputs = Regex.Replace(input, "&[a-zA-Z]+;", match =>
         {
             string entity = match.Value;
             return htmlEntities.ContainsKey(entity) ? htmlEntities[entity] : entity;
         });
+        input = inputs;
     }
-    static string HtmlDecode(string input)
+    static void DecodeHtmlEntities(ref string input)
     {
-        //string encodedString = "&#1046;&#1091;&#1088;&#1085;&#1072;&#1083; &#1040;&#1058;&#1055;";
-        return WebUtility.HtmlDecode(input);
-    }
-    static string Convert1252_1251(string input, Encoding encoding)
-    {
-        Encoding utf8 = Encoding.UTF8;
-
-        return new string(input.Select(c =>
+        var inputs = Regex.Replace(input, @"&#(\d+);", match =>
         {
-            if (c >= '\u0080' && c <= '\u00FF')
-            {
-                byte[] bytes = new byte[] { (byte)c };
-                string converted = encoding.GetString(bytes);
-                return utf8.GetString(encoding.GetBytes(converted))[0];
-            }
-            return c;
-        }).ToArray());
-        ////string input = "Ãèäðîñèñòåìà» (ãèäðàâëè÷åñêèé è òåïëîâîé ðàñ÷åò íàïîðíûõ òðóáîïðîâîäîâ ðàçíîîáð";
-        ////byte[] bytes = Encoding.GetEncoding("Windows-1252").GetBytes(input);
-        ////string output = Encoding.GetEncoding("Windows-1251").GetString(bytes);
-        //// Создаем кодировки
-        //Encoding win1251 = Encoding.GetEncoding("Windows-1251");
-        //Encoding utf8 = Encoding.UTF8;
-
-        //// Преобразуем посимвольно
-        //return new string(input.Select(c =>
-        //{
-        //    // Если символ в диапазоне, который нуждается в конвертации
-        //    if (c >= '\u0080' && c <= '\u00FF')
-        //    {
-        //        // Конвертируем символ
-        //        byte[] bytes = new byte[] { (byte)c };
-        //        string converted = win1251.GetString(bytes);
-        //        return utf8.GetString(win1251.GetBytes(converted))[0];
-        //    }
-        //    // Иначе оставляем символ без изменений
-        //    return c;
-        //}).ToArray());
-        //return output;
+            int number = int.Parse(match.Groups[1].Value);
+            return ((char)number).ToString();
+        });
+        input = inputs;
     }
+    //static string HtmlDecode(string input)
+    //{
+    //    //string encodedString = "&#1046;&#1091;&#1088;&#1085;&#1072;&#1083; &#1040;&#1058;&#1055;";
+    //    return WebUtility.HtmlDecode(input);
+    //}
+    //static string Convert1252_1251(string input, Encoding encoding)
+    //{
+    //    Encoding utf8 = Encoding.UTF8;
+
+    //    return new string(input.Select(c =>
+    //    {
+    //        if (c >= '\u0080' && c <= '\u00FF')
+    //        {
+    //            byte[] bytes = new byte[] { (byte)c };
+    //            string converted = encoding.GetString(bytes);
+    //            return utf8.GetString(encoding.GetBytes(converted))[0];
+    //        }
+    //        return c;
+    //    }).ToArray());
+
+    //}
 
 
-    static bool ContainsInvalidCharacters(string text)
-    {
-        return text.Any(c => invalidChars.Contains(c));
-    }
-    public static string DecodeCyrillic(string text)
-    {
-        string restoredText = text;
-        string[] cyrillicParts = Regex.Split(text, @"[a-zA-Z0-9\s]+");
-        foreach (string part in cyrillicParts)
-        {
-            if (!string.IsNullOrEmpty(part))
-            {
-                byte[] bytes = Encoding.GetEncoding("iso-8859-1").GetBytes(part);
-                string decodedPart = Encoding.GetEncoding("windows-1251").GetString(bytes);
-                restoredText = restoredText.Replace(part, decodedPart);
-            }
-        }
-        return restoredText;
-    }
+    //static bool ContainsInvalidCharacters(string text)
+    //{
+    //    return text.Any(c => invalidChars.Contains(c));
+    //}
+    //public static string DecodeCyrillic(string text)
+    //{
+    //    string restoredText = text;
+    //    string[] cyrillicParts = Regex.Split(text, @"[a-zA-Z0-9\s]+");
+    //    foreach (string part in cyrillicParts)
+    //    {
+    //        if (!string.IsNullOrEmpty(part))
+    //        {
+    //            byte[] bytes = Encoding.GetEncoding("iso-8859-1").GetBytes(part);
+    //            string decodedPart = Encoding.GetEncoding("windows-1251").GetString(bytes);
+    //            restoredText = restoredText.Replace(part, decodedPart);
+    //        }
+    //    }
+    //    return restoredText;
+    //}
 
     /// <summary>
     /// List replace
     /// </summary>
-    private static List<Replacement> Replacements = new List<Replacement>();
-    private static bool IsReplacements;
+
 
     static void Main(string[] args)
     {
@@ -176,6 +155,9 @@ class Program
             Replacements = myConfig.FileSettings.Replacements;
             IsReplacements = myConfig.FileSettings.IsReplacements;
             htmlEntities = myConfig.FileSettings.htmlEntities;
+            searchTextBySelector = myConfig.FileSettings.SearchTextBySelector;
+            priorityGroups = myConfig.FileSettings.PriorityGroups;
+            extensionMapping = myConfig.FileSettings.ExtensionMapping;
 
             if (args.Length < 2)
             {
@@ -185,15 +167,17 @@ class Program
             }
             // Определяем имя Active Directory и учетную запись
             WindowsIdentity identity = WindowsIdentity.GetCurrent();
-            string adName = identity.Name.Split('\\')[0];
-            string userName = identity.Name.Split('\\')[1];
-
-            Log.Information($"account: {adName}\\{userName}");
-            string inputFolder = args[0];
-            string outputFolder = args[1];
+            Log.Information($"account: {identity.Name.Split('\\')[0]}\\{identity.Name.Split('\\')[1]}");
+            inputFolder = args[0];
+            outputFolder = args[1];
             Log.Information($"inputFolder: {inputFolder}");
             Log.Information($"outputFolder: {outputFolder}");
-            CopyFiles(inputFolder, outputFolder);
+
+            //init parse
+            parserHtml = new ParserHtml();
+
+            CopyFiles();
+            parserHtml.dispose();
         }
         catch (Exception ex)
         {
@@ -202,7 +186,7 @@ class Program
         return;
     }
 
-    static void CopyFiles(string inputFolder, string outputFolder)
+    static void CopyFiles()
     {
         try
         {
@@ -212,38 +196,70 @@ class Program
                 Directory.CreateDirectory(outputFolder);
                 Log.Information($"Step2!Directory.Exists: {outputFolder}");
             }
-            string[] textFileExtensions = { ".htm", ".html", ".json", ".js" }; // Добавьте другие расширения по необходимости
+            string[] textFileExtensions = priorityExtensions;
+            var extensionMappings = extensionMapping
+                .SelectMany(kvp => kvp.Value.Select(ext => new { Group = kvp.Key, Extension = ext.ToLower() }))
+                .ToDictionary(x => x.Extension, x => x.Group);
 
-            foreach (string file in Directory.EnumerateFiles(inputFolder, "*", SearchOption.AllDirectories))
+            var groupedFiles = Directory.EnumerateFiles(inputFolder, "*", SearchOption.AllDirectories)
+                .GroupBy(file => {
+                    string ext = Path.GetExtension(file).ToLower();
+                    return extensionMappings.TryGetValue(ext, out string group) ? group : "other";
+                })
+                .OrderBy(g => g.Key == "HTML" ? -1 : Array.IndexOf(priorityGroups, g.Key))
+                .ThenBy(g => g.Key).ToArray();
+
+
+            var tempGroupHtml = new List<string>();
+            foreach (var group in groupedFiles)
             {
-                // Проверяем, имеет ли файл текстовое расширение
-                var ext = Path.GetExtension(file).ToLower();
-                var isExt = textFileExtensions.Contains(ext);
+                //Console.WriteLine($"Расширение: {group.Key}");
 
-                string relativePath = Path.GetRelativePath(inputFolder, file);
-                string destinationFile = Path.Combine(outputFolder, relativePath);
-                if (!Directory.Exists(Path.GetDirectoryName(destinationFile)))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(destinationFile));
-                }
-                try
-                {
-                    File.Copy(file, destinationFile, true);
-                    if (isExt)
-                    {
-                        Thread.Sleep(1);
-                        if (IsReplacements)
-                        {
-                            ReplaceInFile(destinationFile, ext);
-                        }
+                // Проверяем, имеет ли файл текстовое расширение
+                var ext = group.Key;
+                var isExt = true;
+
+                if (group.Key == "HTML" )//в первый раз восстанавливаем кодировку и ищем нужный страницы для поиска
+                {                 
+                    foreach (string file in group)
+                    { 
+                        tempGroupHtml.Add(file);
+                        commonJob(file, ext, isExt); //имена реплейсов которые мы заменим тут в новом прогонке не учитываем добавим булл  ignorejson
                     }
-                    //Log.Information($"file {relativePath} ok copy.");
                 }
-                catch (Exception ex)
+                else if (group.Key == "JSON")
                 {
-                    Console.Error.WriteLine($"Error copying {relativePath}: {ex.Message}");
+                    foreach (string file in group)
+                    {
+                        commonJob(file, ext, isExt);
+                    }
+                }
+                else if (group.Key == "JavaScript")
+                {
+                    foreach (string file in group)
+                    {
+                        commonJob(file, ext, isExt);
+                    }
+                }
+                else
+                {
+                    foreach (string file in group)
+                    {
+                        commonJob(file, ext, false);
+                    }
+                    //другие расширения
+                    
                 }
             }
+            if (tempGroupHtml.Count() == 0)
+            {
+                Log.Error($"{nameof(CopyFiles)}:tempGroupHtml_Count == 0");
+            }
+            foreach (var file in tempGroupHtml) //после поиска контента сделаем , новые замены в тексте,или выполнить модификации данных html
+            {
+                commonJob(file, "HTML", true,false,true);
+            }
+            
         }
         catch (Exception ex)
         {
@@ -253,50 +269,155 @@ class Program
 
         Log.Information($"Deplay File OK");
     }
-
-    static void ReplaceInFile(string filePath, string ext)
+    /// <summary>
+    /// isFileCopy -не копируем файл, по умолчанию всегда копируем
+    /// </summary>
+    /// <param name="file"></param>
+    /// <param name="ext"></param>
+    /// <param name="isExt">Расширение для модификации файла,пример Html</param>
+    /// <param name="isFileCopy"></param>
+    /// <returns></returns>
+    static string commonJob(string file,string ext, bool isExt,bool isFileCopy =true,bool isRepitorrepeatingTask = false)
+    {
+        string relativePath = Path.GetRelativePath(inputFolder, file);
+        string destinationFile = Path.Combine(outputFolder, relativePath);
+        if (!Directory.Exists(Path.GetDirectoryName(destinationFile)))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(destinationFile));
+        }
+        try
+        {
+            if (isFileCopy)
+            {
+                File.Copy(file, destinationFile, true);
+            }
+           
+            if (isExt)
+            {
+                if (isFileCopy)
+                {
+                    Thread.Sleep(1);
+                }
+               
+                if (IsReplacements)
+                {
+                    ReplaceInFile(destinationFile, ext, isRepitorrepeatingTask);
+                }
+            }
+            //Log.Information($"file {relativePath} ok copy.");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error copying {relativePath}: {ex.Message}");
+        }
+        return destinationFile;
+    }
+    //static string commonJobHTML(string file,string ext, bool isExt)
+    //{
+    //    string relativePath = Path.GetRelativePath(inputFolder, file);
+    //    string destinationFile = Path.Combine(outputFolder, relativePath);
+    //    if (!Directory.Exists(Path.GetDirectoryName(destinationFile)))
+    //    {
+    //        Directory.CreateDirectory(Path.GetDirectoryName(destinationFile));
+    //    }
+    //    try
+    //    {
+    //        File.Copy(file, destinationFile, true);
+    //        if (isExt)
+    //        {
+    //            Thread.Sleep(1);
+    //            if (IsReplacements)
+    //            {
+    //                ReplaceInFile(destinationFile, ext,true);
+    //            }
+    //        }
+    //        //Log.Information($"file {relativePath} ok copy.");
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        Console.Error.WriteLine($"Error copying {relativePath}: {ex.Message}");
+    //    }
+    //    return destinationFile;
+    //}
+    /// <summary>
+    /// Производит  изменения в файле,ext - расширение,isRepitorrepeatingTask -ReplaceInFile используется более одного раза
+    /// </summary>
+    /// <param name="filePath"></param>
+    static void ReplaceInFile(string filePath, string ext,bool isRepitorrepeatingTask =false)
     {
         try
         {
-            byte[] content;
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
+            var fileContent = filePath.ReadFile();
+            if (!isRepitorrepeatingTask)
             {
-                content = new byte[fileStream.Length];
-                fileStream.Read(content, 0, content.Length);
-            }
-            string fileContent = System.Text.Encoding.UTF8.GetString(content);
+                ReplaceHtmlEntities(ref fileContent);
+                DecodeUnicodeEscapes(ref fileContent);
+                DecodeHtmlEntities(ref fileContent);
+                ReplacementsTextinDocument(ref fileContent);
+                
+                if (ext == "HTML" && !Program.isSeacrhComplited)
+                {
+                    parserHtml = HtmlChange(filePath, fileContent, ext, true);
+                    parserHtml.SearchFile(ref searchTextBySelector); //тут промежуточный класс для измений по шаблону,например скрытия элементов
+                                                                     //fileContent = parserHtml.documentToString(); //return res text
+                }
 
-            fileContent = ReplaceHtmlEntities(fileContent);
-            
-            foreach (var replacement in Replacements)
-            {
-                fileContent = fileContent.Replace(replacement.OldStr, replacement.NewStr);
-            }
-            fileContent = DecodeUnicodeEscapes(fileContent);
-            //foreach (var replacement in Replacements)
-            //{
-            //    string pattern = $@"\b{Regex.Escape(replacement.OldStr)}\b";
-            //    fileContent = Regex.Replace(fileContent, pattern, replacement.NewStr);
-            //}
 
-            //var e = ContainsInvalidCharacters(fileContent);
-            //if (e)
-            //{
-            //    //Log.Information($"cont");
-            //    var t = DecodeCyrillic(fileContent);//Windows-1252
-            //    fileContent = t;
 
-            //}
-            using (FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-            {
-                byte[] updatedContent = System.Text.Encoding.UTF8.GetBytes(fileContent);
-                fileStream.Write(updatedContent, 0, updatedContent.Length);
             }
+            else
+            { //step2
+                ReplacementsTextinDocument(ref fileContent,Program.ReplacementsInner);
+            }
+            filePath.WriteFile(fileContent);
+
+
+
         }
         catch (Exception ex)
         {
             Log.Error($"{nameof(ReplaceInFile)} error:{ex.Message}");
             return;
+        }
+    }
+
+    /// <summary>
+    /// Возращает экземпляр класса для работы с дом элементами
+    /// </summary>
+    /// <param name="ext"></param>
+    /// <param name="Content">Содержимое файла</param>
+    /// <param name="isChangeText">изменяет DOM</param>
+    private static ParserHtml HtmlChange(string filePath,string? Content, string ext, bool isParsHtml)
+    {
+        if (isParsHtml && ext == "HTML")
+        {
+            parserHtml.init(filePath);
+            parserHtml.ParseDocument(Content);
+            return parserHtml;
+        }
+        return null;
+    }
+
+    private static void ReplacementsTextinDocument(ref string? fileContent, List<Replacement>? replacementsInner =null)
+    {
+        List<Replacement> Replace = new List<Replacement>();
+        if (replacementsInner !=null)
+        {
+            Replace = replacementsInner;
+        }
+        else
+        {
+            Replace = Replacements;
+        }
+        foreach (var replacement in Replace)
+        {
+            var newstr = replacement.NewStr;
+            if (replacement.type == "securityStar")
+            {
+                newstr = "*****";
+            }
+            fileContent = fileContent?.Replace(replacement.OldStr, newstr);
+            //replacement.isUsed = true;
         }
     }
 }

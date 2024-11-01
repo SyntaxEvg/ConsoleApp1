@@ -358,6 +358,7 @@ class Program
                 if (ext == "HTML" && !Program.isSeacrhComplited)
                 {
                     parserHtml = HtmlChange(filePath, fileContent, ext, true);
+                    //parserHtml.ExecuteScript(""); //тут промежуточный класс для измений по шаблону,например скрытия элементов
                     parserHtml.SearchFile(ref searchTextBySelector); //тут промежуточный класс для измений по шаблону,например скрытия элементов
                                                                      //fileContent = parserHtml.documentToString(); //return res text
                 }
@@ -367,6 +368,11 @@ class Program
             }
             else
             { //step2
+                parserHtml = HtmlChange(filePath, fileContent, ext, true);
+                //parserHtml.ExecuteScript(""); //тут промежуточный класс для измений по шаблону,например скрытия элементов
+                parserHtml.removeDuplicates(ref searchTextBySelector);
+                fileContent = parserHtml.documentToString();
+                parserHtml.dispose();
                 ReplacementsTextinDocument(ref fileContent,Program.ReplacementsInner);
             }
             filePath.WriteFile(fileContent);
@@ -403,7 +409,7 @@ class Program
         List<Replacement> Replace = new List<Replacement>();
         if (replacementsInner !=null)
         {
-            Replace = replacementsInner;
+            Replace = replacementsInner.Distinct().ToList();
         }
         else
         {

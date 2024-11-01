@@ -57,11 +57,17 @@ namespace copyFile
 
     public class SearchTextBySelector
     {
+        [JsonProperty("Enabled", NullValueHandling = NullValueHandling.Ignore)]
+        public bool Enabled { get; set; }      
+        
         [JsonProperty("text", NullValueHandling = NullValueHandling.Ignore)]
         public string text { get; set; }       
         
         [JsonProperty("selector", NullValueHandling = NullValueHandling.Ignore)]
         public string selector { get; set; }
+        
+        [JsonProperty("attribute", NullValueHandling = NullValueHandling.Ignore)]
+        public string attribute { get; set; }
         
         [JsonProperty("selectorSelectContentScrap", NullValueHandling = NullValueHandling.Ignore)]
         public string selectorSelectContentScrap { get; set; } 

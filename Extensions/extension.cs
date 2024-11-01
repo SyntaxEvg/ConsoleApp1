@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace copyFile.Extensions
@@ -48,6 +49,28 @@ namespace copyFile.Extensions
                     fileStream.Read(content, 0, content.Length);
                 }
                 return System.Text.Encoding.UTF8.GetString(content);
+            }
+            catch (Exception ex)
+            {
+
+                return null;
+            }
+            
+
+        }
+        
+        /// <summary>
+         /// Приводим к нижнему регистру для регистронезависимого сравнения
+         /// </summary>
+         /// <param name="nameFile"></param>
+         /// <param name="Content">Массив данных в видео текста</param>
+        public static string? NormalizeContent(this string content)
+        {
+            try
+            {
+                    content = Regex.Replace(content, @"\s+", "");
+                    // Приводим к нижнему регистру для регистронезависимого сравнения
+                    return content.ToLowerInvariant();
             }
             catch (Exception ex)
             {

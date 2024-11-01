@@ -1,25 +1,34 @@
-﻿using AngleSharp.Html.Parser;
-using AngleSharp;
+﻿
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AngleSharp.Html.Dom;
 using static System.Net.Mime.MediaTypeNames;
-using AngleSharp.Dom;
 using System.Xml.Linq;
 using AngleSharp.Css.Dom;
 using System.Collections;
 using System.Reflection.Metadata;
-
+using AngleSharp.Html.Dom;
+using AngleSharp.Html.Parser;
+using AngleSharp;
+using AngleSharp.Html.Dom;
+using AngleSharp.Js;
+using AngleSharp.Dom; // Важно добавить этот using
+using Jint;
+using AngleSharp.Scripting;
+using CsQuery;
+using Jurassic;
+using System.Text.RegularExpressions;
+using copyFile.Extensions;
+using System.Runtime.InteropServices;
 public static class AngleSharpExtensions
 {
     /// <summary>
     /// Поиск селеткоров по тексту
     /// </summary>
     /// <param name="document"></param>
-    /// <param name="text"></param>
+    /// <param name="text"></param> 
     /// <returns></returns>
     public static List<IElement> FindElementsByText(this IDocument document, string text)
     {
@@ -36,7 +45,7 @@ public static class AngleSharpExtensions
             return string.Empty;
 
         var selector = new List<string>();
-        while (element != null && element.NodeType == NodeType.Element)
+        while (element != null && element.NodeType == AngleSharp.Dom.NodeType.Element)
         {
             string currentSelector = element.NodeName.ToLower();
 
@@ -92,26 +101,57 @@ namespace copyFile
         public string? filePath = null;
         private readonly IConfiguration config;
         private IBrowsingContext context;
+        private JsScriptingService? jsEngine;
         private IHtmlParser? parser;
+        private Engine engine;
         private IHtmlDocument document;
 
         public ParserHtml()
         {
-            config = Configuration.Default;
+            config = Configuration.Default
+
+               .WithDefaultLoader().WithJs(); // Включаем поддержку JavaScript;
+
             context = BrowsingContext.New(config);
+            jsEngine = context.GetService<JsScriptingService>();
+
             // Создаем парсер
             parser = context.GetService<IHtmlParser>();
+
+
         }
         public void init(string file)
         {
             filePath = file;
         }
+        ////        var jsCode = @"
+        ////    var rows = Array.from(document.getElementById('myTable').rows);
+        ////    return rows.map(row => Array.from(row.cells).map(cell => cell.innerText)).slice(1);
+        ////";
+
+        ////        // Выполните JavaScript код и получите результат как двумерный массив строк
+        ////        var tableData = document.ExecuteScript<string[][]>(jsCode);
+
+
+
+
+
+
+        /// <summary>
+        /// Выполняет код на странице
+        /// </summary>
+        /// <param name = "file" ></ param >
+        public object ExecuteScript(string jsCode)
+        {
+            return null;
+        }
+
         public void dispose()
         {
             filePath = null;
             parser = null;
-            context.Dispose();
-            document.Dispose();
+            context?.Dispose();
+            document?.Dispose();
         }
 
         /// <summary>
@@ -133,7 +173,7 @@ namespace copyFile
                 return false;
             }
             return true;
-           
+
         }
         /// <summary>
         /// распознает html и переводит в тип document
@@ -144,7 +184,7 @@ namespace copyFile
         {
             try
             {
-                document =  parser?.ParseDocument(text);
+                document = parser?.ParseDocument(text);
 
             }
             catch (Exception ex)
@@ -153,7 +193,7 @@ namespace copyFile
                 return false;
             }
             return true;
-           
+
         }
         /// <summary>
         /// Запись изменения документа в файл
@@ -175,7 +215,7 @@ namespace copyFile
                 return false;
             }
             return true;
-           
+
         }
         /// <summary>
         /// Document to string? возвращает html в виде измененного текста
@@ -185,7 +225,10 @@ namespace copyFile
         {
             try
             {
-                string html =document.DocumentElement.OuterHtml;
+                // Сохранить изменения в документе
+                //var modifiedHtml = document.ToHtml();
+
+                string html = document.DocumentElement.OuterHtml;
                 return html;
 
             }
@@ -193,7 +236,7 @@ namespace copyFile
             {
                 return "";
             }
-           
+
         }
 
 
@@ -218,7 +261,7 @@ namespace copyFile
                          //Console.WriteLine($"Текущий текст: {el.TextContent}");
                          // Console.WriteLine($"Селектор: {el.GetSelector()}");
                          // Вариант 1: Установка атрибута style
-                        //link.SetAttribute("style", "display: none;");
+                         //link.SetAttribute("style", "display: none;");
 
                         //// Вариант 2: Добавление класса
                         //link.ClassList.Add("hidden");
@@ -245,7 +288,7 @@ namespace copyFile
                         //}
                         if (el.TagName == "H2") // Применяем стили только к заголовкам H2
                         {
-                          
+
                             el.InnerHtml = "<strong><em><span style='color: red;'>Основные понятия</span></em></strong>";
                         }
                         Console.WriteLine(str);
@@ -271,7 +314,7 @@ namespace copyFile
             }
             return true;
 
-            
+
         }
         public IElement? QuerySelector(string selector)
         {
@@ -299,6 +342,9 @@ namespace copyFile
         }
 
 
+
+
+
         /// <summary>
         /// Program.Replacements класс в который попадают найденные элементы для их изменений по типу
         /// </summary>
@@ -307,16 +353,27 @@ namespace copyFile
         {
             foreach (var searchTextBySelector in searchTextBySelectors)
             {
+                if (!searchTextBySelector.Enabled)
+                {
+                    continue;
+                }
+
+              
+                if (searchTextBySelector.type == "removeDuplicate")
+                {
+                    continue;
+                }
                 var selector = searchTextBySelector.selector;
+
                 var els = QuerySelectorAll(selector);
                 foreach (var el in els)
                 {
-                    if (el != null && el.TextContent.Trim() ==searchTextBySelector.text)
+                    if (el != null && el.TextContent.Trim() == searchTextBySelector.text)
                     {
                         searchTextBySelector.isfile = true;
                         searchTextBySelector.filePath = filePath;
                         var selectCS = searchTextBySelector.selectorSelectContentScrap;
-                        IElement currentSection =null;
+                        IElement currentSection = null;
                         if (searchTextBySelector.sectionName != null && searchTextBySelector.sectionName.Length > 2)
                         {
                             var contentS = QuerySelectorAll(searchTextBySelector.sectionselectorName).ToList();
@@ -326,7 +383,8 @@ namespace copyFile
                             }
                             foreach (var sect in contentS)
                             {
-                                if (sect != null && sect.TextContent.Trim() == searchTextBySelector.sectionName){
+                                if (sect != null && sect.TextContent.Trim() == searchTextBySelector.sectionName)
+                                {
                                     currentSection = sect;
                                     break;
                                 }
@@ -349,17 +407,156 @@ namespace copyFile
                                 Program.ReplacementsInner.Add(new Replacement()
                                 {
                                     OldStr = content.TextContent.Trim(),
-                                    type =searchTextBySelector.type
+                                    type = searchTextBySelector.type
                                 });
 
                             }
                         }
                     }
                 }
-                
+
             }
         }
 
-        
+        public void removeDuplicates(ref List<SearchTextBySelector> searchTextBySelectors)
+        {
+            foreach (var searchTextBySelector in searchTextBySelectors)
+            {
+                if (searchTextBySelector.type == "removeDuplicate")
+                {
+                    removeDuplicate(searchTextBySelector);
+                    continue;
+                }
+            }
+        }
+        private void removeDuplicate(SearchTextBySelector searchTextBySelector)
+        {
+            if ((searchTextBySelector.selector == null))
+            {
+                return;
+            }
+            if (searchTextBySelector.selector.StartsWith("table") && !searchTextBySelector.selector.EndsWith("td"))
+            {
+                removeDuplicateNormalizeContent(searchTextBySelector);
+                return;
+            }
+            else
+            {
+                removeDuplicateForSelector(searchTextBySelector);
+
+            }
+        }
+        /// <summary>
+        /// Удаление дубликатов по селектору
+        /// </summary>
+        /// <param name="searchTextBySelector"></param>
+        private void removeDuplicateForSelector(SearchTextBySelector searchTextBySelector)
+        {
+            // Находим все td элементы
+            var tdElements = document.QuerySelectorAll(searchTextBySelector.selector);
+
+            foreach (var td in tdElements)
+            {
+                // Множество для хранения уникальных ссылок
+                var uniqueLinks = new HashSet<string>();
+
+                // Список элементов для удаления
+                var elementsToRemove = new List<INode>();
+
+                // Проходим по всем дочерним узлам td
+                for (var i = 0; i < td.ChildNodes.Length; i++)
+                {
+                    var node = td.ChildNodes[i];
+                    if (node is IHtmlImageElement)
+                    {
+                        var link = node.NextSibling as IHtmlAnchorElement;
+                        if (link != null)
+                        {
+                            var href = link.GetAttribute("href");
+                            if (!uniqueLinks.Contains(href))
+                            {
+                                uniqueLinks.Add(href);
+                            }
+                            else
+                            {
+                                // Если ссылка дубликат, помечаем для удаления изображение, ссылку и <br>
+                                elementsToRemove.Add(node); // Изображение
+                                elementsToRemove.Add(link); // Ссылка
+                                if (i + 2 < td.ChildNodes.Length && td.ChildNodes[i + 2] is IHtmlBreakRowElement)
+                                {
+                                    elementsToRemove.Add(td.ChildNodes[i + 2]); // <br>
+                                }
+                            }
+                            i += 2; // Пропускаем ссылку и <br>
+                        }
+                    }
+                }
+
+                // Удаляем помеченные элементы
+                foreach (var element in elementsToRemove)
+                {
+                    td.RemoveChild(element);
+                }
+
+                // Удаляем последний <br>, если он есть
+                var lastChild = td.LastChild;
+                if (lastChild is IHtmlBreakRowElement)
+                {
+                    td.RemoveChild(lastChild);
+                }
+                // Удаляем лишние пробелы и переносы строк
+                td.InnerHtml = Regex.Replace(td.InnerHtml, @">\s+<", "><");
+                td.InnerHtml = Regex.Replace(td.InnerHtml, @"\s+", " ").Trim();
+                      }
+            }
+
+
+        /// <summary>
+        /// Удаление дубликатов по всей таблице,
+        /// </summary>
+        /// <param name="searchTextBySelector"></param>
+        /// <exception cref="NotImplementedException"></exception>
+        private void removeDuplicateNormalizeContent(SearchTextBySelector searchTextBySelector)
+        {
+            // Находим таблицу
+            var tables = document.QuerySelectorAll("table");
+            if (tables.Count() > 0)
+            {
+                foreach (var table in tables)
+                {
+
+
+                    // Множество для хранения уникального содержимого
+                    var uniqueContents = new HashSet<string>();
+
+                    // Список элементов для удаления
+                    var rowsToRemove = new List<IElement>();
+
+                    foreach (var tr in table.QuerySelectorAll("tr"))
+                    {
+                        // Нормализуем содержимое строки
+                        var normalizedContent = tr.InnerHtml.NormalizeContent();
+
+                        if (!uniqueContents.Contains(normalizedContent))
+                        {
+                            uniqueContents.Add(normalizedContent);
+                        }
+                        else
+                        {
+                            rowsToRemove.Add(tr);
+                        }
+                    }
+
+                    // Удаляем дублирующиеся строки
+                    foreach (var row in rowsToRemove)
+                    {
+                        row.Remove();
+                    }
+                    // Удаляем лишние пробелы и переносы строк
+                    table.InnerHtml = Regex.Replace(table.InnerHtml, @">\s+<", "><");
+                    table.InnerHtml = Regex.Replace(table.InnerHtml, @"\s+", " ").Trim();
+                }
+            }
+        }
     }
 }

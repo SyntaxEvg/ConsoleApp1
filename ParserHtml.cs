@@ -347,20 +347,25 @@ namespace copyFile
         /// Program.Replacements класс в который попадают найденные элементы для их изменений по типу
         /// </summary>
         /// <param name="searchTextBySelectors"></param>
-        public void SearchFile(ref List<SearchTextBySelector> searchTextBySelectors)
+        public void SearchFile(SearchTextBySelector searchTextBySelector)
         {
-            foreach (var searchTextBySelector in searchTextBySelectors)
-            {
-                if (!searchTextBySelector.Enabled)
-                {
-                    continue;
-                }
+            
+               // if (!searchTextBySelector.Enabled)
+               // {
+               //     continue;
+               // }
 
               
-                if (searchTextBySelector.type == "removeDuplicate")
-                {
-                    continue;
-                }
+               // if (searchTextBySelector.type == "removeDuplicate")
+               // {
+               //     continue;
+               // }
+               //init(filePath);
+               //ParseDocument(Content);
+
+
+
+
                 var selector = searchTextBySelector.selector;
 
                 var els = QuerySelectorAll(selector);
@@ -412,8 +417,6 @@ namespace copyFile
                         }
                     }
                 }
-
-            }
         }
 
         public void removeDuplicates(ref List<SearchTextBySelector> searchTextBySelectors)

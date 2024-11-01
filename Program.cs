@@ -16,6 +16,7 @@ using System.Linq;
 using System.IO.Pipes;
 using copyFile.Extensions;
 using System.Threading.Tasks;
+using AngleSharp.Dom;
 
 
 class Program
@@ -255,6 +256,7 @@ class Program
             {
                 Log.Error($"{nameof(CopyFiles)}:tempGroupHtml_Count == 0");
             }
+            Log.Information($"Step2:tempGroupHtml.Count: {tempGroupHtml.Count()}");
             foreach (var file in tempGroupHtml) //после поиска контента сделаем , новые замены в тексте,или выполнить модификации данных html
             {
                 commonJob(file, "HTML", true,false,true);
@@ -355,16 +357,11 @@ class Program
                 DecodeHtmlEntities(ref fileContent);
                 ReplacementsTextinDocument(ref fileContent);
                 
-                if (ext == "HTML" && !Program.isSeacrhComplited)
+                if (!Program.isSeacrhComplited && ext == "HTML")
                 {
-                    parserHtml = HtmlChange(filePath, fileContent, ext, true);
-                    //parserHtml.ExecuteScript(""); //тут промежуточный класс для измений по шаблону,например скрытия элементов
-                    parserHtml.SearchFile(ref searchTextBySelector); //тут промежуточный класс для измений по шаблону,например скрытия элементов
+                    SearchFile(ref searchTextBySelector, filePath, fileContent, ext, true); //тут промежуточный класс для измений по шаблону,например скрытия элементов
                                                                      //fileContent = parserHtml.documentToString(); //return res text
                 }
-
-
-
             }
             else
             { //step2
@@ -386,6 +383,28 @@ class Program
             return;
         }
     }
+    /// <summary>
+    /// Program.Replacements класс в который попадают найденные элементы для их изменений по типу
+    /// </summary>
+    /// <param name="searchTextBySelectors"></param>
+    public static void SearchFile(ref List<SearchTextBySelector> searchTextBySelectors, string filePath, string? Content, string ext, bool isParsHtml)
+    {
+        foreach (var searchTextBySelector in searchTextBySelectors)
+        {
+            if (!searchTextBySelector.Enabled)
+            {
+                continue;
+            }
+            if (searchTextBySelector.type == "removeDuplicate")
+            {
+                continue;
+            }
+            parserHtml = HtmlChange(filePath, Content, ext, true);
+            //parserHtml.ExecuteScript(""); //тут промежуточный класс для измений по шаблону,например скрытия элементов
+            parserHtml.SearchFile(searchTextBySelector); //тут промежуточный класс для измений по шаблону,например скрытия элемен
+        }
+    }
+
 
     /// <summary>
     /// Возращает экземпляр класса для работы с дом элементами

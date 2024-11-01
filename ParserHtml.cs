@@ -349,101 +349,102 @@ namespace copyFile
         /// <param name="searchTextBySelectors"></param>
         public void SearchFile(SearchTextBySelector searchTextBySelector)
         {
-            
-               // if (!searchTextBySelector.Enabled)
-               // {
-               //     continue;
-               // }
 
-              
-               // if (searchTextBySelector.type == "removeDuplicate")
-               // {
-               //     continue;
-               // }
-               //init(filePath);
-               //ParseDocument(Content);
+            // if (!searchTextBySelector.Enabled)
+            // {
+            //     continue;
+            // }
 
 
+            // if (searchTextBySelector.type == "removeDuplicate")
+            // {
+            //     continue;
+            // }
+            //init(filePath);
+            //ParseDocument(Content);
 
 
-                var selector = searchTextBySelector.selector;
 
-                var els = QuerySelectorAll(selector);
-                foreach (var el in els)
+
+            var selector = searchTextBySelector.selector;
+
+            var els = QuerySelectorAll(selector);
+            foreach (var el in els)
+            {
+                if (el != null && el.TextContent.Trim() == searchTextBySelector.text)
                 {
-                    if (el != null && el.TextContent.Trim() == searchTextBySelector.text)
+                    searchTextBySelector.isfile = true;
+                    searchTextBySelector.filePath = filePath;
+                    var selectCS = searchTextBySelector.selectorSelectContentScrap;
+                    IElement currentSection = null;
+                    if (searchTextBySelector.sectionName != null && searchTextBySelector.sectionName.Length > 2)
                     {
-                        searchTextBySelector.isfile = true;
-                        searchTextBySelector.filePath = filePath;
-                        var selectCS = searchTextBySelector.selectorSelectContentScrap;
-                        IElement currentSection = null;
-                        if (searchTextBySelector.sectionName != null && searchTextBySelector.sectionName.Length > 2)
+                        var contentS = QuerySelectorAll(searchTextBySelector.sectionselectorName).ToList();
+                        if (contentS == null)
                         {
-                            var contentS = QuerySelectorAll(searchTextBySelector.sectionselectorName).ToList();
-                            if (contentS == null)
-                            {
-                                continue; //инфы нет
-                            }
-                            foreach (var sect in contentS)
-                            {
-                                if (sect != null && sect.TextContent.Trim() == searchTextBySelector.sectionName)
-                                {
-                                    currentSection = sect;
-                                    break;
-                                }
-                            }
+                            continue; //инфы нет
                         }
-                        if (currentSection != null && selectCS != null && selectCS.Length > 3)
+                        foreach (var sect in contentS)
                         {
-                            var contentS = currentSection.ParentElement.QuerySelectorAll(selectCS).ToList();
-                            if (contentS == null)
+                            if (sect != null && sect.TextContent.Trim() == searchTextBySelector.sectionName)
                             {
-                                continue; //инфы нет
-                            }
-                            //List<string> collReplaceText = new List<string>();
-                            foreach (var content in contentS)
-                            {
-                                Program.isSeacrhComplited = true;
-                                Program.IsReplacements = true; //внутренние замены
-                                //collReplaceText.Add();
-
-                                Program.ReplacementsInner.Add(new Replacement()
-                                {
-                                    OldStr = content.TextContent.Trim(),
-                                    type = searchTextBySelector.type
-                                });
-
+                                currentSection = sect;
+                                break;
                             }
                         }
                     }
+                    if (currentSection != null && selectCS != null && selectCS.Length > 3)
+                    {
+                        var contentS = currentSection.ParentElement.QuerySelectorAll(selectCS).ToList();
+                        if (contentS == null)
+                        {
+                            continue; //инфы нет
+                        }
+                        //List<string> collReplaceText = new List<string>();
+                        foreach (var content in contentS)
+                        {
+                            Program.isSeacrhComplited = true;
+                            Program.IsReplacements = true; //внутренние замены
+                                                           //collReplaceText.Add();
+
+                            Program.ReplacementsInner.Add(new Replacement()
+                            {
+                                OldStr = content.TextContent.Trim(),
+                                type = searchTextBySelector.type
+                            });
+
+                        }
+                    }
                 }
+            }
         }
 
-        public void removeDuplicates(ref List<SearchTextBySelector> searchTextBySelectors)
+        public bool removeDuplicates(List<SearchTextBySelector> searchTextBySelectors)
         {
+            bool flag = false;
             foreach (var searchTextBySelector in searchTextBySelectors)
             {
                 if (searchTextBySelector.type == "removeDuplicate")
                 {
-                    removeDuplicate(searchTextBySelector);
+                    flag = removeDuplicate(searchTextBySelector);
                     continue;
                 }
             }
+            return flag;
         }
-        private void removeDuplicate(SearchTextBySelector searchTextBySelector)
+        private bool removeDuplicate(SearchTextBySelector searchTextBySelector)
         {
             if ((searchTextBySelector.selector == null))
             {
-                return;
+                return false;
             }
             if (searchTextBySelector.selector.StartsWith("table") && !searchTextBySelector.selector.EndsWith("td"))
             {
-                removeDuplicateNormalizeContent(searchTextBySelector);
-                return;
+                return removeDuplicateNormalizeContent(searchTextBySelector);
             }
             else
             {
-                removeDuplicateForSelector(searchTextBySelector);
+                return removeDuplicateForSelector(searchTextBySelector);
 
             }
         }
@@ -451,19 +452,17 @@ namespace copyFile
         /// Удаление дубликатов по селектору
         /// </summary>
         /// <param name="searchTextBySelector"></param>
-        private void removeDuplicateForSelector(SearchTextBySelector searchTextBySelector)
+        private bool removeDuplicateForSelector(SearchTextBySelector searchTextBySelector)
         {
-            // Находим все td элементы
+            bool flag = false;
             var tdElements = document.QuerySelectorAll(searchTextBySelector.selector);
 
             foreach (var td in tdElements)
             {
                 // Множество для хранения уникальных ссылок
                 var uniqueLinks = new HashSet<string>();
-
                 // Список элементов для удаления
                 var elementsToRemove = new List<INode>();
-
                 // Проходим по всем дочерним узлам td
                 for (var i = 0; i < td.ChildNodes.Length; i++)
                 {
@@ -492,13 +491,10 @@ namespace copyFile
                         }
                     }
                 }
-
-                // Удаляем помеченные элементы
                 foreach (var element in elementsToRemove)
                 {
                     td.RemoveChild(element);
                 }
-
                 // Удаляем последний <br>, если он есть
                 var lastChild = td.LastChild;
                 if (lastChild is IHtmlBreakRowElement)
@@ -508,17 +504,18 @@ namespace copyFile
                 // Удаляем лишние пробелы и переносы строк
                 td.InnerHtml = Regex.Replace(td.InnerHtml, @">\s+<", "><");
                 td.InnerHtml = Regex.Replace(td.InnerHtml, @"\s+", " ").Trim();
-                      }
+                flag = true;
             }
-
-
+            return flag;
+        }
         /// <summary>
         /// Удаление дубликатов по всей таблице,
         /// </summary>
         /// <param name="searchTextBySelector"></param>
         /// <exception cref="NotImplementedException"></exception>
-        private void removeDuplicateNormalizeContent(SearchTextBySelector searchTextBySelector)
+        private bool removeDuplicateNormalizeContent(SearchTextBySelector searchTextBySelector)
         {
+            bool flag = false;
             // Находим таблицу
             var tables = document.QuerySelectorAll("table");
             if (tables.Count() > 0)
@@ -556,8 +553,10 @@ namespace copyFile
                     // Удаляем лишние пробелы и переносы строк
                     table.InnerHtml = Regex.Replace(table.InnerHtml, @">\s+<", "><");
                     table.InnerHtml = Regex.Replace(table.InnerHtml, @"\s+", " ").Trim();
+                    flag = true;
                 }
             }
+            return flag;
         }
     }
 }

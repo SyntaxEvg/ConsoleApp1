@@ -32,7 +32,7 @@ class Program
     public const string invalidChars = "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ";
     private static readonly Regex UnicodeEscapeRegex = new Regex(@"\\u00[0-9A-Za-z]{2}", RegexOptions.Compiled);
     static Dictionary<string, string> htmlEntities;
-    static List<SearchTextBySelector> searchTextBySelector;
+    public static List<SearchTextBySelector> searchTextBySelector;
     private static string[] priorityGroups;
     private static Dictionary<string, string[]> extensionMapping;
     private static string[] priorityExtensions;
@@ -367,9 +367,11 @@ class Program
             { //step2
                 parserHtml = HtmlChange(filePath, fileContent, ext, true);
                 //parserHtml.ExecuteScript(""); //тут промежуточный класс для измений по шаблону,например скрытия элементов
-                parserHtml.removeDuplicates(ref searchTextBySelector);
-                fileContent = parserHtml.documentToString();
-                parserHtml.dispose();
+                if (parserHtml.removeDuplicates(searchTextBySelector))
+                {
+                    fileContent = parserHtml.documentToString();
+                }
+                //parserHtml.dispose();
                 ReplacementsTextinDocument(ref fileContent,Program.ReplacementsInner);
             }
             filePath.WriteFile(fileContent);

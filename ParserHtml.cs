@@ -17,8 +17,6 @@ using AngleSharp.Js;
 using AngleSharp.Dom; // Важно добавить этот using
 using Jint;
 using AngleSharp.Scripting;
-using CsQuery;
-using Jurassic;
 using System.Text.RegularExpressions;
 using copyFile.Extensions;
 using System.Runtime.InteropServices;

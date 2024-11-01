@@ -77,6 +77,9 @@ namespace copyFile
 
          [JsonProperty("sectionName", NullValueHandling = NullValueHandling.Ignore)]
         public string sectionName { get; set; }
+
+        [JsonProperty("removeSpace", NullValueHandling = NullValueHandling.Ignore)]
+        public bool removeSpace { get; set; } = false;
         
         [JsonProperty("type", NullValueHandling = NullValueHandling.Ignore)]
         public string type { get; set; }//hide,securityStar...

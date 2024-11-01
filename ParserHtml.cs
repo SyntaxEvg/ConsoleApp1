@@ -502,8 +502,12 @@ namespace copyFile
                     td.RemoveChild(lastChild);
                 }
                 // Удаляем лишние пробелы и переносы строк
-                td.InnerHtml = Regex.Replace(td.InnerHtml, @">\s+<", "><");
-                td.InnerHtml = Regex.Replace(td.InnerHtml, @"\s+", " ").Trim();
+                if (searchTextBySelector.removeSpace)
+                {
+                    td.InnerHtml = Regex.Replace(td.InnerHtml, @">\s+<", "><");
+                    td.InnerHtml = Regex.Replace(td.InnerHtml, @"\s+", " ").Trim();
+                }        
+
                 flag = true;
             }
             return flag;
@@ -551,8 +555,11 @@ namespace copyFile
                         row.Remove();
                     }
                     // Удаляем лишние пробелы и переносы строк
-                    table.InnerHtml = Regex.Replace(table.InnerHtml, @">\s+<", "><");
-                    table.InnerHtml = Regex.Replace(table.InnerHtml, @"\s+", " ").Trim();
+                    if (searchTextBySelector.removeSpace)
+                    {
+                        table.InnerHtml = Regex.Replace(table.InnerHtml, @">\s+<", "><");
+                        table.InnerHtml = Regex.Replace(table.InnerHtml, @"\s+", " ").Trim();
+                    }
                     flag = true;
                 }
             }

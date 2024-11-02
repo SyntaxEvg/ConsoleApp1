@@ -503,7 +503,6 @@ namespace copyFile
                             else
                             {
                                 // Если ссылка дубликат, помечаем для удаления изображение, ссылку и <br>
-                                elementsToRemove.Add(node); // Изображение
                                 elementsToRemove.Add(link); // Ссылка
                                 if (i + 2 < td.ChildNodes.Length && td.ChildNodes[i + 2] is IHtmlBreakRowElement)
                                 {

@@ -490,6 +490,29 @@ namespace copyFile
                             i += 2; // Пропускаем ссылку и <br>
                         }
                     }
+                    else if (node is IHtmlAnchorElement)
+                    {
+                        var link = node as IHtmlAnchorElement;
+                        if (link != null)
+                        {
+                            var href = link.GetAttribute("href");
+                            if (!uniqueLinks.Contains(href))
+                            {
+                                uniqueLinks.Add(href);
+                            }
+                            else
+                            {
+                                // Если ссылка дубликат, помечаем для удаления изображение, ссылку и <br>
+                                elementsToRemove.Add(node); // Изображение
+                                elementsToRemove.Add(link); // Ссылка
+                                if (i + 2 < td.ChildNodes.Length && td.ChildNodes[i + 2] is IHtmlBreakRowElement)
+                                {
+                                    elementsToRemove.Add(td.ChildNodes[i + 2]); // <br>
+                                }
+                            }
+                            i += 2; // Пропускаем ссылку и <br>
+                        }
+                    }
                 }
                 foreach (var element in elementsToRemove)
                 {

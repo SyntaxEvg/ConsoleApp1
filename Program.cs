@@ -298,7 +298,7 @@ class Program
             {
                 if (isFileCopy)
                 {
-                    Thread.Sleep(1);
+                    //Thread.Sleep(1);
                 }
                
                 if (IsReplacements)

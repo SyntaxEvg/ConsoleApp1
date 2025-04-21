@@ -346,7 +346,7 @@ namespace copyFile
         /// <summary>
         /// Program.Replacements класс в который попадают найденные элементы для их изменений по типу
         /// </summary>
-        /// <param name="searchTextBySelectors"></param>
+        /// <param name="searchTextBySelectors"></param> StaticReplacementsFile
         public void SearchFile(SearchTextBySelector searchTextBySelector)
         {
 
@@ -431,7 +431,8 @@ namespace copyFile
                 }
             }
             return flag;
-        }
+        } 
+        
         private bool removeDuplicate(SearchTextBySelector searchTextBySelector)
         {
             if ((searchTextBySelector.selector == null))

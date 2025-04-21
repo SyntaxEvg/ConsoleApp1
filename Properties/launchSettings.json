@@ -2,7 +2,7 @@
   "profiles": {
     "copyFile": {
       "commandName": "Project",
-      "commandLineArgs": "\"Y:\\3uToolsV3\\App\\test\" \"Y:\\3uToolsV3\\App\\copyFileOUT\""
+      "commandLineArgs": "\"C:\\Users\\Admin\\Desktop\\test\\source\" \"C:\\Users\\Admin\\Desktop\\test\""
     }
   }
 }

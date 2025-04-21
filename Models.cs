@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace copyFile
 {
+
     public class FileSettings
     {
         [JsonProperty("Replacements", NullValueHandling = NullValueHandling.Ignore)]
@@ -17,6 +18,10 @@ namespace copyFile
 
         [JsonProperty("SearchTextBySelector", NullValueHandling = NullValueHandling.Ignore)]
         public List<SearchTextBySelector> SearchTextBySelector { get; set; }
+
+        [JsonProperty("StaticReplacementsFile", NullValueHandling = NullValueHandling.Ignore)]
+        public List<StaticReplacementsFile> StaticReplacementsFile { get; set; }
+
         [JsonProperty("ExtensionMapping", NullValueHandling = NullValueHandling.Ignore)]
         public Dictionary<string, string[]> ExtensionMapping { get; set; }
         [JsonProperty("PriorityGroups", NullValueHandling = NullValueHandling.Ignore)]
@@ -52,50 +57,62 @@ namespace copyFile
         [JsonProperty("FileSettings", NullValueHandling = NullValueHandling.Ignore)]
         public FileSettings FileSettings { get; set; }
     }
-    // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
 
+    /// <summary>
+    /// Делает замену файлы в по списку, приорететный ранг, проивзодит в начале всех действий.
+    /// </summary>
+    public class StaticReplacementsFile
+    {
+        [JsonProperty("Enabled", NullValueHandling = NullValueHandling.Ignore)]
+        public bool Enabled { get; set; }
+        [JsonProperty("OldNameFile", NullValueHandling = NullValueHandling.Ignore)]
+        public string OldNameFile { get; set; }
+
+        [JsonProperty("NewPathFile", NullValueHandling = NullValueHandling.Ignore)]
+        public string NewPathFile { get; set; }
+    }
 
     public class SearchTextBySelector
     {
         [JsonProperty("Enabled", NullValueHandling = NullValueHandling.Ignore)]
-        public bool Enabled { get; set; }      
-        
+        public bool Enabled { get; set; }
+
         [JsonProperty("text", NullValueHandling = NullValueHandling.Ignore)]
-        public string text { get; set; }       
-        
+        public string text { get; set; }
+
         [JsonProperty("selector", NullValueHandling = NullValueHandling.Ignore)]
         public string selector { get; set; }
-        
+
         [JsonProperty("attribute", NullValueHandling = NullValueHandling.Ignore)]
         public string attribute { get; set; }
-        
+
         [JsonProperty("selectorSelectContentScrap", NullValueHandling = NullValueHandling.Ignore)]
-        public string selectorSelectContentScrap { get; set; } 
-        
+        public string selectorSelectContentScrap { get; set; }
+
         [JsonProperty("sectionselectorName", NullValueHandling = NullValueHandling.Ignore)]
         public string sectionselectorName { get; set; }
 
-         [JsonProperty("sectionName", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("sectionName", NullValueHandling = NullValueHandling.Ignore)]
         public string sectionName { get; set; }
 
         [JsonProperty("removeSpace", NullValueHandling = NullValueHandling.Ignore)]
         public bool removeSpace { get; set; } = false;
-        
+
         [JsonProperty("type", NullValueHandling = NullValueHandling.Ignore)]
         public string type { get; set; }//hide,securityStar...
-        
+
         /// <summary>
         /// Названия найденного файла 
         /// </summary>
         [JsonIgnore]
         public string? filePath { get; set; }//
-        
+
         /// <summary>
         /// Указывает,был найден файл по селектору и тексту внутри
         /// </summary>
         [JsonIgnore]
         public bool isfile { get; set; }//
-        
+
         /// <summary>
         /// если стоит задача произвести выборку на этой страницы то оно попадает сюда
         /// </summary>

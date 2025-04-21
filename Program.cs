@@ -18,7 +18,6 @@ using copyFile.Extensions;
 using System.Threading.Tasks;
 using AngleSharp.Dom;
 
-
 class Program
 {
     public static List<Replacement> Replacements = new List<Replacement>();
@@ -33,6 +32,7 @@ class Program
     private static readonly Regex UnicodeEscapeRegex = new Regex(@"\\u00[0-9A-Za-z]{2}", RegexOptions.Compiled);
     static Dictionary<string, string> htmlEntities;
     public static List<SearchTextBySelector> searchTextBySelector;
+    private static List<StaticReplacementsFile> staticReplacementsFiles;
     private static string[] priorityGroups;
     private static Dictionary<string, string[]> extensionMapping;
     private static string[] priorityExtensions;
@@ -41,6 +41,7 @@ class Program
     /// </summary>
     public static bool isSeacrhComplited =false;
     internal static List<Replacement> ReplacementsInner =new();
+    private static IEnumerable<string> EnumerateFiles;
 
     static void DecodeUnicodeEscapes(ref string? encodedText)
     {
@@ -157,6 +158,7 @@ class Program
             IsReplacements = myConfig.FileSettings.IsReplacements;
             htmlEntities = myConfig.FileSettings.htmlEntities;
             searchTextBySelector = myConfig.FileSettings.SearchTextBySelector;
+            staticReplacementsFiles = myConfig.FileSettings.StaticReplacementsFile;
             priorityGroups = myConfig.FileSettings.PriorityGroups;
             extensionMapping = myConfig.FileSettings.ExtensionMapping;
 
@@ -187,6 +189,55 @@ class Program
         return;
     }
 
+    /// <summary>
+    /// Заменит модифицируемые файлы в начале прочих замен, меняет  в оригинальной папке.
+    /// </summary>
+    /// <param name="staticReplacementsFiles"></param>
+    /// <returns></returns>
+    public static bool staticReplacementsFile()
+    {
+        try
+        {
+            staticReplacementsFiles = staticReplacementsFiles.Where(r => r.Enabled).ToList();
+
+           // List<string> selectFiles = new List<string>();
+            foreach (var replacement in staticReplacementsFiles)
+            {
+                var foundFiles = Directory.EnumerateFiles(inputFolder, replacement.OldNameFile, SearchOption.AllDirectories);
+                if (foundFiles != null && foundFiles.Any())
+                {
+                    var file = foundFiles.First();
+                    Log.Information($"Найден файл: {foundFiles}");
+                    try
+                    {
+                        
+                        if (File.Exists(replacement.NewPathFile))
+                        {
+                            // Копируем файл в новое место с новым именем // C:\Users\Admin\Desktop\test\news\response ivanovation.ro.js
+                            File.Copy(replacement.NewPathFile, file, true);
+                           
+                        }
+
+                        
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Ошибка при замене файла {file}: {ex.Message}");
+                    }
+
+                }
+            }
+           
+        }
+        catch (Exception ex)
+        {
+
+            Log.Error(ex, $"staticReplacementsFile,{ex.Message}");
+            return false;
+        }
+        return true;
+    }
+
     static void CopyFiles()
     {
         try
@@ -202,7 +253,11 @@ class Program
                 .SelectMany(kvp => kvp.Value.Select(ext => new { Group = kvp.Key, Extension = ext.ToLower() }))
                 .ToDictionary(x => x.Extension, x => x.Group);
 
-            var groupedFiles = Directory.EnumerateFiles(inputFolder, "*", SearchOption.AllDirectories)
+            EnumerateFiles = Directory.EnumerateFiles(inputFolder, "*", SearchOption.AllDirectories).ToList();
+
+            var isSuccfull = staticReplacementsFile();
+
+            var groupedFiles = EnumerateFiles
                 .GroupBy(file => {
                     string ext = Path.GetExtension(file).ToLower();
                     return extensionMappings.TryGetValue(ext, out string group) ? group : "other";
@@ -210,16 +265,11 @@ class Program
                 .OrderBy(g => g.Key == "HTML" ? -1 : Array.IndexOf(priorityGroups, g.Key))
                 .ThenBy(g => g.Key).ToArray();
 
-
             var tempGroupHtml = new List<string>();
             foreach (var group in groupedFiles)
             {
-                //Console.WriteLine($"Расширение: {group.Key}");
-
-                // Проверяем, имеет ли файл текстовое расширение
                 var ext = group.Key;
                 var isExt = true;
-
                 if (group.Key == "HTML" )//в первый раз восстанавливаем кодировку и ищем нужный страницы для поиска
                 {                 
                     foreach (string file in group)

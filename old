@@ -1,5 +1,5 @@
 define('WP_HTTP_BLOCK_EXTERNAL', true);
-
+sudo nano /var/www/wp-content/mu-plugins/log-blocked-requests.php
 // Логирование заблокированных HTTP запросов
 add_filter('pre_http_request', function($preempt, $parsed_args, $url) {
     // Если запрос заблокирован WP_HTTP_BLOCK_EXTERNAL

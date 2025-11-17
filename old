@@ -1,6 +1,25 @@
-function bizup_load_admin_framework() {
-    if (is_admin()) {	
-        require_once get_template_directory() . '/framework/ini/theme-base.php';	
-    }
-}
-add_action('init', 'bizup_load_admin_framework');
+/var/www/wp-includes/functions.php
+
+do_action( 'wp_trigger_error_run', $function_name, $message, $error_level );
+
+	if ( ! empty( $function_name ) ) {
+		$message = sprintf( '%s(): %s', $function_name, $message );
+	}
+
+	$message = wp_kses(
+		$message,
+		array(
+			'a'      => array( 'href' => true ),
+			'br'     => array(),
+			'code'   => array(),
+			'em'     => array(),
+			'strong' => array(),
+		),
+		array( 'http', 'https' )
+	);
+
+	if ( E_USER_ERROR === $error_level ) {
+		throw new WP_Exception( $message );
+	}
+
+	trigger_error( $message, $error_level );

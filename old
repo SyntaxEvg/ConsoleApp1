@@ -1,23 +1,21 @@
-// Логирование всех HTTP запросов WordPress
-add_action('http_api_debug', function($response, $context, $class, $args, $url) {
-    error_log(sprintf(
-        "WordPress HTTP Request:\nURL: %s\nMethod: %s\nResponse Code: %s\n---\n",
-        $url,
-        isset($args['method']) ? $args['method'] : 'GET',
-        is_wp_error($response) ? 'ERROR' : wp_remote_retrieve_response_code($response)
-    ));
-}, 10, 5);
-
-// Отключить обновление переводов
-define('DISALLOW_FILE_MODS', true); // Отключает все обновления
-// или только переводы:
-add_filter('auto_update_translation', '__return_false');
-
+// Блокировать все внешние запросы по умолчанию
 define('WP_HTTP_BLOCK_EXTERNAL', true);
-define('WP_ACCESSIBLE_HOSTS', ''); // Пустое = блокировать всё
 
+// Белый список разрешённых доменов (управляемый список)
+// Закомментируй строку с доменом, чтобы заблокировать его
+define('WP_ACCESSIBLE_HOSTS', implode(',', array(
+    // 'api.wordpress.org',           // Закомментировано = заблокировано
+    // 'wordpress.org',                // Закомментировано = заблокировано  
+    // 'downloads.wordpress.org',      // Закомментировано = заблокировано
+    // 's.w.org',                      // Эмодзи и прочее
+    // 'ps.w.org',                     // Photon (оптимизация изображений)
+    
+    // Раскомментируй, если нужны эти сервисы:
+    // 'cdn.example.com',              // Твой CDN
+    // 'fonts.googleapis.com',         // Google Fonts
+    // 'maps.googleapis.com',          // Google Maps
+)));
 
-sudo nano /var/www/wp-content/themes/bizup/functions.php
-// Отключить автоматическую загрузку переводов
-remove_action('init', 'wp_schedule_update_checks');
-add_filter('auto_update_translation', '__return_false');	
+// Отключить автообновления
+define('AUTOMATIC_UPDATER_DISABLED', true);
+define('WP_AUTO_UPDATE_CORE', false);

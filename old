@@ -1,20 +1,17 @@
 <?php
-add_action( 'tgmpa_register', 'bizup_register_required_plugins' );
+
 function bizup_register_required_plugins() {
 	$plugins = array(	
-  
 	array(
 		'name' 		=> 'Redux Framework',
 		'slug' 		=> 'redux-framework',
 		'required' 	=> true,
 	),  
-	
 	array(
 		'name' 		=> 'WooCommerce',
 		'slug' 		=> 'woocommerce',
 		'required' 	=> true,
 	),	
-
 	array(
 		'name' 		=> 'Elementor',
 		'slug' 		=> 'elementor',
@@ -25,26 +22,21 @@ function bizup_register_required_plugins() {
 		'slug' 		=> 'breadcrumb-navxt',
 		'required' 	=> true,
 	),
-
 	array(
 		'name' 		=> 'Contact Form 7',
 		'slug' 		=> 'contact-form-7',
 		'required' 	=> true,
 	),
-
 	array(
 		'name' 		=> 'Mailchimp for WordPress',
 		'slug' 		=> 'mailchimp-for-wp',
 		'required' 	=>  false,
 	),
-
-	
 	array(
 		'name' 		=> 'One Click Demo Import',
 		'slug' 		=> 'one-click-demo-import',
 		'required' 	=> true,
 	),
-	
 	array(
 		'name'               => 'RSElements', // The plugin name.
 		'slug'               => 'rselements', // The plugin slug (typically the folder name).
@@ -89,20 +81,18 @@ function bizup_register_required_plugins() {
 		'external_url'       => '', // If set, overrides default API URL and points to an external URL.
 		'is_callable'        => '', // If set, this callable will be be checked for availability to determine if a plugin is active.
 	),
-		
-
 );
 	// Change this to your theme text domain, used for internationalising strings
 	$theme_text_domain = 'bizup';
 	$config = array(
-		'domain'       		=> 	$theme_text_domain,         // Text domain - likely want to be the same as your theme.
-		'default_path' 		=> '',                         	// Default absolute path to pre-packaged plugins
-		'parent_menu_slug' 	=> 'themes.php', 				// Default parent menu slug
-		'parent_url_slug' 	=> 'themes.php', 				// Default parent URL slug
-		'menu'         		=> 'install-required-plugins', 	// Menu slug
-		'has_notices'      	=> true,                       	// Show admin notices or not
-		'is_automatic'    	=> true,					   	// Automatically activate plugins after installation or not
-		'message' 			=> '',							// Message to output right before the plugins table
+		'domain'       		=> 	$theme_text_domain,         
+		'default_path' 		=> '',                         
+		'parent_menu_slug' 	=> 'themes.php', 			
+		'parent_url_slug' 	=> 'themes.php', 			
+		'menu'         		=> 'install-required-plugins', 
+		'has_notices'      	=> true,                       
+		'is_automatic'    	=> true,					   
+		'message' 			=> '',						
 		'strings'      		=> array(
 			'page_title'                       			=> __( 'Install Required Plugins', "bizup" ),
 			'menu_title'                       			=> __( 'Install Plugins', "bizup" ),
@@ -126,3 +116,9 @@ function bizup_register_required_plugins() {
 	);
 	tgmpa( $plugins, $config );
 }
+
+// Register the action on init hook to ensure textdomain is loaded
+function bizup_register_tgmpa() {
+	add_action( 'tgmpa_register', 'bizup_register_required_plugins' );
+}
+add_action( 'init', 'bizup_register_tgmpa' );

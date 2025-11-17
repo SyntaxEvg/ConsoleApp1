@@ -1,17 +1,8 @@
-'175,190p' /var/www/wp-content/themes/bizup/inc/template-functions.php
-      'import_notice'              => esc_html__( 'Caution: For importing demo data please click on "Import Demo Data" button. During demo data installation please do not refresh the page.', 'bizup' ),
-
-    ),
-
-  );
 }
 
-add_filter( 'pt-ocdi/import_files', 'bizup_import_files' );
+function bizup_register_import_filter() {
+    add_filter( 'pt-ocdi/import_files', 'bizup_import_files' );
+}
+add_action( 'init', 'bizup_register_import_filter' );
 
 function bizup_after_import_setup() {
-  // Assign menus to their locations.
-  $main_menu   = get_term_by( 'name', 'Main Menu', 'nav_menu' );
-  $single_menu = get_term_by( 'name', 'Single Menu', 'nav_menu' );
-  set_theme_mod( 'nav_menu_locations', array(
-      'menu-1' => $main_menu->term_id,
-      'menu-2' => $single_menu->term_id

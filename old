@@ -1,25 +1,37 @@
-/var/www/wp-includes/functions.php
-
 do_action( 'wp_trigger_error_run', $function_name, $message, $error_level );
 
-	if ( ! empty( $function_name ) ) {
-		$message = sprintf( '%s(): %s', $function_name, $message );
-	}
+// Добавляем детальное логирование для отладки
+if ( ! empty( $function_name ) && $function_name === '_load_textdomain_just_in_time' ) {
+    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 15);
+    $trace_log = "=== TEXTDOMAIN ERROR TRACE ===\n";
+    $trace_log .= "Message: " . $message . "\n";
+    $trace_log .= "Call stack:\n";
+    foreach ($backtrace as $i => $trace) {
+        $file = isset($trace['file']) ? $trace['file'] : 'unknown';
+        $line = isset($trace['line']) ? $trace['line'] : 'unknown';
+        $function = isset($trace['function']) ? $trace['function'] : 'unknown';
+        $class = isset($trace['class']) ? $trace['class'] . '::' : '';
+        $trace_log .= sprintf("#%d %s%s() called at [%s:%s]\n", $i, $class, $function, $file, $line);
+    }
+    $trace_log .= "=== END TRACE ===\n\n";
+    error_log($trace_log);
+}
 
-	$message = wp_kses(
-		$message,
-		array(
-			'a'      => array( 'href' => true ),
-			'br'     => array(),
-			'code'   => array(),
-			'em'     => array(),
-			'strong' => array(),
-		),
-		array( 'http', 'https' )
-	);
-
-	if ( E_USER_ERROR === $error_level ) {
-		throw new WP_Exception( $message );
-	}
-
-	trigger_error( $message, $error_level );
+if ( ! empty( $function_name ) ) {
+    $message = sprintf( '%s(): %s', $function_name, $message );
+}
+$message = wp_kses(
+    $message,
+    array(
+        'a'      => array( 'href' => true ),
+        'br'     => array(),
+        'code'   => array(),
+        'em'     => array(),
+        'strong' => array(),
+    ),
+    array( 'http', 'https' )
+);
+if ( E_USER_ERROR === $error_level ) {
+    throw new WP_Exception( $message );
+}
+trigger_error( $message, $error_level );

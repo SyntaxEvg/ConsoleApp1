@@ -1,20 +1,35 @@
-sudo nano /etc/php.ini
-```
+do_action( 'wp_trigger_error_run', $function_name, $message, $error_level );
 
-Найди строку `error_log =` и измени на:
-```
-error_log = /var/log/php_errors.log
-```
+// Добавляем стек вызовов прямо в сообщение для _load_textdomain_just_in_time
+if ( ! empty( $function_name ) && $function_name === '_load_textdomain_just_in_time' ) {
+    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
+    $message .= "\n\n=== CALL STACK ===\n";
+    foreach ($backtrace as $i => $trace) {
+        if ($i === 0) continue; // Пропускаем текущую функцию
+        $file = isset($trace['file']) ? str_replace('/var/www/', '', $trace['file']) : 'unknown';
+        $line = isset($trace['line']) ? $trace['line'] : '?';
+        $function = isset($trace['function']) ? $trace['function'] : 'unknown';
+        $class = isset($trace['class']) ? $trace['class'] . '::' : '';
+        $message .= sprintf("#%d %s%s() in %s:%s\n", $i, $class, $function, $file, $line);
+    }
+    $message .= "=== END STACK ===";
+}
 
-Или если строки нет, добавь:
-```
-error_reporting = E_ALL
-log_errors = On
-error_log = /var/log/php_errors.log
-
-sudo touch /var/log/php_errors.log
-sudo chmod 666 /var/log/php_errors.log
-
-sudo systemctl restart php-fpm
-
-tail -100 /var/log/php_errors.log
+if ( ! empty( $function_name ) ) {
+    $message = sprintf( '%s(): %s', $function_name, $message );
+}
+$message = wp_kses(
+    $message,
+    array(
+        'a'      => array( 'href' => true ),
+        'br'     => array(),
+        'code'   => array(),
+        'em'     => array(),
+        'strong' => array(),
+    ),
+    array( 'http', 'https' )
+);
+if ( E_USER_ERROR === $error_level ) {
+    throw new WP_Exception( $message );
+}
+trigger_error( $message, $error_level );

@@ -1,1 +1,2 @@
-tail -f /var/log/php-fpm/error.log
+# Проверить все PHP файлы рекурсивно
+find /var/www -name "*.php" -exec php -l {} \; 2>&1 | grep -v "No syntax errors"

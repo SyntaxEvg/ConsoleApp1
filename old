@@ -1,51 +1,24 @@
-<?php
-/**
- * Core HTTP Request API
- *
- * @package WordPress
- * @subpackage HTTP
- */
-
-// ========================================
-// ЧЁРНЫЙ СПИСОК ДОМЕНОВ ДЛЯ БЛОКИРОВКИ
-// ========================================
 function wp_check_blocked_domain($url) {
-    // Чёрный список
     $blocked_domains = array(
         'api.wordpress.org',
         'wordpress.org',
         'downloads.wordpress.org',
         's.w.org',
         'ps.w.org',
-        // Добавляй/удаляй домены здесь
     );
     
     $host = parse_url($url, PHP_URL_HOST);
     
+    // ВСЕГДА логируем ВСЕ запросы
+    error_log("🌐 HTTP REQUEST: $url (Host: $host)");
+    
     foreach ($blocked_domains as $blocked) {
         if ($host === $blocked || strpos($host, $blocked) !== false) {
-            error_log(sprintf(
-                "🚫 BLOCKED HTTP REQUEST:\nURL: %s\nHost: %s",
-                $url,
-                $host
-            ));
+            error_log("🚫 BLOCKED: $url");
             return true;
         }
     }
     
+    error_log("✅ ALLOWED: $url");
     return false;
-}
-
-function wp_remote_request( $url, $args = array() ) {
-    // ПРОВЕРКА ЧЁРНОГО СПИСКА
-    if (wp_check_blocked_domain($url)) {
-        return new WP_Error(
-            'http_request_blocked',
-            sprintf('HTTP request blocked by security policy: %s', parse_url($url, PHP_URL_HOST))
-        );
-    }
-    
-    // Остальной код функции без изменений...
-    $http = _wp_http_get_object();
-    return $http->request( $url, $args );
 }

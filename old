@@ -1,28 +1,42 @@
-function translations_api( $type, $args = null ) {
-	if ( ! in_array( $type, array( 'plugins', 'themes', 'core' ), true ) ) {
-		return new WP_Error( 'invalid_type', __( 'Invalid translation type.' ) );
-	}
-	$res = apply_filters( 'translations_api', false, $type, $args );
-
-	if ( false === $res ) {
-		$url      = 'http://api.wordpress.org/translations/' . $type . '/1.0/';
-		$http_url = $url;
-		$ssl      = wp_http_supports( array( 'ssl' ) );
-		if ( $ssl ) {
-			$url = set_url_scheme( $url, 'https' );
-		}
-
-		$options = array(
-			'timeout' => 3,
-			'body'    => array(
-				'wp_version' => wp_get_wp_version(),
-				'locale'     => get_locale(),
-				'version'    => $args['version'], // Version of plugin, theme or core.
-			),
-		);
-
-		if ( 'core' !== $type ) {
-			$options['body']['slug'] = $args['slug']; // Plugin or theme slug.
-		}
-
-		$request = wp_remote_post( $url, $options );
+// ГЛОБАЛЬНЫЙ ЧЁРНЫЙ СПИСОК для всех HTTP запросов WordPress
+add_filter('pre_http_request', function($preempt, $parsed_args, $url) {
+    
+    // ЧЁРНЫЙ СПИСОК - домены для блокировки
+    $blocked_domains = array(
+        'api.wordpress.org',
+        'wordpress.org', 
+        'downloads.wordpress.org',
+        's.w.org',
+        'ps.w.org',
+        // Добавляй/удаляй домены здесь
+    );
+    
+    // Парсим URL и получаем домен
+    $host = parse_url($url, PHP_URL_HOST);
+    
+    // Проверяем чёрный список
+    foreach ($blocked_domains as $blocked) {
+        if ($host === $blocked || strpos($host, $blocked) !== false) {
+            // Логируем заблокированный запрос
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_log(sprintf(
+                    "🚫 BLOCKED HTTP REQUEST:\nURL: %s\nHost: %s\nMethod: %s",
+                    $url,
+                    $host,
+                    isset($parsed_args['method']) ? $parsed_args['method'] : 'POST'
+                ));
+            }
+            
+            // Возвращаем ошибку вместо выполнения запроса
+            return new WP_Error(
+                'http_request_blocked',
+                sprintf('HTTP request to %s blocked by security policy', $host),
+                array('blocked_url' => $url)
+            );
+        }
+    }
+    
+    // Если домен не заблокирован - разрешаем запрос
+    return $preempt;
+    
+}, 10, 3);

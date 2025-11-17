@@ -1,27 +1,17 @@
-  // Apply filters and echo
-  return apply_filters( 'bizup_wpex_get_excerpt', $output );
-}
-
-
-//Demo content file include here
-
-function bizup_import_files() {
-  return array(
-    array(
-      'import_file_name'           => 'Bizup Demo Import',
-      'categories'                 => array( 'Category 1' ),
-      'import_file_url'            => trailingslashit( get_template_directory_uri() ) . 'ocdi/bizup-content.xml',
-      'import_widget_file_url'     => trailingslashit( get_template_directory_uri() ) . 'ocdi/bizup-widget.wie',
-      'import_redux'               => array(
-        array(
-          'file_url'    => trailingslashit( get_template_directory_uri() ) . 'ocdi/bizup-options.json',
-          'option_name' => 'bizup_option',
-        ),
-      ),
-
+'175,190p' /var/www/wp-content/themes/bizup/inc/template-functions.php
       'import_notice'              => esc_html__( 'Caution: For importing demo data please click on "Import Demo Data" button. During demo data installation please do not refresh the page.', 'bizup' ),
 
     ),
 
   );
 }
+
+add_filter( 'pt-ocdi/import_files', 'bizup_import_files' );
+
+function bizup_after_import_setup() {
+  // Assign menus to their locations.
+  $main_menu   = get_term_by( 'name', 'Main Menu', 'nav_menu' );
+  $single_menu = get_term_by( 'name', 'Single Menu', 'nav_menu' );
+  set_theme_mod( 'nav_menu_locations', array(
+      'menu-1' => $main_menu->term_id,
+      'menu-2' => $single_menu->term_id

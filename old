@@ -20,6 +20,22 @@ function _load_textdomain_just_in_time( $domain ) {
 	}
 
 	if ( ! doing_action( 'after_setup_theme' ) && ! did_action( 'after_setup_theme' ) ) {
+		// ОТЛАДКА: выводим стек вызовов для bizup
+		if ( $domain === 'bizup' ) {
+			echo '<div style="background: #f00; color: #fff; padding: 20px; margin: 20px; font-family: monospace; white-space: pre-wrap;">';
+			echo '<strong>❌ BIZUP TEXTDOMAIN LOADED TOO EARLY!</strong>' . "\n\n";
+			echo '<strong>CALL STACK:</strong>' . "\n";
+			$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
+			foreach ($backtrace as $i => $trace) {
+				$file = isset($trace['file']) ? str_replace('/var/www/', '', $trace['file']) : 'unknown';
+				$line = isset($trace['line']) ? $trace['line'] : '?';
+				$function = isset($trace['function']) ? $trace['function'] : 'unknown';
+				$class = isset($trace['class']) ? $trace['class'] . '::' : '';
+				echo sprintf("#%d %s%s()\n    in %s:%s\n\n", $i, $class, $function, $file, $line);
+			}
+			echo '</div>';
+		}
+		
 		_doing_it_wrong(
 			__FUNCTION__,
 			sprintf(

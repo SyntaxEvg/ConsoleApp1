@@ -1,25 +1,34 @@
-// Найти инстанс Flatpickr
-let flatpickrInstance = document.querySelector('.flatpickr-input')._flatpickr
+Понял! Вижу календарь с диапазоном дат. Попробуйте так:
+Вариант 1 - Через контейнер календаря:
+javascript// Найти элемент календаря
+let calendar = document.querySelector('.vc-pane-container')
+console.log(calendar)
 
-// Установить нужную дату
-flatpickrInstance.setDate('2025-11-17')
+// Или через родительский контейнер
+let dateRange = document.querySelector('.flex.items-center.gap-2')
+console.log(dateRange)
+Вариант 2 - Это похоже на Vue Calendar (v-calendar):
+javascript// Найти Vue компонент
+let calendarElement = document.querySelector('[data-v-c42d2aba]')
+let vueInstance = calendarElement.__vue__ || calendarElement.__vueParentComponent
 
-// Или так
-flatpickrInstance.setDate(new Date(2025, 10, 17)) // месяцы с 0
+// Посмотреть данные
+console.log(vueInstance)
+Вариант 3 - Через span с датами:
+javascript// Найти span с начальной датой
+let startDate = document.querySelector('.text-gray-700.font-medium')
+console.log(startDate.textContent) // "20 ноября"
 
-// Найти input
-let dateInput = document.querySelector('input[name="check-in"]')
-
-// Изменить значение
-dateInput.value = '2025-11-17'
-
-// Вызвать change event для обновления Flatpickr
-dateInput._flatpickr.setDate('2025-11-17')
-
-// Check-in дата
-document.querySelector('input[name="check-in"]')._flatpickr.setDate('2025-11-20')
-
-// Check-out дата
-document.querySelector('input[name="check-out"]')._flatpickr.setDate('2025-11-25')
-
-document.querySelector('input[name="check-in"]')._flatpickr.open()
+// Изменить текст (визуально)
+startDate.textContent = "25 ноября"
+Вариант 4 - Найти все элементы с data-v атрибутами:
+javascript// Посмотреть все Vue компоненты
+document.querySelectorAll('[data-v-c42d2aba]').forEach(el => {
+    console.log(el)
+    console.log(el.__vue__)
+})
+Вариант 5 - Через корневой Vue инстанс:
+javascript// Если есть глобальный Vue
+window.$vm0 // в Vue DevTools
+// или
+document.querySelector('#app').__vue__

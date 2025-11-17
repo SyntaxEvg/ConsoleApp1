@@ -1,2 +1,1 @@
-tail -50 /var/log/nginx/error.log
-tail -50 /var/log/php-fpm/error.log
+grep -rn "function wp_remote_post" /var/www/ --include="*.php"

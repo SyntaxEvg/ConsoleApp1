@@ -1,1 +1,21 @@
-Notice: Функция _load_textdomain_just_in_time вызвана неправильно. Translation loading for the bizup domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the init action or later. Дополнительную информацию можно найти на странице «Отладка в WordPress». (Это сообщение было добавлено в версии 6.7.0.) in /var/www/wp-includes/functions.php on line 6139
+sudo nano /var/www/wp-includes/l10n.php
+
+function _load_textdomain_just_in_time( $domain ) {
+    // ОТЛАДКА: выводим стек вызовов
+    if ( $domain === 'bizup' && ! did_action( 'init' ) ) {
+        echo '<pre style="background: #f00; color: #fff; padding: 10px; margin: 10px;">';
+        echo '<strong>BIZUP TEXTDOMAIN CALLED TOO EARLY!</strong><br>';
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 15);
+        foreach ($backtrace as $i => $trace) {
+            $file = isset($trace['file']) ? str_replace('/var/www/', '', $trace['file']) : 'unknown';
+            $line = isset($trace['line']) ? $trace['line'] : '?';
+            $function = isset($trace['function']) ? $trace['function'] : 'unknown';
+            $class = isset($trace['class']) ? $trace['class'] . '::' : '';
+            echo sprintf("#%d %s%s() in %s:%s\n", $i, $class, $function, $file, $line);
+        }
+        echo '</pre>';
+    }
+    
+    // Остальной код функции без изменений...
+
+grep -n "_doing_it_wrong" /var/www/wp-includes/l10n.php | head -5

@@ -1,21 +1,28 @@
-// Блокировать все внешние запросы по умолчанию
-define('WP_HTTP_BLOCK_EXTERNAL', true);
+function translations_api( $type, $args = null ) {
+	if ( ! in_array( $type, array( 'plugins', 'themes', 'core' ), true ) ) {
+		return new WP_Error( 'invalid_type', __( 'Invalid translation type.' ) );
+	}
+	$res = apply_filters( 'translations_api', false, $type, $args );
 
-// Белый список разрешённых доменов (управляемый список)
-// Закомментируй строку с доменом, чтобы заблокировать его
-define('WP_ACCESSIBLE_HOSTS', implode(',', array(
-    // 'api.wordpress.org',           // Закомментировано = заблокировано
-    // 'wordpress.org',                // Закомментировано = заблокировано  
-    // 'downloads.wordpress.org',      // Закомментировано = заблокировано
-    // 's.w.org',                      // Эмодзи и прочее
-    // 'ps.w.org',                     // Photon (оптимизация изображений)
-    
-    // Раскомментируй, если нужны эти сервисы:
-    // 'cdn.example.com',              // Твой CDN
-    // 'fonts.googleapis.com',         // Google Fonts
-    // 'maps.googleapis.com',          // Google Maps
-)));
+	if ( false === $res ) {
+		$url      = 'http://api.wordpress.org/translations/' . $type . '/1.0/';
+		$http_url = $url;
+		$ssl      = wp_http_supports( array( 'ssl' ) );
+		if ( $ssl ) {
+			$url = set_url_scheme( $url, 'https' );
+		}
 
-// Отключить автообновления
-define('AUTOMATIC_UPDATER_DISABLED', true);
-define('WP_AUTO_UPDATE_CORE', false);
+		$options = array(
+			'timeout' => 3,
+			'body'    => array(
+				'wp_version' => wp_get_wp_version(),
+				'locale'     => get_locale(),
+				'version'    => $args['version'], // Version of plugin, theme or core.
+			),
+		);
+
+		if ( 'core' !== $type ) {
+			$options['body']['slug'] = $args['slug']; // Plugin or theme slug.
+		}
+
+		$request = wp_remote_post( $url, $options );

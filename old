@@ -1,2 +1,6 @@
-
-/var/www/wp-content/themes/bizup/framework/ini/theme-base.php:17:                       require_once get_template_directory() . '/framework/class-tgm-plugin-activation.php';
+function bizup_load_admin_framework() {
+    if (is_admin()) {	
+        require_once get_template_directory() . '/framework/ini/theme-base.php';	
+    }
+}
+add_action('init', 'bizup_load_admin_framework');

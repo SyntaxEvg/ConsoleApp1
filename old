@@ -1,30 +1,41 @@
-define('WP_HTTP_BLOCK_EXTERNAL', true);
-sudo nano /var/www/wp-content/mu-plugins/log-blocked-requests.php
-// Логирование заблокированных HTTP запросов
+<?php
+/**
+ * Plugin Name: Log Blocked HTTP Requests
+ */
+
+// Логируем запуск плагина
+file_put_contents('/var/log/wordpress-blocked.log', 
+    date('[Y-m-d H:i:s] ') . "✅ PLUGIN LOADED: log-blocked-requests.php\n",
+    FILE_APPEND
+);
+
 add_filter('pre_http_request', function($preempt, $parsed_args, $url) {
-    // Если запрос заблокирован WP_HTTP_BLOCK_EXTERNAL
+    // Логируем что хук сработал
+    file_put_contents('/var/log/wordpress-blocked.log', 
+        date('[Y-m-d H:i:s] ') . "🔍 HOOK TRIGGERED: pre_http_request for $url\n",
+        FILE_APPEND
+    );
+    
     if (defined('WP_HTTP_BLOCK_EXTERNAL') && WP_HTTP_BLOCK_EXTERNAL) {
         $host = parse_url($url, PHP_URL_HOST);
         
-        // Проверяем белый список
         $allowed = defined('WP_ACCESSIBLE_HOSTS') ? explode(',', WP_ACCESSIBLE_HOSTS) : array();
         $is_allowed = false;
         foreach ($allowed as $allowed_host) {
-            if (strpos($host, trim($allowed_host)) !== false) {
+            if ($allowed_host && strpos($host, trim($allowed_host)) !== false) {
                 $is_allowed = true;
                 break;
             }
         }
         
-        // Логируем только заблокированные
         if (!$is_allowed) {
             file_put_contents('/var/log/wordpress-blocked.log', 
-                date('[Y-m-d H:i:s] ') . sprintf(
-                    "🚫 BLOCKED: %s\n   Host: %s\n   Method: %s\n\n",
-                    $url,
-                    $host,
-                    isset($parsed_args['method']) ? $parsed_args['method'] : 'GET'
-                ),
+                date('[Y-m-d H:i:s] ') . "🚫 BLOCKED: $url (Host: $host)\n",
+                FILE_APPEND
+            );
+        } else {
+            file_put_contents('/var/log/wordpress-blocked.log', 
+                date('[Y-m-d H:i:s] ') . "✅ ALLOWED: $url (Host: $host)\n",
                 FILE_APPEND
             );
         }
@@ -33,8 +44,12 @@ add_filter('pre_http_request', function($preempt, $parsed_args, $url) {
     return $preempt;
 }, 10, 3);
 
-sudo touch /var/log/wordpress-blocked.log
-sudo chmod 666 /var/log/wordpress-blocked.log
-sudo chown nginx:nginx /var/log/wordpress-blocked.log
+// Логируем что фильтр добавлен
+file_put_contents('/var/log/wordpress-blocked.log', 
+    date('[Y-m-d H:i:s] ') . "✅ FILTER REGISTERED: pre_http_request\n",
+    FILE_APPEND
+);
 
-tail -f /var/log/wordpress-blocked.log
+
+sudo truncate -s 0 /var/log/wordpress-blocked.log
+cat /var/log/wordpress-blocked.log

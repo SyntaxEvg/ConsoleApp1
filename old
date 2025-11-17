@@ -1,181 +1,261 @@
-        async Task<IHttpActionResult> ExecuteCodeMacroMega(oDataAll data)
+async Task<IHttpActionResult> ExecuteCodeMacroMega(oDataAll data)
+{
+    List<string> strerror = new List<string>();
+    strerror.Add("step1: Method started");
+    
+    var guid = Guid.NewGuid().ToString().Substring(0, 2);
+    strerror.Add($"step2: Generated GUID={guid}");
+    
+    var ValidateOData = ValidateODataAll(data);
+    strerror.Add($"step3: Validation completed, IsValid={ValidateOData.IsValid}");
+    
+    try
+    {
+        string startTime = $"{DateTime.Now:HH.mm.ss}";
+        strerror.Add($"step4: Start time={startTime}");
+        
+        string endTime = null;
+        var url = base.Url.Request.RequestUri.AbsolutePath.ToString();
+        url = url.Split('/').LastOrDefault();
+        strerror.Add($"step5: URL extracted={url}");
+        
+        string macroResult = "";
+
+        var path = $"C:\\LogSerilog/{DateTime.Now:ddMMyyyy-HH.mm}_{data.Class}_u_{url}_Day_{data.DaysInterval}_{guid}.log";
+        strerror.Add($"step6: Log path created={path}");
+        
+        var logger = new LoggerConfiguration()
+                            .WriteTo.File(encoding: Encoding.UTF8, path: path)
+                            .CreateLogger();
+        strerror.Add("step7: Logger created");
+        
+        try
         {
-            List<string> strerror = new List<string>();
-            strerror.Add("step1");
-            var guid = Guid.NewGuid().ToString().Substring(0, 2);
-            var ValidateOData = ValidateODataAll(data);
+            string jsonReq = null;
+
             try
             {
-                string startTime = $"{DateTime.Now:HH.mm.ss}";
-                string endTime = null;
-                var url = base.Url.Request.RequestUri.AbsolutePath.ToString();
-                url = url.Split('/').LastOrDefault();
-                string macroResult = "";
+                #region ValidJSon
+                jsonReq = JsonConvert.SerializeObject(data);
+                strerror.Add("step8: JSON serialization successful");
+                #endregion
+            }
+            catch (Exception ex)
+            {
+                strerror.Add($"step8_error: JSON serialization failed - {ex.Message}");
+                Log.Error($"BadRequest:{ex.Message}");
+                if (jsonReq == null)
+                {
+                    return ServerError500(new WebServiceResult { ErrorType = "BadRequest", Content = ex.Message });
+                }
+            }
+            
+            data.un = User.Identity.Name;
+            strerror.Add($"step9: Username set={data.un}");
+            
+            logger.Information($"UserName: {data.un}");
+            logger.Information($"url: {url}");
+            logger.Information($"Request: {jsonReq}");
+            
+            data.ip = ((HttpContextWrapper)Request.Properties["MS_HttpContext"]).Request.UserHostAddress;
+            strerror.Add($"step10: IP address set={data.ip}");
+            
+            string sessionMode = "MS"; 
+            string accessMode = "RW"; 
+            bool closeSession = false;
+            strerror.Add("step11: Session parameters initialized");
 
-                var path = $"C:\\LogSerilog/{DateTime.Now:ddMMyyyy-HH.mm}_{data.Class}_u_{url}_Day_{data.DaysInterval}_{guid}.log";
-                var logger = new LoggerConfiguration()
-                                    .WriteTo.File(encoding: Encoding.UTF8, path: path)
-                                    .CreateLogger();
+            var userInfo = getUserInfo();
+            strerror.Add("step12: User info retrieved");
+            
+            var hopexContext = getHopexContext();
+            strerror.Add("step13: Hopex context retrieved");
+            
+            string mwasUrl = "";
+
+            var sspUrl = ConfigurationManager.AppSettings["MegaSiteProvider"];
+            strerror.Add($"step14: SSP URL retrieved={sspUrl}");
+            
+            var securityKey = ((NameValueCollection)WebConfigurationManager.GetSection("secureAppSettings"))["SecurityKey"];
+            strerror.Add("step15: Security key retrieved");
+            
+            int quantityDemand = 2;
+            strerror.Add($"step16: Quantity demand set={quantityDemand}");
+
+            if (!ValidateOData.IsValid)
+            {
+                strerror.Add($"step17_error: Validation failed - {ValidateOData.ErrorMessage}");
+                logger.Error("errorValidData: " + ValidateOData.ErrorMessage);
+                return ServerError500(new WebServiceResult { ErrorType = "BadRequest", Content = ValidateOData.ErrorMessage });
+            }
+            strerror.Add("step17: Validation passed");
+            
+            while (quantityDemand > 0)
+            {
+                strerror.Add($"step18: While loop iteration, quantityDemand={quantityDemand}");
                 try
                 {
-                    string jsonReq = null;
-
+                    if (quantityDemand == 0)
+                    {
+                        strerror.Add("step19_error: Quantity demand is 0");
+                        return ServerError500(new WebServiceResult { ErrorType = "BadRequest", Content = "local repeat was not successful" });
+                    }
+                    
                     try
                     {
-                        #region ValidJSon
-                        jsonReq = JsonConvert.SerializeObject(data);
-
-                        #endregion
+                        strerror.Add("step20: Calling FindSession");
+                        mwasUrl = HopexService.FindSession(sspUrl, securityKey, hopexContext.EnvironmentId, hopexContext.DataLanguageId, hopexContext.GuiLanguageId, hopexContext.ProfileId, userInfo.HopexAuthPerson, true);
+                        strerror.Add($"step21: FindSession successful, mwasUrl={mwasUrl}");
                     }
                     catch (Exception ex)
                     {
-                        Log.Error($"BadRequest:{ex.Message}");
-                        if (jsonReq == null)
-                        {
-                            return ServerError500(new WebServiceResult { ErrorType = "BadRequest", Content = ex.Message });
-
-                        }
+                        strerror.Add($"step21_error: FindSession failed - {ex.Message}");
+                        logger.Error($"ExceptionFindSession: {ex.Message}");
+                        return ServerError500(new WebServiceResult { ErrorType = "BadRequest", Content = JsonConvert.SerializeObject(ex) });
                     }
-                    data.un = User.Identity.Name;
-                    logger.Information($"UserName: {data.un}");
-                    logger.Information($"url: {url}");
-                    logger.Information($"Request: {jsonReq}");
-                    data.ip = ((HttpContextWrapper)Request.Properties["MS_HttpContext"]).Request.UserHostAddress;
-                    string sessionMode = "MS"; string accessMode = "RW"; bool closeSession = false;
-
-                    var userInfo = getUserInfo();
-                    var hopexContext = getHopexContext();
-                    string mwasUrl = "";
-
-                    var sspUrl = ConfigurationManager.AppSettings["MegaSiteProvider"];
-                    var securityKey = ((NameValueCollection)WebConfigurationManager.GetSection("secureAppSettings"))["SecurityKey"];
-                    int quantityDemand = 2;
-
-                    if (!ValidateOData.IsValid)
+                    
+                    if (mwasUrl == null)
                     {
-                        logger.Error("errorValidData: " + ValidateOData.ErrorMessage);
-                        return ServerError500(new WebServiceResult { ErrorType = "BadRequest", Content = ValidateOData.ErrorMessage });
+                        const string message = "Unable to get MWAS url. Please retry later and check your configuration if it doesn't work.";
+                        strerror.Add($"step22_error: {message}");
+                        logger.Error(message);
+                        return FormatResult(new WebServiceResult { ErrorType = "BadRequest", Content = message });
                     }
-                    while (quantityDemand > 0)
+                    
+                    if (mwasUrl.ToString().IndexOf("Error") > 0)
                     {
-                        try
-                        {
-                            if (quantityDemand == 0)
-                            {
-                                return ServerError500(new WebServiceResult { ErrorType = "BadRequest", Content = "local repeat was not successful" });
-                            }
-                            try
-                            {
-                                mwasUrl = HopexService.FindSession(sspUrl, securityKey, hopexContext.EnvironmentId, hopexContext.DataLanguageId, hopexContext.GuiLanguageId, hopexContext.ProfileId, userInfo.HopexAuthPerson, true);
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.Error($"ExceptionFindSession: {ex.Message}");
-                                //Logger.Debug("ErrorMega: " + ex.Message);
-                                return ServerError500(new WebServiceResult { ErrorType = "BadRequest", Content = JsonConvert.SerializeObject(ex) });
-                            }
-                            if (mwasUrl == null)
-                            {
-                                const string message = "Unable to get MWAS url. Please retry later and check your configuration if it doesn't work.";
-                                logger.Error(message);
-
-                                return FormatResult(new WebServiceResult { ErrorType = "BadRequest", Content = message });
-                            }
-                            if (mwasUrl.ToString().IndexOf("Error") > 0)
-                            {
-                                const string message = "Unable to get MWAS url. Please retry later and check your configuration if it doesn't work.";
-                                logger.Error(message);
-
-                                return FormatResult(new WebServiceResult { ErrorType = "BadRequest", Content = message });
-                            }
-
-                            mwasUrl = mwasUrl.ToLower().Replace("hopexmwas", "hopexapimwas");
-
-                            // Open the Hopex session
-                            var hopexService = new HopexService(mwasUrl, securityKey);
-                            var mwasSettings = InitMwasSettings();
-                            var mwasSessionConnectionParameters = InitMwasSessionConnectionParameters(sessionMode, accessMode, hopexContext, userInfo);
-                            if (!hopexService.TryOpenSession(mwasSettings, mwasSessionConnectionParameters, findSession: !closeSession))
-                            {
-                                var message = "Unable to open an Hopex session. Please check the values in the HopexContext header and retry.";
-                                //Logger.Debug(message);
-                                return FormatResult(new WebServiceResult { ErrorType = "BadRequest", Content = message });
-                            }
-
-                            var jsmod = JsonConvert.SerializeObject(data);
-
-                            macroResult = hopexService.CallMacro(data.MacrosID, jsmod);
-
-                            if (data.Verb == "Read")
-                            {
-                                hopexService.CloseSession();
-                            }
-                            else
-                            {
-                                hopexService.CloseUpdateSession();
-                            }
-                            macroResult = DecoderMegaWrapper.Execute(macroResult);
-                        }
-                        catch (Exception exlog)
-                        {
-                            logger.Error($"Exception: {exlog.Message}");
-                            if (exlog.Message.Contains("Response status code does not indicate success"))
-                            {
-                                quantityDemand--;
-                                continue;
-                            }
-                        }
-                        break;
+                        const string message = "Unable to get MWAS url. Please retry later and check your configuration if it doesn't work.";
+                        strerror.Add($"step23_error: {message}");
+                        logger.Error(message);
+                        return FormatResult(new WebServiceResult { ErrorType = "BadRequest", Content = message });
                     }
+                    strerror.Add("step22-23: MWAS URL validation passed");
+
+                    mwasUrl = mwasUrl.ToLower().Replace("hopexmwas", "hopexapimwas");
+                    strerror.Add($"step24: MWAS URL transformed={mwasUrl}");
+
+                    // Open the Hopex session
+                    var hopexService = new HopexService(mwasUrl, securityKey);
+                    strerror.Add("step25: HopexService created");
+                    
+                    var mwasSettings = InitMwasSettings();
+                    strerror.Add("step26: MWAS settings initialized");
+                    
+                    var mwasSessionConnectionParameters = InitMwasSessionConnectionParameters(sessionMode, accessMode, hopexContext, userInfo);
+                    strerror.Add("step27: MWAS session connection parameters initialized");
+                    
+                    if (!hopexService.TryOpenSession(mwasSettings, mwasSessionConnectionParameters, findSession: !closeSession))
+                    {
+                        var message = "Unable to open an Hopex session. Please check the values in the HopexContext header and retry.";
+                        strerror.Add($"step28_error: {message}");
+                        return FormatResult(new WebServiceResult { ErrorType = "BadRequest", Content = message });
+                    }
+                    strerror.Add("step28: Hopex session opened successfully");
+
+                    var jsmod = JsonConvert.SerializeObject(data);
+                    strerror.Add("step29: Data serialized for macro call");
+
+                    macroResult = hopexService.CallMacro(data.MacrosID, jsmod);
+                    strerror.Add($"step30: Macro called, MacrosID={data.MacrosID}");
+
+                    if (data.Verb == "Read")
+                    {
+                        hopexService.CloseSession();
+                        strerror.Add("step31: Session closed (Read mode)");
+                    }
+                    else
+                    {
+                        hopexService.CloseUpdateSession();
+                        strerror.Add("step31: Update session closed");
+                    }
+                    
+                    macroResult = DecoderMegaWrapper.Execute(macroResult);
+                    strerror.Add("step32: Macro result decoded");
                 }
                 catch (Exception exlog)
                 {
-                    if (!ValidateOData.IsValid)
-                    {
-                        logger.Error($"Exception: {ValidateOData.ErrorMessage}");
-                    }
+                    strerror.Add($"step33_error: Exception in while loop - {exlog.Message}");
                     logger.Error($"Exception: {exlog.Message}");
-
+                    if (exlog.Message.Contains("Response status code does not indicate success"))
+                    {
+                        quantityDemand--;
+                        strerror.Add($"step34: Retrying, quantityDemand decreased to {quantityDemand}");
+                        continue;
+                    }
                 }
-                finally
-                {
-                    endTime = $"{DateTime.Now:HH.mm.ss}";
-                    logger.Information($"startTime: {startTime}");
-                    logger.Information($"endTime: {endTime}");
-                    logger.Information($"Response: {macroResult}");
-                    logger.Dispose();
-
-                }
-                return FormatResult(new WebServiceResult { ErrorType = "None", Content = macroResult });
+                break;
             }
-            catch (Exception globalEx)
-            {
-                var stream = HttpContext.Current.Request.InputStream;//.Clear();
-                var ContentLength = HttpContext.Current.Request.ContentLength;//.Clear();
-                stream.Position = 0;
-                string Content = "";
-                using (StreamReader reader = new StreamReader(stream, encoding: Encoding.UTF8, true, 1024, true))
-                {
-                    Content = reader.ReadToEnd();
-                    stream.Position = 0;
-                }
-                var body = Request.ToString();
-                var path1 = $"C:\\LogSerilog/{DateTime.Now:ddMMyyyy-HH.mm}_EX_{guid}.log";
-                var loggerEX = new LoggerConfiguration()
-                                    .WriteTo.File(encoding: Encoding.UTF8, path: path1)
-                                    .CreateLogger();
-
-                if (ValidateOData.IsValid == false)
-                {
-                    loggerEX.Error($"ExceptionGl: {ValidateOData.ErrorMessage}");
-                }
-                loggerEX.Error($"globalEx:{globalEx.Message}");
-                loggerEX.Error($"innerEx:{globalEx.InnerException}");
-                loggerEX.Error($"Content: {Content}");
-                loggerEX.Error($"ContentLength: {ContentLength}");
-                loggerEX.Error($"bodyH: {body}");
-                loggerEX.Dispose();
-                return FormatResult(new WebServiceResult { ErrorType = "BadRequest", Content = globalEx.Message });
-            }
-
+            strerror.Add("step35: While loop completed");
         }
+        catch (Exception exlog)
+        {
+            strerror.Add($"step36_error: Exception in main try block - {exlog.Message}");
+            if (!ValidateOData.IsValid)
+            {
+                logger.Error($"Exception: {ValidateOData.ErrorMessage}");
+            }
+            logger.Error($"Exception: {exlog.Message}");
+        }
+        finally
+        {
+            endTime = $"{DateTime.Now:HH.mm.ss}";
+            strerror.Add($"step37: End time={endTime}");
+            
+            logger.Information($"startTime: {startTime}");
+            logger.Information($"endTime: {endTime}");
+            logger.Information($"Response: {macroResult}");
+            logger.Dispose();
+            strerror.Add("step38: Logger disposed");
+        }
+        
+        strerror.Add("step39: Returning FormatResult");
+        return FormatResult(new WebServiceResult { ErrorType = "None", Content = macroResult });
+    }
+    catch (Exception globalEx)
+    {
+        strerror.Add($"step40_error: Global exception - {globalEx.Message}");
+        
+        var stream = HttpContext.Current.Request.InputStream;
+        var ContentLength = HttpContext.Current.Request.ContentLength;
+        stream.Position = 0;
+        string Content = "";
+        
+        using (StreamReader reader = new StreamReader(stream, encoding: Encoding.UTF8, true, 1024, true))
+        {
+            Content = reader.ReadToEnd();
+            stream.Position = 0;
+        }
+        strerror.Add("step41: Request content read");
+        
+        var body = Request.ToString();
+        var path1 = $"C:\\LogSerilog/{DateTime.Now:ddMMyyyy-HH.mm}_EX_{guid}.log";
+        var loggerEX = new LoggerConfiguration()
+                            .WriteTo.File(encoding: Encoding.UTF8, path: path1)
+                            .CreateLogger();
+        strerror.Add("step42: Exception logger created");
+
+        if (ValidateOData.IsValid == false)
+        {
+            loggerEX.Error($"ExceptionGl: {ValidateOData.ErrorMessage}");
+        }
+        
+        loggerEX.Error($"globalEx:{globalEx.Message}");
+        loggerEX.Error($"innerEx:{globalEx.InnerException}");
+        loggerEX.Error($"Content: {Content}");
+        loggerEX.Error($"ContentLength: {ContentLength}");
+        loggerEX.Error($"bodyH: {body}");
+        
+        // Выводим всю коллекцию strerror в лог
+        loggerEX.Information("=== Execution trace ===");
+        foreach (var step in strerror)
+        {
+            loggerEX.Information(step);
+        }
+        loggerEX.Information("=== End of trace ===");
+        
+        loggerEX.Dispose();
+        strerror.Add("step43: Exception logged and logger disposed");
+        
+        return FormatResult(new WebServiceResult { ErrorType = "BadRequest", Content = globalEx.Message });
+    }
+}

@@ -1,3 +1,20 @@
-sudo php -i | grep error_log
-error_log => no value => no value
-opcache.error_log => no value => no value
+sudo nano /etc/php.ini
+```
+
+Найди строку `error_log =` и измени на:
+```
+error_log = /var/log/php_errors.log
+```
+
+Или если строки нет, добавь:
+```
+error_reporting = E_ALL
+log_errors = On
+error_log = /var/log/php_errors.log
+
+sudo touch /var/log/php_errors.log
+sudo chmod 666 /var/log/php_errors.log
+
+sudo systemctl restart php-fpm
+
+tail -100 /var/log/php_errors.log

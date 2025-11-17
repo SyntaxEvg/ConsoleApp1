@@ -1,55 +1,13 @@
-<?php
-/**
- * Plugin Name: Log Blocked HTTP Requests
- */
-
-// Логируем запуск плагина
-file_put_contents('/var/log/wordpress-blocked.log', 
-    date('[Y-m-d H:i:s] ') . "✅ PLUGIN LOADED: log-blocked-requests.php\n",
-    FILE_APPEND
-);
-
-add_filter('pre_http_request', function($preempt, $parsed_args, $url) {
-    // Логируем что хук сработал
-    file_put_contents('/var/log/wordpress-blocked.log', 
-        date('[Y-m-d H:i:s] ') . "🔍 HOOK TRIGGERED: pre_http_request for $url\n",
-        FILE_APPEND
-    );
-    
-    if (defined('WP_HTTP_BLOCK_EXTERNAL') && WP_HTTP_BLOCK_EXTERNAL) {
-        $host = parse_url($url, PHP_URL_HOST);
-        
-        $allowed = defined('WP_ACCESSIBLE_HOSTS') ? explode(',', WP_ACCESSIBLE_HOSTS) : array();
-        $is_allowed = false;
-        foreach ($allowed as $allowed_host) {
-            if ($allowed_host && strpos($host, trim($allowed_host)) !== false) {
-                $is_allowed = true;
-                break;
-            }
-        }
-        
-        if (!$is_allowed) {
-            file_put_contents('/var/log/wordpress-blocked.log', 
-                date('[Y-m-d H:i:s] ') . "🚫 BLOCKED: $url (Host: $host)\n",
-                FILE_APPEND
-            );
-        } else {
-            file_put_contents('/var/log/wordpress-blocked.log', 
-                date('[Y-m-d H:i:s] ') . "✅ ALLOWED: $url (Host: $host)\n",
-                FILE_APPEND
-            );
-        }
-    }
-    
-    return $preempt;
-}, 10, 3);
-
-// Логируем что фильтр добавлен
-file_put_contents('/var/log/wordpress-blocked.log', 
-    date('[Y-m-d H:i:s] ') . "✅ FILTER REGISTERED: pre_http_request\n",
-    FILE_APPEND
-);
-
-
-sudo truncate -s 0 /var/log/wordpress-blocked.log
-cat /var/log/wordpress-blocked.log
+sudo tail -50 /var/log/wordpress-blocked.log
+[2025-11-17 15:06:40] ✅ PLUGIN LOADED: log-blocked-requests.php
+[2025-11-17 15:06:40] ✅ FILTER REGISTERED: pre_http_request
+[2025-11-17 15:06:40] 🔍 HOOK TRIGGERED: pre_http_request for http://10.13.20.51/wp-cron.php?doing_wp_cron=1763392000.8763720989227294921875
+[2025-11-17 15:06:40] 🚫 BLOCKED: http://10.13.20.51/wp-cron.php?doing_wp_cron=1763392000.8763720989227294921875 (Host: 10.13.20.51)
+[2025-11-17 15:06:40] ✅ PLUGIN LOADED: log-blocked-requests.php
+[2025-11-17 15:06:40] ✅ FILTER REGISTERED: pre_http_request
+[2025-11-17 15:06:45] ✅ PLUGIN LOADED: log-blocked-requests.php
+[2025-11-17 15:06:45] ✅ FILTER REGISTERED: pre_http_request
+[2025-11-17 15:06:45] 🔍 HOOK TRIGGERED: pre_http_request for https://api.wordpress.org/translations/core/1.0/
+[2025-11-17 15:06:45] 🚫 BLOCKED: https://api.wordpress.org/translations/core/1.0/ (Host: api.wordpress.org)
+[2025-11-17 15:06:45] 🔍 HOOK TRIGGERED: pre_http_request for http://api.wordpress.org/translations/core/1.0/
+[2025-11-17 15:06:45] 🚫 BLOCKED: http://api.wordpress.org/translations/core/1.0/ (Host: api.wordpress.org)

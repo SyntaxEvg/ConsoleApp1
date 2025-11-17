@@ -1,68 +1,16 @@
-<?php
-/**
- * Plugin Name: Log Blocked HTTP Requests
- */
+// Если у вас есть доступ к Vue инстансу через window
+window.app.yourDateVariable = '2025-11-17'
 
-// Логируем запуск плагина
-file_put_contents('/var/log/wordpress-blocked.log', 
-    date('[Y-m-d H:i:s] ') . "✅ PLUGIN LOADED: log-blocked-requests.php\n",
-    FILE_APPEND
-);
+// Или найдите элемент DOM и получите Vue инстанс
+let element = document.querySelector('.calendar-selector')
+element.__vue__.dateProperty = new Date('2025-11-17')
 
-add_filter('pre_http_request', function($preempt, $parsed_args, $url) {
-    // Логируем что хук сработал
-    file_put_contents('/var/log/wordpress-blocked.log', 
-        date('[Y-m-d H:i:s] ') . "🔍 HOOK TRIGGERED: pre_http_request for $url\n",
-        FILE_APPEND
-    );
-    
-    if (defined('WP_HTTP_BLOCK_EXTERNAL') && WP_HTTP_BLOCK_EXTERNAL) {
-        $host = parse_url($url, PHP_URL_HOST);
-        
-        // ВНУТРЕННИЕ ХОСТЫ - всегда разрешены
-        $internal_hosts = array(
-            'localhost',
-            '127.0.0.1',
-            '10.13.20.51',  // IP твоего сервера
-            parse_url(home_url(), PHP_URL_HOST), // Домен сайта
-        );
-        
-        if (in_array($host, $internal_hosts)) {
-            file_put_contents('/var/log/wordpress-blocked.log', 
-                date('[Y-m-d H:i:s] ') . "✅ INTERNAL ALLOWED: $url (Host: $host)\n",
-                FILE_APPEND
-            );
-            return $preempt; // Разрешаем внутренние запросы
-        }
-        
-        // БЕЛЫЙ СПИСОК из WP_ACCESSIBLE_HOSTS
-        $allowed = defined('WP_ACCESSIBLE_HOSTS') ? explode(',', WP_ACCESSIBLE_HOSTS) : array();
-        $is_allowed = false;
-        foreach ($allowed as $allowed_host) {
-            if ($allowed_host && strpos($host, trim($allowed_host)) !== false) {
-                $is_allowed = true;
-                break;
-            }
-        }
-        
-        if (!$is_allowed) {
-            file_put_contents('/var/log/wordpress-blocked.log', 
-                date('[Y-m-d H:i:s] ') . "🚫 BLOCKED: $url (Host: $host)\n",
-                FILE_APPEND
-            );
-        } else {
-            file_put_contents('/var/log/wordpress-blocked.log', 
-                date('[Y-m-d H:i:s] ') . "✅ ALLOWED: $url (Host: $host)\n",
-                FILE_APPEND
-            );
-        }
-    }
-    
-    return $preempt;
-}, 10, 3);
+// Найти все input с датой
+document.querySelector('input[type="date"]').value = '2025-11-17'
 
-// Логируем что фильтр добавлен
-file_put_contents('/var/log/wordpress-blocked.log', 
-    date('[Y-m-d H:i:s] ') . "✅ FILTER REGISTERED: pre_http_request\n",
-    FILE_APPEND
-);
+// Или изменить атрибут
+document.querySelector('.date-picker').setAttribute('value', '2025-11-17')
+
+// Вызвать событие, чтобы Vue среагировал
+let event = new Event('input', { bubbles: true })
+document.querySelector('input[type="date"]').dispatchEvent(event)

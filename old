@@ -2,41 +2,77 @@ function wp_trigger_error( $function_name, $message, $error_level = E_USER_NOTIC
 	if ( ! WP_DEBUG ) {
 		return;
 	}
-do_action( 'wp_trigger_error_run', $function_name, $message, $error_level );
-// Добавляем стек вызовов ДО wp_kses
-if ( ! empty( $function_name ) && $function_name === '_load_textdomain_just_in_time' ) {
-    $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
-    $stack_html = "<br><br><strong>=== CALL STACK ===</strong><br>";
-    foreach ($backtrace as $i => $trace) {
-        if ($i === 0) continue;
-        $file = isset($trace['file']) ? str_replace('/var/www/', '', $trace['file']) : 'unknown';
-        $line = isset($trace['line']) ? $trace['line'] : '?';
-        $function = isset($trace['function']) ? $trace['function'] : 'unknown';
-        $class = isset($trace['class']) ? $trace['class'] . '::' : '';
-        $stack_html .= sprintf("<strong>#%d</strong> %s%s() in <code>%s:%s</code><br>", $i, $class, $function, $file, $line);
-    }
-    $stack_html .= "<strong>=== END STACK ===</strong>";
-}
-if ( ! empty( $function_name ) ) {
-    $message = sprintf( '%s(): %s', $function_name, $message );
-}
-// Добавляем стек ПОСЛЕ формирования основного сообщения, но ДО wp_kses
-if ( ! empty( $stack_html ) ) {
-    $message .= $stack_html;
-}
-$message = wp_kses(
-    $message,
-    array(
-        'a'      => array( 'href' => true ),
-        'br'     => array(),
-        'code'   => array(),
-        'em'     => array(),
-        'strong' => array(),
-    ),
-    array( 'http', 'https' )
-);
-if ( E_USER_ERROR === $error_level ) {
-    throw new WP_Exception( $message );
-}
-trigger_error( $message, $error_level );
+	
+	do_action( 'wp_trigger_error_run', $function_name, $message, $error_level );
+	
+	// Добавляем стек вызовов ДЛЯ ВСЕХ ОШИБОК
+	$stack_html = '';
+	if ( ! empty( $function_name ) ) {
+		$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 15);
+		
+		// Выбираем цвет в зависимости от типа ошибки
+		$bg_color = '#9C27B0'; // Фиолетовый по умолчанию
+		$border_color = '#7B1FA2';
+		$icon = '🔍';
+		
+		if ( $function_name === '_load_textdomain_just_in_time' ) {
+			$bg_color = '#f44336';
+			$border_color = '#d32f2f';
+			$icon = '❌';
+		} elseif ( strpos($function_name, 'deprecated') !== false ) {
+			$bg_color = '#2196F3';
+			$border_color = '#1976D2';
+			$icon = 'ℹ️';
+		} elseif ( strpos($function_name, 'doing_it_wrong') !== false || strpos($message, 'incorrectly') !== false ) {
+			$bg_color = '#ff9800';
+			$border_color = '#f57c00';
+			$icon = '⚠️';
+		}
+		
+		$stack_html = sprintf(
+			'<div style="background: %s; color: #fff; padding: 15px; margin: 10px; font-family: monospace; white-space: pre-wrap; border-left: 5px solid %s;">',
+			$bg_color,
+			$border_color
+		);
+		$stack_html .= sprintf('<strong>%s FUNCTION: %s</strong>', $icon, esc_html($function_name)) . "\n\n";
+		$stack_html .= '<strong>CALL STACK:</strong>' . "\n";
+		
+		foreach ($backtrace as $i => $trace) {
+			if ($i === 0) continue; // Пропускаем текущую функцию
+			$file = isset($trace['file']) ? str_replace('/var/www/', '', $trace['file']) : 'unknown';
+			$line = isset($trace['line']) ? $trace['line'] : '?';
+			$func = isset($trace['function']) ? $trace['function'] : 'unknown';
+			$class = isset($trace['class']) ? $trace['class'] . '::' : '';
+			$stack_html .= sprintf("#%d %s%s()\n    in %s:%s\n\n", $i - 1, $class, $func, $file, $line);
+		}
+		$stack_html .= '</div>';
+	}
+	
+	if ( ! empty( $function_name ) ) {
+		$message = sprintf( '%s(): %s', $function_name, $message );
+	}
+	
+	// Добавляем стек ПОСЛЕ формирования основного сообщения, но ДО wp_kses
+	if ( ! empty( $stack_html ) ) {
+		$message .= $stack_html;
+	}
+	
+	$message = wp_kses(
+		$message,
+		array(
+			'a'      => array( 'href' => true ),
+			'br'     => array(),
+			'code'   => array(),
+			'em'     => array(),
+			'strong' => array(),
+			'div'    => array( 'style' => true ), // ВАЖНО: разрешаем div со стилями
+		),
+		array( 'http', 'https' )
+	);
+	
+	if ( E_USER_ERROR === $error_level ) {
+		throw new WP_Exception( $message );
+	}
+	
+	trigger_error( $message, $error_level );
 }

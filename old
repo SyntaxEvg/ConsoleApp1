@@ -1,61 +1,35 @@
-function _load_textdomain_just_in_time( $domain ) {
-	/** @var WP_Textdomain_Registry $wp_textdomain_registry */
-	global $l10n_unloaded, $wp_textdomain_registry;
+? BIZUP TEXTDOMAIN LOADED TOO EARLY!
 
-	$l10n_unloaded = (array) $l10n_unloaded;
+CALL STACK:
+#0 _load_textdomain_just_in_time()
+    in wp-includes/l10n.php:1425
 
-	// Short-circuit if domain is 'default' which is reserved for core.
-	if ( 'default' === $domain || isset( $l10n_unloaded[ $domain ] ) ) {
-		return false;
-	}
+#1 get_translations_for_domain()
+    in wp-includes/l10n.php:195
 
-	if ( ! $wp_textdomain_registry->has( $domain ) ) {
-		return false;
-	}
+#2 translate()
+    in wp-includes/l10n.php:340
 
-	$locale = determine_locale();
-	$path   = $wp_textdomain_registry->get( $domain, $locale );
-	if ( ! $path ) {
-		return false;
-	}
+#3 esc_html__()
+    in wp-content/themes/bizup/libs/theme-option/config.php:38
 
-	if ( ! doing_action( 'after_setup_theme' ) && ! did_action( 'after_setup_theme' ) ) {
-		// ОТЛАДКА: выводим стек вызовов для bizup
-		if ( $domain === 'bizup' ) {
-			echo '<div style="background: #f00; color: #fff; padding: 20px; margin: 20px; font-family: monospace; white-space: pre-wrap;">';
-			echo '<strong>❌ BIZUP TEXTDOMAIN LOADED TOO EARLY!</strong>' . "\n\n";
-			echo '<strong>CALL STACK:</strong>' . "\n";
-			$backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 20);
-			foreach ($backtrace as $i => $trace) {
-				$file = isset($trace['file']) ? str_replace('/var/www/', '', $trace['file']) : 'unknown';
-				$line = isset($trace['line']) ? $trace['line'] : '?';
-				$function = isset($trace['function']) ? $trace['function'] : 'unknown';
-				$class = isset($trace['class']) ? $trace['class'] . '::' : '';
-				echo sprintf("#%d %s%s()\n    in %s:%s\n\n", $i, $class, $function, $file, $line);
-			}
-			echo '</div>';
-		}
-		
-		_doing_it_wrong(
-			__FUNCTION__,
-			sprintf(
-				/* translators: 1: The text domain. 2: 'init'. */
-				__( 'Translation loading for the %1$s domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the %2$s action or later.' ),
-				'<code>' . $domain . '</code>',
-				'<code>init</code>'
-			),
-			'6.7.0'
-		);
-	}
+#4 require_once()
+    in wp-content/themes/bizup/functions.php:116
 
-	// Themes with their language directory outside of WP_LANG_DIR have a different file name.
-	$template_directory   = trailingslashit( get_template_directory() );
-	$stylesheet_directory = trailingslashit( get_stylesheet_directory() );
-	if ( str_starts_with( $path, $template_directory ) || str_starts_with( $path, $stylesheet_directory ) ) {
-		$mofile = "{$path}{$locale}.mo";
-	} else {
-		$mofile = "{$path}{$domain}-{$locale}.mo";
-	}
+#5 include()
+    in wp-settings.php:695
 
-	return load_textdomain( $domain, $mofile, $locale );
-}
+#6 require_once()
+    in wp-config.php:132
+
+#7 require_once()
+    in wp-load.php:50
+
+#8 require_once()
+    in wp-blog-header.php:13
+
+#9 require()
+    in index.php:17
+
+
+Notice: Функция _load_textdomain_just_in_time вызвана неправильно. Translation loading for the bizup domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the init action or later. Дополнительную информацию можно найти на странице «Отладка в WordPress». (Это сообщение было добавлено в версии 6.7.0.) in /var/www/wp-includes/functions.php on line 6139

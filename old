@@ -1,1 +1,14 @@
 head -50 /var/www/wp-includes/http.php | grep -A5 "blocked_domains"
+    $blocked_domains = array(
+        'api.wordpress.org',
+        'wordpress.org',
+        'downloads.wordpress.org',
+        's.w.org',
+        'ps.w.org',
+--
+    foreach ($blocked_domains as $blocked) {
+        if ($host === $blocked || strpos($host, $blocked) !== false) {
+            error_log("?? BLOCKED: $url");
+            return true;
+        }
+    }

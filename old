@@ -70,9 +70,9 @@ function bizup_studio_fonts_url() {
     Translators: If there are characters in your language that are not supported
     by chosen font(s), translate this to 'off'. Do not translate into your own language.
      */
-    if ( 'off' !== _x( 'on', 'Google font: on or off', 'bizup' ) ) {
-        $font_url = add_query_arg( 'family', urlencode( 'Poppins:300,400,500,600,700,800,900&display=swap' ), "//fonts.googleapis.com/css" );
-    }
+    // Remove translation check to avoid early textdomain loading
+    $font_url = add_query_arg( 'family', urlencode( 'Poppins:300,400,500,600,700,800,900&display=swap' ), "//fonts.googleapis.com/css" );
+    
     return $font_url;
 }
 /*
@@ -182,7 +182,6 @@ function bizup_register_import_filter() {
     add_filter( 'pt-ocdi/import_files', 'bizup_import_files' );
 }
 add_action( 'init', 'bizup_register_import_filter' );
-//add_filter( 'pt-ocdi/import_files', 'bizup_import_files' );
 
 function bizup_after_import_setup() {
   // Assign menus to their locations.

@@ -1,21 +1,45 @@
-sudo nano /var/www/wp-includes/l10n.php
-
 function _load_textdomain_just_in_time( $domain ) {
-    // ОТЛАДКА: выводим стек вызовов
-    if ( $domain === 'bizup' && ! did_action( 'init' ) ) {
-        echo '<pre style="background: #f00; color: #fff; padding: 10px; margin: 10px;">';
-        echo '<strong>BIZUP TEXTDOMAIN CALLED TOO EARLY!</strong><br>';
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 15);
-        foreach ($backtrace as $i => $trace) {
-            $file = isset($trace['file']) ? str_replace('/var/www/', '', $trace['file']) : 'unknown';
-            $line = isset($trace['line']) ? $trace['line'] : '?';
-            $function = isset($trace['function']) ? $trace['function'] : 'unknown';
-            $class = isset($trace['class']) ? $trace['class'] . '::' : '';
-            echo sprintf("#%d %s%s() in %s:%s\n", $i, $class, $function, $file, $line);
-        }
-        echo '</pre>';
-    }
-    
-    // Остальной код функции без изменений...
+	/** @var WP_Textdomain_Registry $wp_textdomain_registry */
+	global $l10n_unloaded, $wp_textdomain_registry;
 
-grep -n "_doing_it_wrong" /var/www/wp-includes/l10n.php | head -5
+	$l10n_unloaded = (array) $l10n_unloaded;
+
+	// Short-circuit if domain is 'default' which is reserved for core.
+	if ( 'default' === $domain || isset( $l10n_unloaded[ $domain ] ) ) {
+		return false;
+	}
+
+	if ( ! $wp_textdomain_registry->has( $domain ) ) {
+		return false;
+	}
+
+	$locale = determine_locale();
+	$path   = $wp_textdomain_registry->get( $domain, $locale );
+	if ( ! $path ) {
+		return false;
+	}
+
+	if ( ! doing_action( 'after_setup_theme' ) && ! did_action( 'after_setup_theme' ) ) {
+		_doing_it_wrong(
+			__FUNCTION__,
+			sprintf(
+				/* translators: 1: The text domain. 2: 'init'. */
+				__( 'Translation loading for the %1$s domain was triggered too early. This is usually an indicator for some code in the plugin or theme running too early. Translations should be loaded at the %2$s action or later.' ),
+				'<code>' . $domain . '</code>',
+				'<code>init</code>'
+			),
+			'6.7.0'
+		);
+	}
+
+	// Themes with their language directory outside of WP_LANG_DIR have a different file name.
+	$template_directory   = trailingslashit( get_template_directory() );
+	$stylesheet_directory = trailingslashit( get_stylesheet_directory() );
+	if ( str_starts_with( $path, $template_directory ) || str_starts_with( $path, $stylesheet_directory ) ) {
+		$mofile = "{$path}{$locale}.mo";
+	} else {
+		$mofile = "{$path}{$domain}-{$locale}.mo";
+	}
+
+	return load_textdomain( $domain, $mofile, $locale );
+}

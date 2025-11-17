@@ -1,34 +1,24 @@
-Понял! Вижу календарь с диапазоном дат. Попробуйте так:
-Вариант 1 - Через контейнер календаря:
-javascript// Найти элемент календаря
-let calendar = document.querySelector('.vc-pane-container')
+Да, вижу! В HTML коде есть класс wrap-v-3-1-calendar. Попробуйте так:
+javascript// Найти элемент с этим классом
+let calendar = document.querySelector('.wrap-v-3-1-calendar')
 console.log(calendar)
 
-// Или через родительский контейнер
-let dateRange = document.querySelector('.flex.items-center.gap-2')
-console.log(dateRange)
-Вариант 2 - Это похоже на Vue Calendar (v-calendar):
-javascript// Найти Vue компонент
-let calendarElement = document.querySelector('[data-v-c42d2aba]')
-let vueInstance = calendarElement.__vue__ || calendarElement.__vueParentComponent
+// Посмотреть все свойства
+console.dir(calendar)
 
-// Посмотреть данные
-console.log(vueInstance)
-Вариант 3 - Через span с датами:
-javascript// Найти span с начальной датой
-let startDate = document.querySelector('.text-gray-700.font-medium')
-console.log(startDate.textContent) // "20 ноября"
+// Попробовать найти Vue инстанс
+console.log(calendar.__vue__)
+console.log(calendar.__vueParentComponent)
 
-// Изменить текст (визуально)
-startDate.textContent = "25 ноября"
-Вариант 4 - Найти все элементы с data-v атрибутами:
-javascript// Посмотреть все Vue компоненты
-document.querySelectorAll('[data-v-c42d2aba]').forEach(el => {
-    console.log(el)
-    console.log(el.__vue__)
-})
-Вариант 5 - Через корневой Vue инстанс:
-javascript// Если есть глобальный Vue
-window.$vm0 // в Vue DevTools
-// или
-document.querySelector('#app').__vue__
+// Или через дочерние элементы
+let calendarInner = document.querySelector('.wrap-v-3-1-calendar .vc-pane-container')
+console.log(calendarInner)
+Также попробуйте:
+javascript// Найти все элементы внутри календаря
+let allElements = document.querySelectorAll('.wrap-v-3-1-calendar *')
+console.log(allElements)
+
+// Проверить, есть ли Vue на родительских элементах
+let parent = document.querySelector('.wrap-v-3-1-calendar').parentElement
+console.log(parent.__vue__)
+Что покажет console.log(calendar) и console.dir(calendar)? Это поможет понять структуру и найти способ изменить даты.

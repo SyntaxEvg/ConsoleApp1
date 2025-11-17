@@ -19,6 +19,23 @@ add_filter('pre_http_request', function($preempt, $parsed_args, $url) {
     if (defined('WP_HTTP_BLOCK_EXTERNAL') && WP_HTTP_BLOCK_EXTERNAL) {
         $host = parse_url($url, PHP_URL_HOST);
         
+        // ВНУТРЕННИЕ ХОСТЫ - всегда разрешены
+        $internal_hosts = array(
+            'localhost',
+            '127.0.0.1',
+            '10.13.20.51',  // IP твоего сервера
+            parse_url(home_url(), PHP_URL_HOST), // Домен сайта
+        );
+        
+        if (in_array($host, $internal_hosts)) {
+            file_put_contents('/var/log/wordpress-blocked.log', 
+                date('[Y-m-d H:i:s] ') . "✅ INTERNAL ALLOWED: $url (Host: $host)\n",
+                FILE_APPEND
+            );
+            return $preempt; // Разрешаем внутренние запросы
+        }
+        
+        // БЕЛЫЙ СПИСОК из WP_ACCESSIBLE_HOSTS
         $allowed = defined('WP_ACCESSIBLE_HOSTS') ? explode(',', WP_ACCESSIBLE_HOSTS) : array();
         $is_allowed = false;
         foreach ($allowed as $allowed_host) {

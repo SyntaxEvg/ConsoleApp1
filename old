@@ -1,38 +1,11 @@
-using System;
-using System.Runtime.Caching;
-using System.Security.Cryptography;
-using System.Text;
-
-public class JsonRequestCacheWithMemoryCache
-{
-    private static readonly MemoryCache _cache = MemoryCache.Default;
-    private static readonly TimeSpan _cacheLifetime = TimeSpan.FromHours(1);
-    
-    public void ProcessRequest(string json)
-    {
-        string hash = CalculateHash(json);
-        
-        if (_cache.Contains(hash))
-        {
-            throw new InvalidOperationException(
-                $"Duplicate request detected within last hour. Hash: {hash}"
-            );
-        }
-        
-        // Добавляем в кеш с автоматическим удалением через час
-        _cache.Add(hash, DateTime.UtcNow, 
-            new CacheItemPolicy { AbsoluteExpiration = DateTimeOffset.UtcNow.Add(_cacheLifetime) });
-        
-        Console.WriteLine($"Processing request with hash: {hash}");
-    }
-    
-    private string CalculateHash(string json)
-    {
-        using (var sha256 = SHA256.Create())
-        {
-            byte[] jsonBytes = Encoding.UTF8.GetBytes(json);
-            byte[] hashBytes = sha256.ComputeHash(jsonBytes);
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLowerInvariant();
-        }
-    }
-}
+'MegaContext(Fields)
+set myConcept = GetObjectfromID("~ezHXsMuE3fG0[Analisi]")
+set myAtt = GetObjectfromID("~ezHXsMuE3fG0[Analisi]").GetAttribute("Name")
+print "Current language: " & myAtt.DescriptionObject.GuiName & " : '" & myAtt & "' or: " & myAtt.Value
+print "In Spanish: " & myAtt.~n97OO26RrO00[Espanol].DescriptionObject.GuiName & " : '" & myAtt.~n97OO26RrO00[Espanol] & "' or: " & myAtt.Translate("~n97OO26RrO00[Espanol]").Value
+print "In GUI Language: " & myAtt.GuiLanguage.DescriptionObject.GuiName & " : '" & myAtt.GuiLanguage & "' or: " & myAtt.Translate("GuiLanguage").Value
+' in 2007 SP1:
+for each transl in myAtt.DescriptionObject.Translations
+set myTranslation = myAtt.Translate(transl.LanguageID)
+print "Traduction in " & myTranslation.DescriptionObject.GuiName & " : " & myTranslation.Value
+next

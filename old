@@ -1,47 +1,67 @@
-// Создание пустого словаря
-var dict = {};
-
-// Создание с начальными данными
+// Способ 1: Ручной подсчет через цикл for...in
 var dict = {
     "ключ1": "значение1",
     "ключ2": "значение2",
     "age": 30
 };
 
-// Добавление элементов
-dict["новыйКлюч"] = "новоеЗначение";
-dict.имя = "Дмитрий";
-
-// Получение значений
-console.log(dict["ключ1"]); // "значение1"
-console.log(dict.имя); // "Дмитрий"
-
-// Проверка существования ключа
-if (dict.hasOwnProperty("ключ1")) {
-    console.log("Ключ существует");
-}
-
-// Или
-if ("ключ1" in dict) {
-    console.log("Ключ существует");
-}
-
-// Получение с дефолтным значением
-var value = dict["несуществующийКлюч"] || "дефолтное значение";
-
-// Удаление
-delete dict["ключ1"];
-
-// Получение всех ключей
-var keys = Object.keys(dict);
-console.log(keys); // ["ключ2", "age", "новыйКлюч", "имя"]
-
-// Перебор
+var count = 0;
 for (var key in dict) {
-    if (dict.hasOwnProperty(key)) {
-        console.log(key + ": " + dict[key]);
+    count++;
+}
+print("Количество элементов: " + count); // 3
+
+// Способ 2: Функция подсчета
+function getSize(obj) {
+    var size = 0;
+    for (var key in obj) {
+        size++;
     }
+    return size;
 }
 
-// Количество элементов
-var size = Object.keys(dict).length;
+var size = getSize(dict);
+print(size); // 3
+
+function isEmpty(obj) {
+    for (var key in obj) {
+        return false; // Если хоть один ключ есть - не пустой
+    }
+    return true;
+}
+
+var dict = {};
+if (isEmpty(dict)) {
+    print("Словарь пустой");
+}
+
+===========
+var translations = {
+    "ru": "Анализ",
+    "en": "Analysis",
+    "es": "Análisis"
+};
+
+// Подсчет количества языков
+var langCount = 0;
+for (var lang in translations) {
+    langCount++;
+}
+print("Доступно языков: " + langCount);
+
+// Получение всех ключей в массив
+var languages = [];
+for (var lang in translations) {
+    languages.push(lang);
+}
+print("Языки: " + languages.join(", ")); // "ru, en, es"
+
+// Функция получения перевода с проверкой
+function getTranslation(lang) {
+    if (translations[lang]) {
+        return translations[lang];
+    }
+    return translations["en"] || "N/A";
+}
+
+print(getTranslation("ru")); // "Анализ"

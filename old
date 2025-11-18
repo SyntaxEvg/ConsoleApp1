@@ -1,3 +1,22 @@
-function hasKey(obj, key) {
-    return typeof obj[key] !== "undefined";
-}
+Deprecated: Automatic conversion of false to array is deprecated in /var/www/wp-content/plugins/elementor/includes/api.php on line 176
+"	$data['pro_widgets'] = [];"
+
+public static function get_canary_deployment_info( $force = false ) {
+		$data = self::get_info_data( $force );
+
+		if ( empty( $data['canary_deployment'] ) ) {
+			return false;
+		}
+
+		return $data['canary_deployment'];
+	}
+
+	public static function get_promotion_widgets() {
+		$data = self::get_info_data();
+
+		if ( ! isset( $data['pro_widgets'] ) ) {
+			$data['pro_widgets'] = [];
+		}
+
+		return $data['pro_widgets'];
+	}

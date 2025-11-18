@@ -1,11 +1,10 @@
-'MegaContext(Fields)
-set myConcept = GetObjectfromID("~ezHXsMuE3fG0[Analisi]")
+' Получение перевода для конкретного языка
 set myAtt = GetObjectfromID("~ezHXsMuE3fG0[Analisi]").GetAttribute("Name")
-print "Current language: " & myAtt.DescriptionObject.GuiName & " : '" & myAtt & "' or: " & myAtt.Value
-print "In Spanish: " & myAtt.~n97OO26RrO00[Espanol].DescriptionObject.GuiName & " : '" & myAtt.~n97OO26RrO00[Espanol] & "' or: " & myAtt.Translate("~n97OO26RrO00[Espanol]").Value
-print "In GUI Language: " & myAtt.GuiLanguage.DescriptionObject.GuiName & " : '" & myAtt.GuiLanguage & "' or: " & myAtt.Translate("GuiLanguage").Value
-' in 2007 SP1:
+translatedValue = myAtt.~n97OO26RrO00[Espanol].Value
+
+' Получение всех переводов атрибута
 for each transl in myAtt.DescriptionObject.Translations
-set myTranslation = myAtt.Translate(transl.LanguageID)
-print "Traduction in " & myTranslation.DescriptionObject.GuiName & " : " & myTranslation.Value
+    set myTranslation = myAtt.Translate(transl.LanguageID)
+    print "Язык: " & myTranslation.DescriptionObject.GuiName
+    print "Значение: " & myTranslation.Value
 next

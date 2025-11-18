@@ -1,1 +1,12 @@
 sudo sed -n '440,450p' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
+                        Group_Control_Typography::get_type(),
+                        [
+                                'name' => 'title_typography',
+                                'label' => esc_html__( 'Title Typography', 'rsaddon' ),
+                                'scheme' => Typography::TYPOGRAPHY_1,
+                                'selector' =>
+                    '{{WRAPPER}} .team-grid-style5 .team-inner-wrap .team-content .member-desc .team-name a, {{WRAPPER}} .team-grid-style4 .team-item .team-content .team-name a, {{WRAPPER}} .team-grid-style2 .team-item-wrap .team-img .team-content .team-name a, {{WRAPPER}} .team-grid-style6 .team-item .team-content h3.team-name a, {{WRAPPER}} .team-grid-style1 .team-item .team-content h3.team-name a',
+                        ]
+                );
+        $this->add_control(
+            'designation_color',

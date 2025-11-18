@@ -1,10 +1,47 @@
-' Получение перевода для конкретного языка
-set myAtt = GetObjectfromID("~ezHXsMuE3fG0[Analisi]").GetAttribute("Name")
-translatedValue = myAtt.~n97OO26RrO00[Espanol].Value
+// Создание пустого словаря
+var dict = {};
 
-' Получение всех переводов атрибута
-for each transl in myAtt.DescriptionObject.Translations
-    set myTranslation = myAtt.Translate(transl.LanguageID)
-    print "Язык: " & myTranslation.DescriptionObject.GuiName
-    print "Значение: " & myTranslation.Value
-next
+// Создание с начальными данными
+var dict = {
+    "ключ1": "значение1",
+    "ключ2": "значение2",
+    "age": 30
+};
+
+// Добавление элементов
+dict["новыйКлюч"] = "новоеЗначение";
+dict.имя = "Дмитрий";
+
+// Получение значений
+console.log(dict["ключ1"]); // "значение1"
+console.log(dict.имя); // "Дмитрий"
+
+// Проверка существования ключа
+if (dict.hasOwnProperty("ключ1")) {
+    console.log("Ключ существует");
+}
+
+// Или
+if ("ключ1" in dict) {
+    console.log("Ключ существует");
+}
+
+// Получение с дефолтным значением
+var value = dict["несуществующийКлюч"] || "дефолтное значение";
+
+// Удаление
+delete dict["ключ1"];
+
+// Получение всех ключей
+var keys = Object.keys(dict);
+console.log(keys); // ["ключ2", "age", "новыйКлюч", "имя"]
+
+// Перебор
+for (var key in dict) {
+    if (dict.hasOwnProperty(key)) {
+        console.log(key + ": " + dict[key]);
+    }
+}
+
+// Количество элементов
+var size = Object.keys(dict).length;

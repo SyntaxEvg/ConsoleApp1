@@ -1,2 +1,3 @@
-Warning: wp_update_plugins(): Произошла непредвиденная ошибка. Возможно, что-то не так с сайтом WordPress.org или с настройками вашего сервера. Если проблема не решится, обратитесь на форумы поддержки. (Не удалось установить защищённое соединение с WordPress.org. Пожалуйста, свяжитесь с администратором сервера.)
-🔍 FUNCTION: wp_update_plugins CALL STACK: #0 wp_update_plugins() in wp-includes/class-wp-hook.php:324 #1 WP_Hook::apply_filters() in wp-includes/class-wp-hook.php:348 #2 WP_Hook::do_action() in wp-includes/plugin.php:517 #3 do_action() in wp-admin/admin.php:386 #4 require_once() in wp-admin/plugins.php:10
+add_filter('pre_site_transient_update_plugins', '__return_null');
+add_filter('pre_site_transient_update_themes', '__return_null');
+add_filter('pre_site_transient_update_core', '__return_null');

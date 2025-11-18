@@ -1,12 +1,5 @@
-sudo sed -n '495,505p' /var/www/wp-content/plugins/widgets/counter/rs-counter.php
-                        'title_color',
-                        [
-                                'label' => esc_html__( 'Color', 'rsaddon' ),
-                                'type' => Controls_Manager::COLOR,
-                                'scheme' => [
-                                        'type' => Color::get_type(),
-                                        'value' => Color::COLOR_2,
-                                ],
-                                'selectors' => [
-                                        '{{WRAPPER}} .count-text .title' => 'color: {{VALUE}};',
-                                ],
+# Удалить многострочный блок scheme для Color
+sudo sed -i '/'\''scheme'\'' => \[/,/\],$/d' /var/www/wp-content/plugins/widgets/counter/rs-counter.php
+
+# Удалить строки 499-502
+sudo sed -i '499,502d' /var/www/wp-content/plugins/widgets/counter/rs-counter.php

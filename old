@@ -1,1 +1,12 @@
 sudo sed -n '495,505p' /var/www/wp-content/plugins/widgets/counter/rs-counter.php
+                        'title_color',
+                        [
+                                'label' => esc_html__( 'Color', 'rsaddon' ),
+                                'type' => Controls_Manager::COLOR,
+                                'scheme' => [
+                                        'type' => Color::get_type(),
+                                        'value' => Color::COLOR_2,
+                                ],
+                                'selectors' => [
+                                        '{{WRAPPER}} .count-text .title' => 'color: {{VALUE}};',
+                                ],

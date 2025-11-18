@@ -1,3 +1,8 @@
-Warning: wp_update_plugins(): Произошла непредвиденная ошибка. Возможно, что-то не так с сайтом WordPress.org или с настройками вашего сервера. Если проблема не решится, обратитесь на форумы поддержки. (Не удалось установить защищённое соединение с WordPress.org. Пожалуйста, свяжитесь с администратором сервера.)
-🔍 FUNCTION: wp_update_plugins CALL STACK: #0 wp_update_plugins() in wp-includes/class-wp-hook.php:324 #1 WP_Hook::apply_filters() in wp-includes/class-wp-hook.php:348 #2 WP_Hook::do_action() in wp-includes/plugin.php:517 #3 do_action() in wp-admin/admin.php:386 #4 require_once() in wp-admin/plugins.php:10
-in /var/www/wp-includes/functions.php on line 6089
+# Функция wp_update_plugins
+cat /var/www/wp-includes/update.php | grep -A 50 "function wp_update_plugins"
+
+# Строка 6089 из functions.php
+sed -n '6080,6100p' /var/www/wp-includes/update.php
+
+# Или весь файл update.php
+cat /var/www/wp-includes/update.php

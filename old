@@ -1,5 +1,3 @@
-# Удалить многострочный блок scheme для Color
-sudo sed -i '/'\''scheme'\'' => \[/,/\],$/d' /var/www/wp-content/plugins/widgets/counter/rs-counter.php
-
-# Удалить строки 499-502
-sudo sed -i '499,502d' /var/www/wp-content/plugins/widgets/counter/rs-counter.php
+Deprecated: preg_replace(): Passing null to parameter #3 ($subject) of type array|string is deprecated in /var/www/wp-includes/kses.php on line 1807
+>> NaN
+Deprecated: preg_replace(): Passing null to parameter #3 ($subject) of type array|string is deprecated in /var/www/wp-includes/kses.php on line 1807

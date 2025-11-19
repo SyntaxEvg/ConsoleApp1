@@ -1,3 +1,4 @@
+String.fromCharCode(1044,1077,1085,1100,0);
 function charCodeAt(inStr) {
     var outStr = '',
         dig = inStr,

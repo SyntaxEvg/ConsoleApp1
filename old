@@ -1,25 +1,24 @@
-String.fromCharCode(1044,1077,1085,1100,0);
-function charCodeAt(inStr) {
+function fromCharCodeArray(inStr) {
     var outStr = '',
-        dig = inStr,
-        cc,
-        c2,
-        i
-    if (inStr == null) {
-        outStr = "";
+        codes,
+        code,
+        i;
+    
+    if (inStr == null || inStr === '') {
+        return '';
     }
-    else {
-        i = 0;
-        outStr = '';
-        while (i <= dig.length) {
-            cc = dig.charAt(i);
-            c2 = cc.charCodeAt(0);
-            if (isNaN(c2)) {
-                c2 = 0;
-            }
-            outStr += c2 + ",";
-            i++;
+    
+    // Разбиваем строку на массив кодов
+    codes = inStr.split(',');
+    
+    for (i = 0; i < codes.length; i++) {
+        code = parseInt(codes[i], 10);
+        
+        // Пропускаем нули и NaN
+        if (code && !isNaN(code)) {
+            outStr += String.fromCharCode(code);
         }
     }
+    
     return outStr;
 }

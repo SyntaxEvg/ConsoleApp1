@@ -1,24 +1,5 @@
-function fromCharCodeArray(inStr) {
-    var outStr = '',
-        codes,
-        code,
-        i;
-    
-    if (inStr == null || inStr === '') {
+if (inStr == null || inStr === '') {
         return '';
     }
     
-    // Разбиваем строку на массив кодов
-    codes = inStr.split(',');
-    
-    for (i = 0; i < codes.length; i++) {
-        code = parseInt(codes[i], 10);
-        
-        // Пропускаем нули и NaN
-        if (code && !isNaN(code)) {
-            outStr += String.fromCharCode(code);
-        }
-    }
-    
-    return outStr;
-}
+    return '[|$' + inStr + '$|]';

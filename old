@@ -1,39 +1,24 @@
 function fromCharCodeArray(inStr) {
     var outStr = '',
-        cleanStr = '',
         codes,
+        code,
         i;
     
     if (inStr == null || inStr === '') {
         return '';
     }
     
-    // Убираем последнюю запятую если есть
-    cleanStr = inStr;
-    if (cleanStr.charAt(cleanStr.length - 1) === ',') {
-        cleanStr = cleanStr.substring(0, cleanStr.length - 1);
-    }
+    // Разбиваем строку на массив кодов
+    codes = inStr.split(',');
     
-    // Убираем последний ноль если он есть
-    codes = cleanStr.split(',');
-    if (codes.length > 0 && codes[codes.length - 1] === '0') {
-        codes.pop(); // Удаляем последний элемент
-    }
-    
-    // Собираем обратно строку кодов
-    cleanStr = codes.join(',');
-    
-    console.log('Очищенная строка:', cleanStr); // Это будет "1044,1077,1085,1100"
-    
-    // Преобразуем в строку символов
     for (i = 0; i < codes.length; i++) {
-        outStr += String.fromCharCode(parseInt(codes[i], 10));
+        code = parseInt(codes[i], 10);
+        
+        // Пропускаем нули и NaN
+        if (code && !isNaN(code)) {
+            outStr += String.fromCharCode(code);
+        }
     }
     
     return outStr;
 }
-
-// Тест
-var test2 = "1044,1077,1085,1100,0,";
-var result = fromCharCodeArray(test2);
-console.log('Результат:', result); // "День"

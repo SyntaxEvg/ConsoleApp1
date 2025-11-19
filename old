@@ -1,7 +1,1 @@
-function sendCompressed(text) {
-    // 1. Сжимаем Base36-LZ (если выгодно)
-    // 2. Оборачиваем маркером
-    if (text.length < 100) return text;
-    var compressed = lzCompressBase36(text);
-    return compressed.length < text.length ? '[C]' + compressed : text;
-}
+ Exception: Could not load file or assembly 'System.Runtime.CompilerServices.Unsafe, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a' or one of its dependencies. The located assembly's manifest definition does not match the assembly reference. (Exception from HRESULT: 0x80131040)

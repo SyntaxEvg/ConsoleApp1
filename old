@@ -1,5 +1,51 @@
-if (inStr == null || inStr === '') {
-        return '';
+using System;
+using System.Text;
+using System.Text.RegularExpressions;
+
+public static string DecodeWrappedText(string input)
+{
+    if (string.IsNullOrEmpty(input))
+    {
+        return string.Empty;
     }
     
-    return '[|$' + inStr + '$|]';
+    // Регулярное выражение для поиска паттерна [|$...$|]
+    string pattern = @"\[\|\$([0-9,]+)\$\|\]";
+    
+    string result = Regex.Replace(input, pattern, match =>
+    {
+        // Получаем строку с кодами (группа 1)
+        string codes = match.Groups[1].Value;
+        
+        // Разбиваем по запятой
+        string[] codeArray = codes.Split(',');
+        
+        StringBuilder sb = new StringBuilder();
+        
+        foreach (string code in codeArray)
+        {
+            if (!string.IsNullOrEmpty(code))
+            {
+                int charCode = int.Parse(code);
+                if (charCode != 0)
+                {
+                    sb.Append((char)charCode);
+                }
+            }
+        }
+        
+        return sb.ToString();
+    });
+    
+    return result;
+}
+
+// Использование:
+string test = "[|$1044,1077,1085,1100$|]";
+string decoded = DecodeWrappedText(test);
+Console.WriteLine(decoded); // "День"
+
+// Можно декодировать несколько вхождений в одной строке:
+string test2 = "Привет [|$1044,1077,1085,1100$|] и [|$1084,1080,1088$|]!";
+string decoded2 = DecodeWrappedText(test2);
+Console.WriteLine(decoded2); // "Привет День и мир!"

@@ -8,14 +8,19 @@ function fromCharCodeArray(inStr) {
         return '';
     }
     
+    // Убираем последнюю запятую если есть
+    if (inStr.charAt(inStr.length - 1) === ',') {
+        inStr = inStr.substring(0, inStr.length - 1);
+    }
+    
     // Разбиваем строку на массив кодов
     codes = inStr.split(',');
     
     for (i = 0; i < codes.length; i++) {
         code = parseInt(codes[i], 10);
         
-        // Пропускаем нули и NaN
-        if (code && !isNaN(code)) {
+        // Пропускаем только если код равен 0 или NaN
+        if (code !== 0 && !isNaN(code)) {
             outStr += String.fromCharCode(code);
         }
     }

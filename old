@@ -1,44 +1,289 @@
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Net;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
-using Easy_Password_Validator;
-using Easy_Password_Validator.Models;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
+using Mega.Has.Commons;
 using Mega.Has.Modules.UAS.Models;
+using Mega.Has.Modules.UAS.Stores;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
-namespace Mega.Has.Modules.UAS.Hopex
+namespace Mega.Has.Modules.UAS.Providers.Google
 {
-	// Token: 0x0200009A RID: 154
-	public class PasswordValidator
+	// Token: 0x0200007E RID: 126
+	public class OpenIdProvider : IIdentityProvider<OpenIdConfig>, IExternalProvider
 	{
-		// Token: 0x0600066F RID: 1647 RVA: 0x000165E0 File Offset: 0x000147E0
-		[return: TupleElementNames(new string[] { "pass", "score" })]
-		public ValueTuple<bool, int> Validate(string password, IEnumerable<string> contextualWords = null, UasSettings options = null)
+		// Token: 0x06000551 RID: 1361 RVA: 0x00011EB4 File Offset: 0x000100B4
+		public OpenIdProvider(ILoggerFactory loggerFactory, ApplicationDbContext context, IClusterConfiguration serverConfiguration)
 		{
-			if (string.IsNullOrEmpty(password))
-			{
-				return new ValueTuple<bool, int>(false, 0);
-			}
-			if (options == null)
-			{
-				options = new UasSettings();
-			}
-			PasswordRequirements requirements = new PasswordRequirements
-			{
-				RequireDigit = options.RequireDigit,
-				RequireLowercase = options.RequireLowercase,
-				RequireUppercase = options.RequireUppercase,
-				RequirePunctuation = options.RequireNonAlphanumeric,
-				MinUniqueCharacters = options.RequiredUniqueChars,
-				MinLength = options.RequiredLength,
-				ExitOnFailure = true,
-				MaxNeighboringCharacter = 5
-			};
-			PasswordValidatorService passwordValidator = new PasswordValidatorService(requirements, null, false);
-			if (contextualWords != null)
-			{
-				passwordValidator.AddTest(new TestReservedWords(contextualWords));
-			}
-			return new ValueTuple<bool, int>(passwordValidator.TestAndScore(password, null, null), passwordValidator.Score);
+			this._context = context;
+			this._serverConfiguration = serverConfiguration;
+			this._loggerFactory = loggerFactory;
+			this._logger = loggerFactory.CreateLogger(typeof(OpenIdProvider));
 		}
+
+		// Token: 0x17000237 RID: 567
+		// (get) Token: 0x06000552 RID: 1362 RVA: 0x00011F08 File Offset: 0x00010108
+		// (set) Token: 0x06000553 RID: 1363 RVA: 0x00011F10 File Offset: 0x00010110
+		public bool Enabled { get; set; }
+
+		// Token: 0x17000238 RID: 568
+		// (get) Token: 0x06000554 RID: 1364 RVA: 0x00011F19 File Offset: 0x00010119
+		// (set) Token: 0x06000555 RID: 1365 RVA: 0x00011F21 File Offset: 0x00010121
+		public string DisplayName { get; set; }
+
+		// Token: 0x17000239 RID: 569
+		// (get) Token: 0x06000556 RID: 1366 RVA: 0x00011F2A File Offset: 0x0001012A
+		// (set) Token: 0x06000557 RID: 1367 RVA: 0x00011F32 File Offset: 0x00010132
+		public string AuthenticationScheme { get; set; }
+
+		// Token: 0x1700023A RID: 570
+		// (get) Token: 0x06000558 RID: 1368 RVA: 0x00011F3B File Offset: 0x0001013B
+		// (set) Token: 0x06000559 RID: 1369 RVA: 0x00011F43 File Offset: 0x00010143
+		public OpenIdConfig Configuration { get; set; } = new OpenIdConfig();
+
+		// Token: 0x0600055A RID: 1370 RVA: 0x00011F4C File Offset: 0x0001014C
+		public void Configure(AuthenticationBuilder builder)
+		{
+			IQueryable<ExternalProvider> externalProviders = this._context.ExternalProviders;
+			ParameterExpression parameterExpression = Expression.Parameter(typeof(ExternalProvider), "x");
+			IQueryable<ExternalProvider> entities = externalProviders.Where(Expression.Lambda<Func<ExternalProvider, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(ExternalProvider.get_Type())), Expression.Constant("OpenIdConfig", typeof(string))), new ParameterExpression[] { parameterExpression }));
+			using (IEnumerator<ExternalProvider> enumerator = entities.GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
+					ExternalProvider externalProvider = enumerator.Current;
+					if (externalProvider != null && externalProvider.Enabled)
+					{
+						this.Configuration = externalProvider.GetConfiguration<OpenIdConfig>();
+						OpenIdConfig configuration = this.Configuration;
+						if (!string.IsNullOrEmpty((configuration != null) ? configuration.ClientId : null))
+						{
+							OpenIdConfig configuration2 = this.Configuration;
+							if (!string.IsNullOrEmpty((configuration2 != null) ? configuration2.ClientSecret : null) || !string.IsNullOrEmpty(this.Configuration.Thumbprint))
+							{
+								if (string.IsNullOrEmpty(this.Configuration.Audience) && !string.IsNullOrEmpty(this.Configuration.Thumbprint))
+								{
+									throw new ArgumentException("Please set Audience field when you activate OPENID Provider");
+								}
+								if (string.IsNullOrEmpty(this.Configuration.Authority))
+								{
+									throw new ArgumentException("Please set Authority field when you activate OPENID Provider");
+								}
+								this.configs.Add(externalProvider.DisplayName, this.Configuration);
+								builder.AddOpenIdConnect(externalProvider.DisplayName, delegate(OpenIdConnectOptions options)
+								{
+									this.Configuration = externalProvider.GetConfiguration<OpenIdConfig>();
+									this.AuthenticationScheme = externalProvider.DisplayName;
+									bool? noSsl = this._serverConfiguration.RuntimeClusterSettings.NoSsl;
+									bool flag = true;
+									options.RequireHttpsMetadata = !((noSsl.GetValueOrDefault() == flag) & (noSsl != null));
+									options.SignInScheme = "idsrv.external";
+									options.Authority = this.Configuration.Authority;
+									options.ResponseType = "code";
+									options.ResponseMode = "query";
+									options.ClientId = this.Configuration.ClientId;
+									if (this._serverConfiguration.RuntimeClusterSettings.PublicAddress.StartsWith("https:", StringComparison.OrdinalIgnoreCase))
+									{
+										options.CorrelationCookie.SameSite = SameSiteMode.None;
+										options.NonceCookie.SameSite = SameSiteMode.None;
+										options.SaveTokens = true;
+									}
+									else
+									{
+										options.NonceCookie.SameSite = SameSiteMode.Lax;
+										options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+										options.ProtocolValidator.RequireNonce = false;
+									}
+									if (!string.IsNullOrEmpty(this.Configuration.Proxy))
+									{
+										try
+										{
+											options.BackchannelHttpHandler = new HttpClientHandler
+											{
+												Proxy = new WebProxy(this.Configuration.Proxy)
+											};
+										}
+										catch (Exception ex)
+										{
+											ILogger logger = this._logger;
+											if (logger != null)
+											{
+												logger.LogError("Proxy Failure : " + ex.Message, Array.Empty<object>());
+											}
+										}
+									}
+									if (string.IsNullOrEmpty(this.Configuration.Thumbprint))
+									{
+										options.ClientSecret = this.Configuration.ClientSecret;
+									}
+									options.CallbackPath = new PathString("/signin-" + this.AuthenticationScheme.ToLower());
+									if (!string.IsNullOrEmpty(this.Configuration.MetadataAddress))
+									{
+										options.MetadataAddress = this.Configuration.MetadataAddress;
+									}
+									if (!string.IsNullOrEmpty(this.Configuration.Issuer))
+									{
+										options.TokenValidationParameters = new TokenValidationParameters
+										{
+											ValidateIssuer = true,
+											IssuerValidator = delegate(string issuer, SecurityToken token, TokenValidationParameters tvp)
+											{
+												if (issuer == this.Configuration.Issuer)
+												{
+													return issuer;
+												}
+												throw new SecurityTokenInvalidIssuerException("Invalid issuer");
+											}
+										};
+									}
+									options.Events.OnAuthorizationCodeReceived = delegate(AuthorizationCodeReceivedContext ctx)
+									{
+										this.Configuration = this.configs[ctx.Scheme.Name];
+										if (!string.IsNullOrEmpty(this.Configuration.Thumbprint))
+										{
+											ctx.TokenEndpointRequest.ClientAssertionType = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+											ctx.TokenEndpointRequest.ClientAssertion = TokenGenerator.generateAuthJwt(this.Configuration.ClientId, this.Configuration.Audience, this.Configuration.Thumbprint);
+										}
+										return Task.CompletedTask;
+									};
+									options.Events.OnAuthenticationFailed = delegate(AuthenticationFailedContext ctx)
+									{
+										ILogger logger2 = this._logger;
+										if (logger2 != null)
+										{
+											logger2.LogError("Remote Failure : " + ctx.Exception.Message, Array.Empty<object>());
+										}
+										return Task.CompletedTask;
+									};
+									options.Events.OnRemoteFailure = delegate(RemoteFailureContext ctx)
+									{
+										ILogger logger3 = this._logger;
+										if (logger3 != null)
+										{
+											logger3.LogError("Remote Failure : " + ctx.Failure.Message, Array.Empty<object>());
+										}
+										return Task.CompletedTask;
+									};
+									options.Events.OnTicketReceived = async delegate(TicketReceivedContext ctxt)
+									{
+										try
+										{
+											this.Configuration = this.configs[ctxt.Scheme.Name];
+											ClaimsIdentity identity = ctxt.Principal.Identity as ClaimsIdentity;
+											if (identity != null)
+											{
+												if (!string.IsNullOrEmpty(this.Configuration.GroupsAuthorized))
+												{
+													ctxt.Principal.FindAll((Claim x) => x.Type == this.Configuration.ClaimForRoles && !this.Configuration.GroupsAuthorized.Contains(x.Value)).ToList<Claim>().ForEach(new Action<Claim>(identity.RemoveClaim));
+												}
+												if (!string.IsNullOrEmpty(this.Configuration.ClaimForSub) && this.Configuration.ClaimForSub.ToLower() != "sub")
+												{
+													Claim claim2 = ctxt.Principal.Claims.FirstOrDefault((Claim x) => x.Type == this.Configuration.ClaimForSub);
+													string value = ((claim2 != null) ? claim2.Value : null);
+													if (value != null)
+													{
+														ctxt.Principal.FindAll((Claim x) => x.Type == "sub").ToList<Claim>().ForEach(new Action<Claim>(identity.RemoveClaim));
+														identity.AddClaim(new Claim("sub", value));
+													}
+													else
+													{
+														this._logger.LogInformation("The claim for sub " + this.Configuration.ClaimForSub + " not found!", Array.Empty<object>());
+													}
+												}
+												if (!string.IsNullOrEmpty(this.Configuration.ClaimForSub) && this.Configuration.ClaimForSub.ToLower() != "name" && ctxt.Principal.FindFirst("sub") != null)
+												{
+													identity.AddClaim(new Claim("UseSubAsLogin", "true"));
+												}
+											}
+											StringBuilder sb = new StringBuilder("");
+											foreach (Claim claim in ctxt.Principal.Claims)
+											{
+												sb.Append("{").Append(claim.ToString()).Append("}");
+											}
+											ILogger logger4 = this._logger;
+											if (logger4 != null)
+											{
+												logger4.LogInformation("OnTicketReceived : " + sb.ToString(), Array.Empty<object>());
+											}
+										}
+										catch (Exception ex2)
+										{
+											ILogger logger5 = this._logger;
+											if (logger5 != null)
+											{
+												logger5.LogError("OnTicketReceived Failure : " + ex2.Message, Array.Empty<object>());
+											}
+										}
+										await Task.Yield();
+									};
+									options.Events.OnTokenResponseReceived = delegate(TokenResponseReceivedContext ctx)
+									{
+										JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
+										JwtSecurityToken jsonAccesToken = handler.ReadJwtToken(ctx.TokenEndpointResponse.AccessToken);
+										ILogger logger6 = this._logger;
+										if (logger6 != null)
+										{
+											DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(14, 1);
+											defaultInterpolatedStringHandler.AppendLiteral("AccessToken : ");
+											defaultInterpolatedStringHandler.AppendFormatted<JwtSecurityToken>(jsonAccesToken);
+											logger6.LogInformation(defaultInterpolatedStringHandler.ToStringAndClear(), Array.Empty<object>());
+										}
+										return Task.CompletedTask;
+									};
+									options.Events.OnAccessDenied = (AccessDeniedContext ctx) => Task.CompletedTask;
+									options.Scope.Clear();
+									foreach (string scope in this.Configuration.Scope.Split(Array.Empty<char>()))
+									{
+										options.Scope.Add(scope);
+									}
+								});
+								continue;
+							}
+						}
+						throw new ArgumentException("Please set ClientId or ClientSecret or Thumbprint field when you activate OPENID Provider");
+					}
+				}
+			}
+		}
+
+		// Token: 0x0600055B RID: 1371 RVA: 0x00012118 File Offset: 0x00010318
+		public bool IsValid()
+		{
+			IQueryable<ExternalProvider> externalProviders = this._context.ExternalProviders;
+			ParameterExpression parameterExpression = Expression.Parameter(typeof(ExternalProvider), "x");
+			ExternalProvider externalProvider = externalProviders.FirstOrDefault(Expression.Lambda<Func<ExternalProvider, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(ExternalProvider.get_Type())), Expression.Constant("OpenIdConfig", typeof(string))), new ParameterExpression[] { parameterExpression }));
+			OpenIdConfig configuration = ((externalProvider != null) ? externalProvider.GetConfiguration<OpenIdConfig>() : null);
+			return !string.IsNullOrEmpty((configuration != null) ? configuration.ClientId : null) && !string.IsNullOrEmpty((configuration != null) ? configuration.ClientSecret : null) && !string.IsNullOrEmpty((configuration != null) ? configuration.Authority : null);
+		}
+
+		// Token: 0x04000438 RID: 1080
+		public const string Name = "OpenId";
+
+		// Token: 0x04000439 RID: 1081
+		private readonly ILoggerFactory _loggerFactory;
+
+		// Token: 0x0400043A RID: 1082
+		private readonly ApplicationDbContext _context;
+
+		// Token: 0x0400043B RID: 1083
+		private readonly IClusterConfiguration _serverConfiguration;
+
+		// Token: 0x0400043C RID: 1084
+		private readonly ILogger _logger;
+
+		// Token: 0x0400043D RID: 1085
+		private readonly Dictionary<string, OpenIdConfig> configs = new Dictionary<string, OpenIdConfig>();
 	}
 }

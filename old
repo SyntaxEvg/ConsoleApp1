@@ -1,289 +1,426 @@
 using System;
 using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
+using System.Data;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Net;
-using System.Net.Http;
 using System.Runtime.CompilerServices;
-using System.Security.Claims;
-using System.Text;
-using System.Threading.Tasks;
+using Dapper;
+using HAS.Server.SiteModule.Cache;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Entities;
+using IdentityServer4.EntityFramework.Mappers;
+using IdentityServer4.Models;
 using Mega.Has.Commons;
+using Mega.Has.Commons.Security;
 using Mega.Has.Modules.UAS.Models;
+using Mega.Has.Modules.UAS.Providers;
+using Mega.Has.Modules.UAS.Providers.Google;
+using Mega.Has.Modules.UAS.Providers.Hopex;
+using Mega.Has.Modules.UAS.Providers.Saml2;
+using Mega.Has.Modules.UAS.Providers.Windows;
 using Mega.Has.Modules.UAS.Stores;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Http;
+using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.IdentityModel.Tokens;
+using Serilog;
 
-namespace Mega.Has.Modules.UAS.Providers.Google
+namespace Mega.Has.Modules.UAS
 {
-	// Token: 0x0200007E RID: 126
-	public class OpenIdProvider : IIdentityProvider<OpenIdConfig>, IExternalProvider
+	// Token: 0x02000051 RID: 81
+	public class SeedData
 	{
-		// Token: 0x06000551 RID: 1361 RVA: 0x00011EB4 File Offset: 0x000100B4
-		public OpenIdProvider(ILoggerFactory loggerFactory, ApplicationDbContext context, IClusterConfiguration serverConfiguration)
+		// Token: 0x060003B4 RID: 948 RVA: 0x0000E05C File Offset: 0x0000C25C
+		public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
 		{
-			this._context = context;
-			this._serverConfiguration = serverConfiguration;
-			this._loggerFactory = loggerFactory;
-			this._logger = loggerFactory.CreateLogger(typeof(OpenIdProvider));
+			ServiceProvider services = serviceCollection.BuildServiceProvider();
+			using (IServiceScope scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+			{
+				ApplicationDbContext uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+				ConfigurationDbContext context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
+				ILogger<SeedData> logger = services.GetService<ILogger<SeedData>>();
+				if (!context.Database.IsInMemory())
+				{
+					try
+					{
+						ICryptoService cryptoService = services.GetRequiredService<ICryptoService>();
+						SeedData.MigrateDatabase(logger, services, cryptoService);
+						SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
+						SeedData.EnsureSeedData(logger, uasContext);
+						Microsoft.Extensions.Logging.ILogger logger2 = logger;
+						ConfigurationDbContext configurationDbContext = context;
+						string publicAddress = serverConfigurations.RuntimeClusterSettings.PublicAddress;
+						RunningMode? mode = serverConfigurations.RuntimeClusterSettings.Mode;
+						RunningMode runningMode = RunningMode.Development;
+						SeedData.EnsurePublicAddress(logger2, configurationDbContext, publicAddress, (mode.GetValueOrDefault() == runningMode) & (mode != null));
+						return;
+					}
+					finally
+					{
+						bool? testMode = serverConfigurations.StartingArguments.TestMode;
+						bool flag = false;
+						if ((testMode.GetValueOrDefault() == flag) & (testMode != null))
+						{
+							context.Database.CloseConnection();
+						}
+					}
+				}
+				SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
+				SeedData.EnsureSeedData(logger, uasContext);
+			}
 		}
 
-		// Token: 0x17000237 RID: 567
-		// (get) Token: 0x06000552 RID: 1362 RVA: 0x00011F08 File Offset: 0x00010108
-		// (set) Token: 0x06000553 RID: 1363 RVA: 0x00011F10 File Offset: 0x00010110
-		public bool Enabled { get; set; }
-
-		// Token: 0x17000238 RID: 568
-		// (get) Token: 0x06000554 RID: 1364 RVA: 0x00011F19 File Offset: 0x00010119
-		// (set) Token: 0x06000555 RID: 1365 RVA: 0x00011F21 File Offset: 0x00010121
-		public string DisplayName { get; set; }
-
-		// Token: 0x17000239 RID: 569
-		// (get) Token: 0x06000556 RID: 1366 RVA: 0x00011F2A File Offset: 0x0001012A
-		// (set) Token: 0x06000557 RID: 1367 RVA: 0x00011F32 File Offset: 0x00010132
-		public string AuthenticationScheme { get; set; }
-
-		// Token: 0x1700023A RID: 570
-		// (get) Token: 0x06000558 RID: 1368 RVA: 0x00011F3B File Offset: 0x0001013B
-		// (set) Token: 0x06000559 RID: 1369 RVA: 0x00011F43 File Offset: 0x00010143
-		public OpenIdConfig Configuration { get; set; } = new OpenIdConfig();
-
-		// Token: 0x0600055A RID: 1370 RVA: 0x00011F4C File Offset: 0x0001014C
-		public void Configure(AuthenticationBuilder builder)
+		// Token: 0x060003B5 RID: 949 RVA: 0x0000E178 File Offset: 0x0000C378
+		private static void EnsureSQLiteDatabaseCreated(DatabaseFacade database)
 		{
-			IQueryable<ExternalProvider> externalProviders = this._context.ExternalProviders;
-			ParameterExpression parameterExpression = Expression.Parameter(typeof(ExternalProvider), "x");
-			IQueryable<ExternalProvider> entities = externalProviders.Where(Expression.Lambda<Func<ExternalProvider, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(ExternalProvider.get_Type())), Expression.Constant("OpenIdConfig", typeof(string))), new ParameterExpression[] { parameterExpression }));
-			using (IEnumerator<ExternalProvider> enumerator = entities.GetEnumerator())
+			string sql = database.GenerateCreateScript();
+			try
 			{
-				while (enumerator.MoveNext())
+				database.ExecuteSqlRaw(sql, Array.Empty<object>());
+			}
+			catch
+			{
+			}
+		}
+
+		// Token: 0x060003B6 RID: 950 RVA: 0x0000E1B0 File Offset: 0x0000C3B0
+		private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
+		{
+			bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
+			bool flag = true;
+			if (!((standalone.GetValueOrDefault() == flag) & (standalone != null)))
+			{
+				logger.LogInformation("Migrate databases", Array.Empty<object>());
+				services.GetRequiredService<ApplicationDbContext>().Database.Migrate();
+				services.GetRequiredService<ConfigurationDbContext>().Database.Migrate();
+				services.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
+				string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
+				SeedData.Migrate_HAS_5_0To5_0_1(cnx);
+				SeedData.Migrate_HAS_5_0_xTo5_0_5(cnx);
+				SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
+				if (slqCreator.CreateTableAndIndexes(cnx) != 0)
 				{
-					ExternalProvider externalProvider = enumerator.Current;
-					if (externalProvider != null && externalProvider.Enabled)
+					throw new Exception("Unable to create cache tables in database");
+				}
+			}
+			else
+			{
+				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
+				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
+				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
+			}
+		}
+
+		// Token: 0x060003B7 RID: 951 RVA: 0x0000E28C File Offset: 0x0000C48C
+		internal static void Migrate_HAS_5_0To5_0_1(string cnxString)
+		{
+			using (SqlConnection connection = new SqlConnection(cnxString))
+			{
+				SeedData.MigrateOldConfigTable<WindowsConfig>(connection);
+				SeedData.MigrateOldConfigTable<HopexConfig>(connection);
+				SeedData.MigrateOldConfigTable<Saml2Config>(connection);
+				SeedData.MigrateOldConfigTable<OpenIdConfig>(connection);
+				try
+				{
+					foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>())
 					{
-						this.Configuration = externalProvider.GetConfiguration<OpenIdConfig>();
-						OpenIdConfig configuration = this.Configuration;
-						if (!string.IsNullOrEmpty((configuration != null) ? configuration.ClientId : null))
+						IdentityServer4.EntityFramework.Entities.ApiResource apiResource = connection.Query("select * from [dbo].[ApiResources] where Name='" + resource.Name + "'", null, null, true, null, null).FirstOrDefault<IdentityServer4.EntityFramework.Entities.ApiResource>();
+						if (apiResource != null)
 						{
-							OpenIdConfig configuration2 = this.Configuration;
-							if (!string.IsNullOrEmpty((configuration2 != null) ? configuration2.ClientSecret : null) || !string.IsNullOrEmpty(this.Configuration.Thumbprint))
+							IDbConnection dbConnection = connection;
+							DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(62, 1);
+							defaultInterpolatedStringHandler.AppendLiteral("select * from [dbo].[ApiResourceScopes] where ApiResourceId='");
+							defaultInterpolatedStringHandler.AppendFormatted<int>(apiResource.Id);
+							defaultInterpolatedStringHandler.AppendLiteral("'");
+							if (dbConnection.Query(defaultInterpolatedStringHandler.ToStringAndClear(), null, null, true, null, null).FirstOrDefault<ApiResourceScope>() == null)
 							{
-								if (string.IsNullOrEmpty(this.Configuration.Audience) && !string.IsNullOrEmpty(this.Configuration.Thumbprint))
+								var p = new
 								{
-									throw new ArgumentException("Please set Audience field when you activate OPENID Provider");
-								}
-								if (string.IsNullOrEmpty(this.Configuration.Authority))
-								{
-									throw new ArgumentException("Please set Authority field when you activate OPENID Provider");
-								}
-								this.configs.Add(externalProvider.DisplayName, this.Configuration);
-								builder.AddOpenIdConnect(externalProvider.DisplayName, delegate(OpenIdConnectOptions options)
-								{
-									this.Configuration = externalProvider.GetConfiguration<OpenIdConfig>();
-									this.AuthenticationScheme = externalProvider.DisplayName;
-									bool? noSsl = this._serverConfiguration.RuntimeClusterSettings.NoSsl;
-									bool flag = true;
-									options.RequireHttpsMetadata = !((noSsl.GetValueOrDefault() == flag) & (noSsl != null));
-									options.SignInScheme = "idsrv.external";
-									options.Authority = this.Configuration.Authority;
-									options.ResponseType = "code";
-									options.ResponseMode = "query";
-									options.ClientId = this.Configuration.ClientId;
-									if (this._serverConfiguration.RuntimeClusterSettings.PublicAddress.StartsWith("https:", StringComparison.OrdinalIgnoreCase))
-									{
-										options.CorrelationCookie.SameSite = SameSiteMode.None;
-										options.NonceCookie.SameSite = SameSiteMode.None;
-										options.SaveTokens = true;
-									}
-									else
-									{
-										options.NonceCookie.SameSite = SameSiteMode.Lax;
-										options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-										options.ProtocolValidator.RequireNonce = false;
-									}
-									if (!string.IsNullOrEmpty(this.Configuration.Proxy))
-									{
-										try
-										{
-											options.BackchannelHttpHandler = new HttpClientHandler
-											{
-												Proxy = new WebProxy(this.Configuration.Proxy)
-											};
-										}
-										catch (Exception ex)
-										{
-											ILogger logger = this._logger;
-											if (logger != null)
-											{
-												logger.LogError("Proxy Failure : " + ex.Message, Array.Empty<object>());
-											}
-										}
-									}
-									if (string.IsNullOrEmpty(this.Configuration.Thumbprint))
-									{
-										options.ClientSecret = this.Configuration.ClientSecret;
-									}
-									options.CallbackPath = new PathString("/signin-" + this.AuthenticationScheme.ToLower());
-									if (!string.IsNullOrEmpty(this.Configuration.MetadataAddress))
-									{
-										options.MetadataAddress = this.Configuration.MetadataAddress;
-									}
-									if (!string.IsNullOrEmpty(this.Configuration.Issuer))
-									{
-										options.TokenValidationParameters = new TokenValidationParameters
-										{
-											ValidateIssuer = true,
-											IssuerValidator = delegate(string issuer, SecurityToken token, TokenValidationParameters tvp)
-											{
-												if (issuer == this.Configuration.Issuer)
-												{
-													return issuer;
-												}
-												throw new SecurityTokenInvalidIssuerException("Invalid issuer");
-											}
-										};
-									}
-									options.Events.OnAuthorizationCodeReceived = delegate(AuthorizationCodeReceivedContext ctx)
-									{
-										this.Configuration = this.configs[ctx.Scheme.Name];
-										if (!string.IsNullOrEmpty(this.Configuration.Thumbprint))
-										{
-											ctx.TokenEndpointRequest.ClientAssertionType = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
-											ctx.TokenEndpointRequest.ClientAssertion = TokenGenerator.generateAuthJwt(this.Configuration.ClientId, this.Configuration.Audience, this.Configuration.Thumbprint);
-										}
-										return Task.CompletedTask;
-									};
-									options.Events.OnAuthenticationFailed = delegate(AuthenticationFailedContext ctx)
-									{
-										ILogger logger2 = this._logger;
-										if (logger2 != null)
-										{
-											logger2.LogError("Remote Failure : " + ctx.Exception.Message, Array.Empty<object>());
-										}
-										return Task.CompletedTask;
-									};
-									options.Events.OnRemoteFailure = delegate(RemoteFailureContext ctx)
-									{
-										ILogger logger3 = this._logger;
-										if (logger3 != null)
-										{
-											logger3.LogError("Remote Failure : " + ctx.Failure.Message, Array.Empty<object>());
-										}
-										return Task.CompletedTask;
-									};
-									options.Events.OnTicketReceived = async delegate(TicketReceivedContext ctxt)
-									{
-										try
-										{
-											this.Configuration = this.configs[ctxt.Scheme.Name];
-											ClaimsIdentity identity = ctxt.Principal.Identity as ClaimsIdentity;
-											if (identity != null)
-											{
-												if (!string.IsNullOrEmpty(this.Configuration.GroupsAuthorized))
-												{
-													ctxt.Principal.FindAll((Claim x) => x.Type == this.Configuration.ClaimForRoles && !this.Configuration.GroupsAuthorized.Contains(x.Value)).ToList<Claim>().ForEach(new Action<Claim>(identity.RemoveClaim));
-												}
-												if (!string.IsNullOrEmpty(this.Configuration.ClaimForSub) && this.Configuration.ClaimForSub.ToLower() != "sub")
-												{
-													Claim claim2 = ctxt.Principal.Claims.FirstOrDefault((Claim x) => x.Type == this.Configuration.ClaimForSub);
-													string value = ((claim2 != null) ? claim2.Value : null);
-													if (value != null)
-													{
-														ctxt.Principal.FindAll((Claim x) => x.Type == "sub").ToList<Claim>().ForEach(new Action<Claim>(identity.RemoveClaim));
-														identity.AddClaim(new Claim("sub", value));
-													}
-													else
-													{
-														this._logger.LogInformation("The claim for sub " + this.Configuration.ClaimForSub + " not found!", Array.Empty<object>());
-													}
-												}
-												if (!string.IsNullOrEmpty(this.Configuration.ClaimForSub) && this.Configuration.ClaimForSub.ToLower() != "name" && ctxt.Principal.FindFirst("sub") != null)
-												{
-													identity.AddClaim(new Claim("UseSubAsLogin", "true"));
-												}
-											}
-											StringBuilder sb = new StringBuilder("");
-											foreach (Claim claim in ctxt.Principal.Claims)
-											{
-												sb.Append("{").Append(claim.ToString()).Append("}");
-											}
-											ILogger logger4 = this._logger;
-											if (logger4 != null)
-											{
-												logger4.LogInformation("OnTicketReceived : " + sb.ToString(), Array.Empty<object>());
-											}
-										}
-										catch (Exception ex2)
-										{
-											ILogger logger5 = this._logger;
-											if (logger5 != null)
-											{
-												logger5.LogError("OnTicketReceived Failure : " + ex2.Message, Array.Empty<object>());
-											}
-										}
-										await Task.Yield();
-									};
-									options.Events.OnTokenResponseReceived = delegate(TokenResponseReceivedContext ctx)
-									{
-										JwtSecurityTokenHandler handler = new JwtSecurityTokenHandler();
-										JwtSecurityToken jsonAccesToken = handler.ReadJwtToken(ctx.TokenEndpointResponse.AccessToken);
-										ILogger logger6 = this._logger;
-										if (logger6 != null)
-										{
-											DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(14, 1);
-											defaultInterpolatedStringHandler.AppendLiteral("AccessToken : ");
-											defaultInterpolatedStringHandler.AppendFormatted<JwtSecurityToken>(jsonAccesToken);
-											logger6.LogInformation(defaultInterpolatedStringHandler.ToStringAndClear(), Array.Empty<object>());
-										}
-										return Task.CompletedTask;
-									};
-									options.Events.OnAccessDenied = (AccessDeniedContext ctx) => Task.CompletedTask;
-									options.Scope.Clear();
-									foreach (string scope in this.Configuration.Scope.Split(Array.Empty<char>()))
-									{
-										options.Scope.Add(scope);
-									}
-								});
-								continue;
+									ApiResourceId = apiResource.Id,
+									Scope = resource.Scopes.First<string>()
+								};
+								connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p, null, null, null);
 							}
 						}
-						throw new ArgumentException("Please set ClientId or ClientSecret or Thumbprint field when you activate OPENID Provider");
 					}
+				}
+				catch (Exception ex)
+				{
+					Log.Logger.Error(ex, "Warning");
 				}
 			}
 		}
 
-		// Token: 0x0600055B RID: 1371 RVA: 0x00012118 File Offset: 0x00010318
-		public bool IsValid()
+		// Token: 0x060003B8 RID: 952 RVA: 0x0000E438 File Offset: 0x0000C638
+		internal static void Migrate_HAS_5_0_xTo5_0_5(string cnxString)
 		{
-			IQueryable<ExternalProvider> externalProviders = this._context.ExternalProviders;
-			ParameterExpression parameterExpression = Expression.Parameter(typeof(ExternalProvider), "x");
-			ExternalProvider externalProvider = externalProviders.FirstOrDefault(Expression.Lambda<Func<ExternalProvider, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(ExternalProvider.get_Type())), Expression.Constant("OpenIdConfig", typeof(string))), new ParameterExpression[] { parameterExpression }));
-			OpenIdConfig configuration = ((externalProvider != null) ? externalProvider.GetConfiguration<OpenIdConfig>() : null);
-			return !string.IsNullOrEmpty((configuration != null) ? configuration.ClientId : null) && !string.IsNullOrEmpty((configuration != null) ? configuration.ClientSecret : null) && !string.IsNullOrEmpty((configuration != null) ? configuration.Authority : null);
+			using (SqlConnection connection = new SqlConnection(cnxString))
+			{
+				try
+				{
+					SeedData.updateClaimForSub<OpenIdConfig>(connection);
+					SeedData.updateClaimForSub<Saml2Config>(connection);
+				}
+				catch (Exception ex)
+				{
+					Log.Logger.Error(ex, "Warning");
+				}
+			}
 		}
 
-		// Token: 0x04000438 RID: 1080
-		public const string Name = "OpenId";
+		// Token: 0x060003B9 RID: 953 RVA: 0x0000E494 File Offset: 0x0000C694
+		private static void updateClaimForSub<T>(SqlConnection connection) where T : new()
+		{
+			IEnumerable<ExternalProvider> externalProviders = connection.Query("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null);
+			foreach (ExternalProvider ep in externalProviders)
+			{
+				T Cfg = ep.GetConfiguration<T>();
+				object CfgDyn = Cfg;
+				if (SeedData.<>o__5<T>.<>p__2 == null)
+				{
+					SeedData.<>o__5<T>.<>p__2 = CallSite<Func<CallSite, object, bool>>.Create(Binder.UnaryOperation(CSharpBinderFlags.None, ExpressionType.IsTrue, typeof(SeedData), new CSharpArgumentInfo[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) }));
+				}
+				Func<CallSite, object, bool> target = SeedData.<>o__5<T>.<>p__2.Target;
+				CallSite <>p__ = SeedData.<>o__5<T>.<>p__2;
+				if (SeedData.<>o__5<T>.<>p__1 == null)
+				{
+					SeedData.<>o__5<T>.<>p__1 = CallSite<Func<CallSite, Type, object, object>>.Create(Binder.InvokeMember(CSharpBinderFlags.None, "IsNullOrEmpty", null, typeof(SeedData), new CSharpArgumentInfo[]
+					{
+						CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType | CSharpArgumentInfoFlags.IsStaticType, null),
+						CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
+					}));
+				}
+				Func<CallSite, Type, object, object> target2 = SeedData.<>o__5<T>.<>p__1.Target;
+				CallSite <>p__2 = SeedData.<>o__5<T>.<>p__1;
+				Type typeFromHandle = typeof(string);
+				if (SeedData.<>o__5<T>.<>p__0 == null)
+				{
+					SeedData.<>o__5<T>.<>p__0 = CallSite<Func<CallSite, object, object>>.Create(Binder.GetMember(CSharpBinderFlags.None, "ClaimForSub", typeof(SeedData), new CSharpArgumentInfo[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) }));
+				}
+				if (target(<>p__, target2(<>p__2, typeFromHandle, SeedData.<>o__5<T>.<>p__0.Target(SeedData.<>o__5<T>.<>p__0, CfgDyn))))
+				{
+					if (SeedData.<>o__5<T>.<>p__3 == null)
+					{
+						SeedData.<>o__5<T>.<>p__3 = CallSite<Func<CallSite, object, string, object>>.Create(Binder.SetMember(CSharpBinderFlags.None, "ClaimForSub", typeof(SeedData), new CSharpArgumentInfo[]
+						{
+							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
+							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType | CSharpArgumentInfoFlags.Constant, null)
+						}));
+					}
+					SeedData.<>o__5<T>.<>p__3.Target(SeedData.<>o__5<T>.<>p__3, CfgDyn, "name");
+					if (SeedData.<>o__5<T>.<>p__4 == null)
+					{
+						SeedData.<>o__5<T>.<>p__4 = CallSite<Action<CallSite, ExternalProvider, object>>.Create(Binder.InvokeMember(CSharpBinderFlags.ResultDiscarded, "SetConfiguration", null, typeof(SeedData), new CSharpArgumentInfo[]
+						{
+							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType, null),
+							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
+						}));
+					}
+					SeedData.<>o__5<T>.<>p__4.Target(SeedData.<>o__5<T>.<>p__4, ep, CfgDyn);
+					DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(77, 1);
+					defaultInterpolatedStringHandler.AppendLiteral("update [dbo].[externalproviders] set Configuration=@Configuration where id = ");
+					defaultInterpolatedStringHandler.AppendFormatted<int>(ep.Id);
+					connection.Execute(defaultInterpolatedStringHandler.ToStringAndClear(), ep, null, null, null);
+				}
+			}
+		}
 
-		// Token: 0x04000439 RID: 1081
-		private readonly ILoggerFactory _loggerFactory;
+		// Token: 0x060003BA RID: 954 RVA: 0x0000E730 File Offset: 0x0000C930
+		private static void MigrateOldConfigTable<T>(SqlConnection connection)
+		{
+			T cfg;
+			try
+			{
+				cfg = connection.Query("select * from [dbo].[" + typeof(T).Name + "]", null, null, true, null, null).FirstOrDefault<T>();
+			}
+			catch
+			{
+				return;
+			}
+			try
+			{
+				if (cfg != null)
+				{
+					OldExternalProvider ep = connection.Query("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null).FirstOrDefault<OldExternalProvider>();
+					if (ep != null)
+					{
+						(cfg as ProviderConfigBase).ClaimForRoles = ep.ClaimForRoles ?? (cfg as ProviderConfigBase).ClaimForRoles;
+						if (typeof(T) == typeof(WindowsConfig))
+						{
+							WindowsConfig winCfg = cfg as WindowsConfig;
+							winCfg.WindowsSourceIdentifier = ep.WindowsSourceIdentifier ?? winCfg.WindowsSourceIdentifier;
+							winCfg.WindowsRole = ep.WindowsRole ?? winCfg.WindowsRole;
+						}
+						ep.SetConfiguration<T>(cfg);
+						connection.Execute("update [dbo].[externalproviders] set Configuration=@Configuration where type = '" + typeof(T).Name + "'", ep, null, null, null);
+					}
+				}
+				connection.Execute("drop table [dbo].[" + typeof(T).Name + "]", null, null, null, null);
+			}
+			catch (Exception ex)
+			{
+				Log.Logger.Error(ex, "Warning");
+			}
+		}
 
-		// Token: 0x0400043A RID: 1082
-		private readonly ApplicationDbContext _context;
+		// Token: 0x060003BB RID: 955 RVA: 0x0000E91C File Offset: 0x0000CB1C
+		private static void EnsurePublicAddress(Microsoft.Extensions.Logging.ILogger logger, ConfigurationDbContext context, string publicAddress, bool isDevelopmentMode)
+		{
+			SeedData.<>c__DisplayClass7_0 CS$<>8__locals1;
+			CS$<>8__locals1.isDevelopmentMode = isDevelopmentMode;
+			IQueryable<IdentityServer4.EntityFramework.Entities.Client> clients = context.Clients;
+			ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "x");
+			IQueryable<IdentityServer4.EntityFramework.Entities.Client> queryable = clients.Include(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, List<ClientPostLogoutRedirectUri>>>(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_PostLogoutRedirectUris())), new ParameterExpression[] { parameterExpression }));
+			parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "x");
+			IIncludableQueryable<IdentityServer4.EntityFramework.Entities.Client, List<ClientRedirectUri>> query = queryable.Include(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, List<ClientRedirectUri>>>(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_RedirectUris())), new ParameterExpression[] { parameterExpression }));
+			logger.LogInformation("URLS Redirections are updating to public address " + publicAddress + "...", Array.Empty<object>());
+			CS$<>8__locals1.publicUri = new UriBuilder(publicAddress);
+			foreach (IdentityServer4.EntityFramework.Entities.Client client in query)
+			{
+				if (client.FrontChannelLogoutUri != null)
+				{
+					client.FrontChannelLogoutUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(client.FrontChannelLogoutUri, ref CS$<>8__locals1);
+				}
+				foreach (ClientRedirectUri redir in client.RedirectUris)
+				{
+					redir.RedirectUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(redir.RedirectUri, ref CS$<>8__locals1);
+				}
+				foreach (ClientPostLogoutRedirectUri redir2 in client.PostLogoutRedirectUris)
+				{
+					redir2.PostLogoutRedirectUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(redir2.PostLogoutRedirectUri, ref CS$<>8__locals1);
+				}
+			}
+			context.SaveChanges();
+		}
 
-		// Token: 0x0400043B RID: 1083
-		private readonly IClusterConfiguration _serverConfiguration;
+		// Token: 0x060003BC RID: 956 RVA: 0x0000EAE4 File Offset: 0x0000CCE4
+		private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, IClusterConfiguration serverConfigurations, ApplicationDbContext uasContext, ConfigurationDbContext configurationStoreContext, ICryptoService cryptoService)
+		{
+			logger.LogInformation("Seeding database...", Array.Empty<object>());
+			logger.LogInformation("Updating AccessTokens...", Array.Empty<object>());
+			using (IEnumerator<AccessToken> enumerator = DefaultConfiguration.GetAccessTokens(cryptoService).GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_0 CS$<>8__locals1 = new SeedData.<>c__DisplayClass8_0();
+					CS$<>8__locals1.user = enumerator.Current;
+					IQueryable<AccessToken> accessTokens = uasContext.AccessTokens;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(AccessToken), "a");
+					if (accessTokens.FirstOrDefault(Expression.Lambda<Func<AccessToken, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(AccessToken.get_TokenName())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals1, typeof(SeedData.<>c__DisplayClass8_0)), fieldof(SeedData.<>c__DisplayClass8_0.user)), methodof(AccessToken.get_TokenName()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						uasContext.AccessTokens.Add(CS$<>8__locals1.user);
+					}
+				}
+			}
+			logger.LogInformation("Updating Clients...", Array.Empty<object>());
+			using (IEnumerator<IdentityServer4.Models.Client> enumerator2 = DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings).GetEnumerator())
+			{
+				while (enumerator2.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_1 CS$<>8__locals2 = new SeedData.<>c__DisplayClass8_1();
+					CS$<>8__locals2.client = enumerator2.Current;
+					IQueryable<IdentityServer4.EntityFramework.Entities.Client> clients = configurationStoreContext.Clients;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "a");
+					if (clients.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_ClientId())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals2, typeof(SeedData.<>c__DisplayClass8_1)), fieldof(SeedData.<>c__DisplayClass8_1.client)), methodof(IdentityServer4.Models.Client.get_ClientId()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						IdentityServer4.EntityFramework.Entities.Client c = CS$<>8__locals2.client.ToEntity();
+						c.NonEditable = true;
+						configurationStoreContext.Clients.Add(c);
+					}
+				}
+			}
+			logger.LogInformation("Updating Scope...", Array.Empty<object>());
+			using (IEnumerator<IdentityServer4.Models.ApiScope> enumerator3 = DefaultConfiguration.GetApiScopes().GetEnumerator())
+			{
+				while (enumerator3.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_2 CS$<>8__locals3 = new SeedData.<>c__DisplayClass8_2();
+					CS$<>8__locals3.scope = enumerator3.Current;
+					IQueryable<IdentityServer4.EntityFramework.Entities.ApiScope> apiScopes = configurationStoreContext.ApiScopes;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.ApiScope), "a");
+					if (apiScopes.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.ApiScope, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.ApiScope.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals3, typeof(SeedData.<>c__DisplayClass8_2)), fieldof(SeedData.<>c__DisplayClass8_2.scope)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						configurationStoreContext.ApiScopes.Add(CS$<>8__locals3.scope.ToEntity());
+					}
+				}
+			}
+			logger.LogInformation("Updating IdentityResources...", Array.Empty<object>());
+			using (IEnumerator<IdentityServer4.Models.IdentityResource> enumerator4 = DefaultConfiguration.GetIdentityResources().GetEnumerator())
+			{
+				while (enumerator4.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_3 CS$<>8__locals4 = new SeedData.<>c__DisplayClass8_3();
+					CS$<>8__locals4.resource = enumerator4.Current;
+					IQueryable<IdentityServer4.EntityFramework.Entities.IdentityResource> identityResources = configurationStoreContext.IdentityResources;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.IdentityResource), "a");
+					if (identityResources.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.IdentityResource, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.IdentityResource.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals4, typeof(SeedData.<>c__DisplayClass8_3)), fieldof(SeedData.<>c__DisplayClass8_3.resource)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						configurationStoreContext.IdentityResources.Add(CS$<>8__locals4.resource.ToEntity());
+					}
+				}
+			}
+			logger.LogInformation("Updating ApiResources...", Array.Empty<object>());
+			using (List<IdentityServer4.Models.ApiResource>.Enumerator enumerator5 = DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>().GetEnumerator())
+			{
+				while (enumerator5.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_4 CS$<>8__locals5 = new SeedData.<>c__DisplayClass8_4();
+					CS$<>8__locals5.resource = enumerator5.Current;
+					IQueryable<IdentityServer4.EntityFramework.Entities.ApiResource> apiResources = configurationStoreContext.ApiResources;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.ApiResource), "a");
+					if (apiResources.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.ApiResource, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.ApiResource.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals5, typeof(SeedData.<>c__DisplayClass8_4)), fieldof(SeedData.<>c__DisplayClass8_4.resource)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						configurationStoreContext.ApiResources.Add(CS$<>8__locals5.resource.ToEntity());
+					}
+				}
+			}
+			configurationStoreContext.SaveChanges();
+		}
 
-		// Token: 0x0400043C RID: 1084
-		private readonly ILogger _logger;
+		// Token: 0x060003BD RID: 957 RVA: 0x0000EFEC File Offset: 0x0000D1EC
+		private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, ApplicationDbContext uasContext)
+		{
+			logger.LogInformation("Updating External Providers...", Array.Empty<object>());
+			using (IEnumerator<ExternalProvider> enumerator = DefaultConfiguration.GetExternalProviders().GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
+					SeedData.<>c__DisplayClass9_0 CS$<>8__locals1 = new SeedData.<>c__DisplayClass9_0();
+					CS$<>8__locals1.externalProvider = enumerator.Current;
+					IQueryable<ExternalProvider> externalProviders = uasContext.ExternalProviders;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(ExternalProvider), "a");
+					if (externalProviders.FirstOrDefault(Expression.Lambda<Func<ExternalProvider, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(ExternalProvider.get_AuthenticationScheme())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals1, typeof(SeedData.<>c__DisplayClass9_0)), fieldof(SeedData.<>c__DisplayClass9_0.externalProvider)), methodof(ExternalProvider.get_AuthenticationScheme()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						uasContext.ExternalProviders.Add(CS$<>8__locals1.externalProvider);
+					}
+				}
+			}
+			uasContext.SaveChanges();
+		}
 
-		// Token: 0x0400043D RID: 1085
-		private readonly Dictionary<string, OpenIdConfig> configs = new Dictionary<string, OpenIdConfig>();
+		// Token: 0x060003BF RID: 959 RVA: 0x0000F0F4 File Offset: 0x0000D2F4
+		[CompilerGenerated]
+		internal static string <EnsurePublicAddress>g__UpdateUri|7_2(string uri, ref SeedData.<>c__DisplayClass7_0 A_1)
+		{
+			UriBuilder url = new UriBuilder(uri)
+			{
+				Port = A_1.publicUri.Port,
+				Host = A_1.publicUri.Host,
+				Scheme = A_1.publicUri.Scheme
+			};
+			if (url.Port == 80 || url.Port == 443)
+			{
+				url.Port = -1;
+			}
+			if (A_1.isDevelopmentMode && string.Compare(url.Path, "/authentication/login-callback", true) == 0)
+			{
+				return uri;
+			}
+			return url.ToString();
+		}
 	}
 }

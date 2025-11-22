@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using HAS.Server.Commons;
@@ -59,63 +62,14 @@ namespace HAS.Modules.UAS.Areas.Admin.Controllers
 		}
 
 		// Token: 0x06000899 RID: 2201 RVA: 0x0001B140 File Offset: 0x00019340
-		public async global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Mvc.IActionResult> Index()
+		public global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Mvc.IActionResult> Index()
 		{
-			global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel> list = new global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel>();
-			global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders = this._context.ExternalProviders;
-			global::System.Linq.Expressions.ParameterExpression parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "e");
-			global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Models.ExternalProvider> list2 = await externalProviders.Where(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Type())), global::System.Linq.Expressions.Expression.Constant("Saml2Config", typeof(string))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression })).ToListAsync(default(global::System.Threading.CancellationToken));
-			foreach (global::Mega.Has.Modules.UAS.Models.ExternalProvider provider in list2)
-			{
-				global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config config = provider.GetConfiguration<global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config>();
-				global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel saml2ConfigViewModel = new global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel();
-				saml2ConfigViewModel.Enabled = provider.Enabled;
-				saml2ConfigViewModel.DisplayName = provider.DisplayName;
-				saml2ConfigViewModel.ClaimForRoles = config.ClaimForRoles;
-				saml2ConfigViewModel.Id = provider.Id;
-				global::Mega.Has.Commons.IClusterConfiguration clusterConfiguration = this._services.GetRequiredService<global::Mega.Has.Commons.IClusterConfiguration>();
-				string text;
-				if (clusterConfiguration == null)
-				{
-					text = null;
-				}
-				else
-				{
-					global::Mega.Has.Commons.IClusterSettings runtimeClusterSettings = clusterConfiguration.RuntimeClusterSettings;
-					text = ((runtimeClusterSettings != null) ? runtimeClusterSettings.PublicAddress : null);
-				}
-				saml2ConfigViewModel.PublicOrigin = text;
-				saml2ConfigViewModel.CertificateUses = this._certificateUses;
-				saml2ConfigViewModel.SigninAlgorithms = this._signinAlgorithms;
-				saml2ConfigViewModel.SigningBehaviors = this._signingBehaviors;
-				saml2ConfigViewModel.EntityId = config.EntityId;
-				saml2ConfigViewModel.MetadataLocation = config.MetadataLocation;
-				saml2ConfigViewModel.AllowUnsolicitedAuthnResponse = config.AllowUnsolicitedAuthnResponse;
-				saml2ConfigViewModel.WantAssertionSigned = config.WantAssertionSigned;
-				saml2ConfigViewModel.WantAuthnRequestsSigned = config.WantAuthnRequestsSigned;
-				saml2ConfigViewModel.AuthenticateRequestSigningBehavior = config.AuthenticateRequestSigningBehavior;
-				saml2ConfigViewModel.CertificateName = config.CertificateName;
-				saml2ConfigViewModel.MinIncomingSigningAlgorithm = config.MinIncomingSigningAlgorithm;
-				saml2ConfigViewModel.OutboundSigningAlgorithm = config.OutboundSigningAlgorithm;
-				saml2ConfigViewModel.CertificateUse = config.CertificateUse;
-				global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson contactPerson = config.ContactPerson;
-				saml2ConfigViewModel.ContactEmail = ((contactPerson != null) ? contactPerson.Email : null);
-				global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson contactPerson2 = config.ContactPerson;
-				saml2ConfigViewModel.ContactType = ((contactPerson2 != null) ? contactPerson2.Type : null) ?? "Other";
-				global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization organization = config.Organization;
-				saml2ConfigViewModel.OrganizationEmail = ((organization != null) ? organization.Email : null);
-				global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization organization2 = config.Organization;
-				saml2ConfigViewModel.OrganizationName = ((organization2 != null) ? organization2.Name : null);
-				global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization organization3 = config.Organization;
-				saml2ConfigViewModel.OrganizationUrl = ((organization3 != null) ? organization3.Url : null);
-				saml2ConfigViewModel.ClaimForRoles = config.ClaimForRoles;
-				saml2ConfigViewModel.ClaimForSub = config.ClaimForSub;
-				saml2ConfigViewModel.ModulePath = config.ModulePath;
-				saml2ConfigViewModel.GroupsAuthorized = config.GroupsAuthorized;
-				saml2ConfigViewModel.OutboundSigningAlgorithm = config.OutboundSigningAlgorithm;
-				list.Add(saml2ConfigViewModel);
-			}
-			return this.View(list);
+			global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<Index>d__9 <Index>d__;
+			<Index>d__.<>t__builder = global::System.Runtime.CompilerServices.AsyncTaskMethodBuilder<global::Microsoft.AspNetCore.Mvc.IActionResult>.Create();
+			<Index>d__.<>4__this = this;
+			<Index>d__.<>1__state = -1;
+			<Index>d__.<>t__builder.Start<global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<Index>d__9>(ref <Index>d__);
+			return <Index>d__.<>t__builder.Task;
 		}
 
 		// Token: 0x0600089A RID: 2202 RVA: 0x0001B184 File Offset: 0x00019384
@@ -203,167 +157,15 @@ namespace HAS.Modules.UAS.Areas.Admin.Controllers
 
 		// Token: 0x0600089B RID: 2203 RVA: 0x0001B444 File Offset: 0x00019644
 		[global::Microsoft.AspNetCore.Mvc.HttpPost]
-		public async global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Mvc.IActionResult> Edit(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel vm)
+		public global::System.Threading.Tasks.Task<global::Microsoft.AspNetCore.Mvc.IActionResult> Edit(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel vm)
 		{
-			global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0 CS$<>8__locals1 = new global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0();
-			CS$<>8__locals1.vm = vm;
-			CS$<>8__locals1.vm.CertificateUses = this._certificateUses;
-			CS$<>8__locals1.vm.SigninAlgorithms = this._signinAlgorithms;
-			CS$<>8__locals1.vm.SigningBehaviors = this._signingBehaviors;
-			CS$<>8__locals1.vm.ContactTypes = this._contactTypes;
-			global::Microsoft.AspNetCore.Mvc.IActionResult actionResult;
-			if (CS$<>8__locals1.vm.Enabled && !base.ModelState.IsValid)
-			{
-				actionResult = this.View(CS$<>8__locals1.vm);
-			}
-			else
-			{
-				global::System.Linq.Expressions.ParameterExpression parameterExpression;
-				global::Mega.Has.Modules.UAS.Models.ExternalProvider provider;
-				global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config config;
-				if (CS$<>8__locals1.vm.Id == 0)
-				{
-					global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders = this._context.ExternalProviders;
-					parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "e");
-					if (externalProviders.FirstOrDefault(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_DisplayName())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(CS$<>8__locals1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_DisplayName()))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression })) != null)
-					{
-						base.ModelState.AddModelError("DisplayName", "Duplicate display name");
-						return this.View(CS$<>8__locals1.vm);
-					}
-					provider = new global::Mega.Has.Modules.UAS.Models.ExternalProvider
-					{
-						Id = CS$<>8__locals1.vm.Id,
-						AuthenticationScheme = "Saml2",
-						IconName = "saml2",
-						Type = "Saml2Config"
-					};
-					this._context.ExternalProviders.Add(provider);
-					config = new global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config();
-				}
-				else
-				{
-					global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders2 = this._context.ExternalProviders;
-					parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "e");
-					if (externalProviders2.FirstOrDefault(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.AndAlso(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_DisplayName())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(CS$<>8__locals1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_DisplayName()))), global::System.Linq.Expressions.Expression.NotEqual(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Id())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(CS$<>8__locals1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_Id())))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression })) != null)
-					{
-						base.ModelState.AddModelError("DisplayName", "Duplicate display name");
-						return this.View(CS$<>8__locals1.vm);
-					}
-					global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders3 = this._context.ExternalProviders;
-					parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "x");
-					provider = externalProviders3.FirstOrDefault(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Id())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(CS$<>8__locals1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_Id()))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression }));
-					config = provider.GetConfiguration<global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config>();
-				}
-				config.ModulePath = CS$<>8__locals1.vm.ModulePath;
-				global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders4 = this._context.ExternalProviders;
-				parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "e");
-				global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> entities = externalProviders4.Where(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.AndAlso(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Type())), global::System.Linq.Expressions.Expression.Constant("Saml2Config", typeof(string))), global::System.Linq.Expressions.Expression.NotEqual(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Id())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(CS$<>8__locals1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_Id())))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression }));
-				foreach (global::Mega.Has.Modules.UAS.Models.ExternalProvider externalProvider in entities)
-				{
-					global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config Conf = externalProvider.GetConfiguration<global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config>();
-					if (Conf.ModulePath == config.ModulePath)
-					{
-						base.ModelState.AddModelError("ModulePath", "Duplicate ModulePath");
-						return this.View(CS$<>8__locals1.vm);
-					}
-				}
-				provider.Enabled = CS$<>8__locals1.vm.Enabled;
-				config.DisplayName = (provider.DisplayName = CS$<>8__locals1.vm.DisplayName);
-				config.ClaimForRoles = CS$<>8__locals1.vm.ClaimForRoles;
-				config.DisplayName = CS$<>8__locals1.vm.DisplayName;
-				config.EntityId = CS$<>8__locals1.vm.EntityId;
-				config.MetadataLocation = CS$<>8__locals1.vm.MetadataLocation;
-				config.AllowUnsolicitedAuthnResponse = CS$<>8__locals1.vm.AllowUnsolicitedAuthnResponse;
-				config.WantAssertionSigned = CS$<>8__locals1.vm.WantAssertionSigned;
-				config.WantAuthnRequestsSigned = CS$<>8__locals1.vm.WantAuthnRequestsSigned;
-				config.AuthenticateRequestSigningBehavior = CS$<>8__locals1.vm.AuthenticateRequestSigningBehavior;
-				config.CertificateName = CS$<>8__locals1.vm.CertificateName;
-				config.MinIncomingSigningAlgorithm = CS$<>8__locals1.vm.MinIncomingSigningAlgorithm.ToLower();
-				config.OutboundSigningAlgorithm = CS$<>8__locals1.vm.OutboundSigningAlgorithm;
-				config.CertificateUse = CS$<>8__locals1.vm.CertificateUse;
-				config.ClaimForRoles = CS$<>8__locals1.vm.ClaimForRoles;
-				config.ClaimForSub = CS$<>8__locals1.vm.ClaimForSub;
-				config.GroupsAuthorized = CS$<>8__locals1.vm.GroupsAuthorized;
-				if (!string.IsNullOrEmpty(config.CertificateName))
-				{
-					try
-					{
-						await this._eventManager.Notify("CHECK_CERTIFICATE", new global::HAS.Server.Commons.CheckCertificateEvent
-						{
-							friendlyName = config.CertificateName,
-							Thumbprint = null
-						}, global::Mega.Has.Commons.Messaging.EventScope.Cluster);
-					}
-					catch (global::System.Exception ex)
-					{
-						base.ModelState.AddModelError("CertificateName", ex.Message);
-						return this.View(CS$<>8__locals1.vm);
-					}
-				}
-				if (string.IsNullOrEmpty(config.ClaimForSub))
-				{
-					base.ModelState.AddModelError("ClaimForSub", "ClaimForSub Is Mandatory");
-					actionResult = this.View(CS$<>8__locals1.vm);
-				}
-				else
-				{
-					if (!string.IsNullOrEmpty(CS$<>8__locals1.vm.ContactEmail))
-					{
-						if (!this._context.ContactPerson.Any<global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson>())
-						{
-							config.ContactPerson = new global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson
-							{
-								Email = CS$<>8__locals1.vm.ContactEmail,
-								Type = (CS$<>8__locals1.vm.ContactType ?? "Other")
-							};
-						}
-						else
-						{
-							config.ContactPerson = this._context.ContactPerson.FirstOrDefault<global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson>();
-							if (config.ContactPerson != null)
-							{
-								config.ContactPerson.Email = CS$<>8__locals1.vm.ContactEmail;
-								config.ContactPerson.Type = CS$<>8__locals1.vm.ContactType ?? "Other";
-							}
-						}
-					}
-					if (!string.IsNullOrEmpty(CS$<>8__locals1.vm.OrganizationName))
-					{
-						if (this._context.Organization.Any<global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization>())
-						{
-							config.Organization = new global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization
-							{
-								DisplayName = CS$<>8__locals1.vm.OrganizationName,
-								Name = CS$<>8__locals1.vm.OrganizationName,
-								Email = CS$<>8__locals1.vm.OrganizationEmail,
-								Language = "en-US",
-								Url = CS$<>8__locals1.vm.OrganizationUrl
-							};
-						}
-						else
-						{
-							config.Organization = this._context.Organization.FirstOrDefault<global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization>();
-							if (config.Organization != null)
-							{
-								config.Organization.DisplayName = CS$<>8__locals1.vm.OrganizationName;
-								config.Organization.Name = CS$<>8__locals1.vm.OrganizationName;
-								config.Organization.Email = CS$<>8__locals1.vm.OrganizationEmail;
-								config.Organization.Language = "en-US";
-								config.Organization.Url = CS$<>8__locals1.vm.OrganizationUrl;
-							}
-						}
-					}
-					provider.SetConfiguration<global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config>(config);
-					this._context.SaveChanges();
-					global::Mega.Has.Commons.Messaging.IEventManager eventManager = this._services.GetRequiredService<global::Mega.Has.Commons.Messaging.IEventManager>();
-					if (eventManager != null)
-					{
-						eventManager.Notify("RESTART", "*", global::Mega.Has.Commons.Messaging.EventScope.Cluster);
-					}
-					actionResult = this.Redirect("/console/restart");
-				}
-			}
-			return actionResult;
+			global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<Edit>d__11 <Edit>d__;
+			<Edit>d__.<>t__builder = global::System.Runtime.CompilerServices.AsyncTaskMethodBuilder<global::Microsoft.AspNetCore.Mvc.IActionResult>.Create();
+			<Edit>d__.<>4__this = this;
+			<Edit>d__.vm = vm;
+			<Edit>d__.<>1__state = -1;
+			<Edit>d__.<>t__builder.Start<global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<Edit>d__11>(ref <Edit>d__);
+			return <Edit>d__.<>t__builder.Task;
 		}
 
 		// Token: 0x0600089C RID: 2204 RVA: 0x0001B490 File Offset: 0x00019690
@@ -411,5 +213,436 @@ namespace HAS.Modules.UAS.Areas.Admin.Controllers
 
 		// Token: 0x040005CF RID: 1487
 		private const string RSAUrl = "http://www.w3.org/2001/04/xmldsig-more#rsa-";
+
+		// Token: 0x0200024F RID: 591
+		[global::System.Runtime.CompilerServices.CompilerGenerated]
+		[global::System.Serializable]
+		private sealed class <>c
+		{
+			// Token: 0x04000D3E RID: 3390
+			public static readonly global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c <>9 = new global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c();
+		}
+
+		// Token: 0x02000250 RID: 592
+		[global::System.Runtime.CompilerServices.CompilerGenerated]
+		private sealed class <>c__DisplayClass10_0
+		{
+			// Token: 0x04000D3F RID: 3391
+			public int? id;
+		}
+
+		// Token: 0x02000251 RID: 593
+		[global::System.Runtime.CompilerServices.CompilerGenerated]
+		private sealed class <>c__DisplayClass11_0
+		{
+			// Token: 0x04000D40 RID: 3392
+			public global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel vm;
+		}
+
+		// Token: 0x02000252 RID: 594
+		[global::System.Runtime.CompilerServices.CompilerGenerated]
+		private sealed class <>c__DisplayClass12_0
+		{
+			// Token: 0x04000D41 RID: 3393
+			public int id;
+		}
+
+		// Token: 0x02000253 RID: 595
+		[global::System.Runtime.CompilerServices.CompilerGenerated]
+		[global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Auto)]
+		private struct <Edit>d__11 : global::System.Runtime.CompilerServices.IAsyncStateMachine
+		{
+			// Token: 0x06000DB7 RID: 3511 RVA: 0x0006EF3C File Offset: 0x0006D13C
+			void global::System.Runtime.CompilerServices.IAsyncStateMachine.MoveNext()
+			{
+				int num = this.<>1__state;
+				global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller saml2Controller = this.<>4__this;
+				global::Microsoft.AspNetCore.Mvc.IActionResult actionResult;
+				try
+				{
+					if (num != 0)
+					{
+						this.<>8__1 = new global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0();
+						this.<>8__1.vm = this.vm;
+						this.<>8__1.vm.CertificateUses = saml2Controller._certificateUses;
+						this.<>8__1.vm.SigninAlgorithms = saml2Controller._signinAlgorithms;
+						this.<>8__1.vm.SigningBehaviors = saml2Controller._signingBehaviors;
+						this.<>8__1.vm.ContactTypes = saml2Controller._contactTypes;
+						if (this.<>8__1.vm.Enabled && !saml2Controller.ModelState.IsValid)
+						{
+							actionResult = saml2Controller.View(this.<>8__1.vm);
+							goto IL_0AAC;
+						}
+						global::System.Linq.Expressions.ParameterExpression parameterExpression;
+						if (this.<>8__1.vm.Id == 0)
+						{
+							global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders = saml2Controller._context.ExternalProviders;
+							parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "e");
+							if (externalProviders.FirstOrDefault(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_DisplayName())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(this.<>8__1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_DisplayName()))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression })) != null)
+							{
+								saml2Controller.ModelState.AddModelError("DisplayName", "Duplicate display name");
+								actionResult = saml2Controller.View(this.<>8__1.vm);
+								goto IL_0AAC;
+							}
+							this.<provider>5__3 = new global::Mega.Has.Modules.UAS.Models.ExternalProvider
+							{
+								Id = this.<>8__1.vm.Id,
+								AuthenticationScheme = "Saml2",
+								IconName = "saml2",
+								Type = "Saml2Config"
+							};
+							saml2Controller._context.ExternalProviders.Add(this.<provider>5__3);
+							this.<config>5__2 = new global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config();
+						}
+						else
+						{
+							global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders2 = saml2Controller._context.ExternalProviders;
+							parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "e");
+							if (externalProviders2.FirstOrDefault(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.AndAlso(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_DisplayName())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(this.<>8__1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_DisplayName()))), global::System.Linq.Expressions.Expression.NotEqual(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Id())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(this.<>8__1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_Id())))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression })) != null)
+							{
+								saml2Controller.ModelState.AddModelError("DisplayName", "Duplicate display name");
+								actionResult = saml2Controller.View(this.<>8__1.vm);
+								goto IL_0AAC;
+							}
+							global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders3 = saml2Controller._context.ExternalProviders;
+							parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "x");
+							this.<provider>5__3 = externalProviders3.FirstOrDefault(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Id())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(this.<>8__1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_Id()))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression }));
+							this.<config>5__2 = this.<provider>5__3.GetConfiguration<global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config>();
+						}
+						this.<config>5__2.ModulePath = this.<>8__1.vm.ModulePath;
+						global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders4 = saml2Controller._context.ExternalProviders;
+						parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "e");
+						global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> entities = externalProviders4.Where(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.AndAlso(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Type())), global::System.Linq.Expressions.Expression.Constant("Saml2Config", typeof(string))), global::System.Linq.Expressions.Expression.NotEqual(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Id())), global::System.Linq.Expressions.Expression.Property(global::System.Linq.Expressions.Expression.Field(global::System.Linq.Expressions.Expression.Constant(this.<>8__1, typeof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0)), fieldof(global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0.vm)), methodof(global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel.get_Id())))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression }));
+						global::System.Collections.Generic.IEnumerator<global::Mega.Has.Modules.UAS.Models.ExternalProvider> enumerator = entities.GetEnumerator();
+						try
+						{
+							while (enumerator.MoveNext())
+							{
+								global::Mega.Has.Modules.UAS.Models.ExternalProvider externalProvider = enumerator.Current;
+								global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config Conf = externalProvider.GetConfiguration<global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config>();
+								if (Conf.ModulePath == this.<config>5__2.ModulePath)
+								{
+									saml2Controller.ModelState.AddModelError("ModulePath", "Duplicate ModulePath");
+									actionResult = saml2Controller.View(this.<>8__1.vm);
+									goto IL_0AAC;
+								}
+							}
+						}
+						finally
+						{
+							if (num < 0 && enumerator != null)
+							{
+								enumerator.Dispose();
+							}
+						}
+						this.<provider>5__3.Enabled = this.<>8__1.vm.Enabled;
+						this.<config>5__2.DisplayName = (this.<provider>5__3.DisplayName = this.<>8__1.vm.DisplayName);
+						this.<config>5__2.ClaimForRoles = this.<>8__1.vm.ClaimForRoles;
+						this.<config>5__2.DisplayName = this.<>8__1.vm.DisplayName;
+						this.<config>5__2.EntityId = this.<>8__1.vm.EntityId;
+						this.<config>5__2.MetadataLocation = this.<>8__1.vm.MetadataLocation;
+						this.<config>5__2.AllowUnsolicitedAuthnResponse = this.<>8__1.vm.AllowUnsolicitedAuthnResponse;
+						this.<config>5__2.WantAssertionSigned = this.<>8__1.vm.WantAssertionSigned;
+						this.<config>5__2.WantAuthnRequestsSigned = this.<>8__1.vm.WantAuthnRequestsSigned;
+						this.<config>5__2.AuthenticateRequestSigningBehavior = this.<>8__1.vm.AuthenticateRequestSigningBehavior;
+						this.<config>5__2.CertificateName = this.<>8__1.vm.CertificateName;
+						this.<config>5__2.MinIncomingSigningAlgorithm = this.<>8__1.vm.MinIncomingSigningAlgorithm.ToLower();
+						this.<config>5__2.OutboundSigningAlgorithm = this.<>8__1.vm.OutboundSigningAlgorithm;
+						this.<config>5__2.CertificateUse = this.<>8__1.vm.CertificateUse;
+						this.<config>5__2.ClaimForRoles = this.<>8__1.vm.ClaimForRoles;
+						this.<config>5__2.ClaimForSub = this.<>8__1.vm.ClaimForSub;
+						this.<config>5__2.GroupsAuthorized = this.<>8__1.vm.GroupsAuthorized;
+						if (string.IsNullOrEmpty(this.<config>5__2.CertificateName))
+						{
+							goto IL_07A9;
+						}
+					}
+					try
+					{
+						global::System.Runtime.CompilerServices.TaskAwaiter<global::System.Collections.Generic.IEnumerable<global::Mega.Has.Commons.Messaging.EventMessage>> awaiter;
+						if (num != 0)
+						{
+							awaiter = saml2Controller._eventManager.Notify("CHECK_CERTIFICATE", new global::HAS.Server.Commons.CheckCertificateEvent
+							{
+								friendlyName = this.<config>5__2.CertificateName,
+								Thumbprint = null
+							}, global::Mega.Has.Commons.Messaging.EventScope.Cluster).GetAwaiter();
+							if (!awaiter.IsCompleted)
+							{
+								num = (this.<>1__state = 0);
+								this.<>u__1 = awaiter;
+								this.<>t__builder.AwaitUnsafeOnCompleted<global::System.Runtime.CompilerServices.TaskAwaiter<global::System.Collections.Generic.IEnumerable<global::Mega.Has.Commons.Messaging.EventMessage>>, global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<Edit>d__11>(ref awaiter, ref this);
+								return;
+							}
+						}
+						else
+						{
+							awaiter = this.<>u__1;
+							this.<>u__1 = default(global::System.Runtime.CompilerServices.TaskAwaiter<global::System.Collections.Generic.IEnumerable<global::Mega.Has.Commons.Messaging.EventMessage>>);
+							num = (this.<>1__state = -1);
+						}
+						awaiter.GetResult();
+					}
+					catch (global::System.Exception ex)
+					{
+						saml2Controller.ModelState.AddModelError("CertificateName", ex.Message);
+						actionResult = saml2Controller.View(this.<>8__1.vm);
+						goto IL_0AAC;
+					}
+					IL_07A9:
+					if (string.IsNullOrEmpty(this.<config>5__2.ClaimForSub))
+					{
+						saml2Controller.ModelState.AddModelError("ClaimForSub", "ClaimForSub Is Mandatory");
+						actionResult = saml2Controller.View(this.<>8__1.vm);
+					}
+					else
+					{
+						if (!string.IsNullOrEmpty(this.<>8__1.vm.ContactEmail))
+						{
+							if (!saml2Controller._context.ContactPerson.Any<global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson>())
+							{
+								this.<config>5__2.ContactPerson = new global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson
+								{
+									Email = this.<>8__1.vm.ContactEmail,
+									Type = (this.<>8__1.vm.ContactType ?? "Other")
+								};
+							}
+							else
+							{
+								this.<config>5__2.ContactPerson = saml2Controller._context.ContactPerson.FirstOrDefault<global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson>();
+								if (this.<config>5__2.ContactPerson != null)
+								{
+									this.<config>5__2.ContactPerson.Email = this.<>8__1.vm.ContactEmail;
+									this.<config>5__2.ContactPerson.Type = this.<>8__1.vm.ContactType ?? "Other";
+								}
+							}
+						}
+						if (!string.IsNullOrEmpty(this.<>8__1.vm.OrganizationName))
+						{
+							if (saml2Controller._context.Organization.Any<global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization>())
+							{
+								this.<config>5__2.Organization = new global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization
+								{
+									DisplayName = this.<>8__1.vm.OrganizationName,
+									Name = this.<>8__1.vm.OrganizationName,
+									Email = this.<>8__1.vm.OrganizationEmail,
+									Language = "en-US",
+									Url = this.<>8__1.vm.OrganizationUrl
+								};
+							}
+							else
+							{
+								this.<config>5__2.Organization = saml2Controller._context.Organization.FirstOrDefault<global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization>();
+								if (this.<config>5__2.Organization != null)
+								{
+									this.<config>5__2.Organization.DisplayName = this.<>8__1.vm.OrganizationName;
+									this.<config>5__2.Organization.Name = this.<>8__1.vm.OrganizationName;
+									this.<config>5__2.Organization.Email = this.<>8__1.vm.OrganizationEmail;
+									this.<config>5__2.Organization.Language = "en-US";
+									this.<config>5__2.Organization.Url = this.<>8__1.vm.OrganizationUrl;
+								}
+							}
+						}
+						this.<provider>5__3.SetConfiguration<global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config>(this.<config>5__2);
+						saml2Controller._context.SaveChanges();
+						global::Mega.Has.Commons.Messaging.IEventManager eventManager = saml2Controller._services.GetRequiredService<global::Mega.Has.Commons.Messaging.IEventManager>();
+						if (eventManager != null)
+						{
+							eventManager.Notify("RESTART", "*", global::Mega.Has.Commons.Messaging.EventScope.Cluster);
+						}
+						actionResult = saml2Controller.Redirect("/console/restart");
+					}
+				}
+				catch (global::System.Exception ex2)
+				{
+					this.<>1__state = -2;
+					this.<>8__1 = null;
+					this.<config>5__2 = null;
+					this.<provider>5__3 = null;
+					this.<>t__builder.SetException(ex2);
+					return;
+				}
+				IL_0AAC:
+				this.<>1__state = -2;
+				this.<>8__1 = null;
+				this.<config>5__2 = null;
+				this.<provider>5__3 = null;
+				this.<>t__builder.SetResult(actionResult);
+			}
+
+			// Token: 0x06000DB8 RID: 3512 RVA: 0x0006FA6C File Offset: 0x0006DC6C
+			[global::System.Diagnostics.DebuggerHidden]
+			void global::System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine([global::System.Runtime.CompilerServices.Nullable(1)] global::System.Runtime.CompilerServices.IAsyncStateMachine stateMachine)
+			{
+				this.<>t__builder.SetStateMachine(stateMachine);
+			}
+
+			// Token: 0x04000D42 RID: 3394
+			public int <>1__state;
+
+			// Token: 0x04000D43 RID: 3395
+			public global::System.Runtime.CompilerServices.AsyncTaskMethodBuilder<global::Microsoft.AspNetCore.Mvc.IActionResult> <>t__builder;
+
+			// Token: 0x04000D44 RID: 3396
+			public global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel vm;
+
+			// Token: 0x04000D45 RID: 3397
+			public global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller <>4__this;
+
+			// Token: 0x04000D46 RID: 3398
+			private global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<>c__DisplayClass11_0 <>8__1;
+
+			// Token: 0x04000D47 RID: 3399
+			private global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config <config>5__2;
+
+			// Token: 0x04000D48 RID: 3400
+			private global::Mega.Has.Modules.UAS.Models.ExternalProvider <provider>5__3;
+
+			// Token: 0x04000D49 RID: 3401
+			private global::System.Runtime.CompilerServices.TaskAwaiter<global::System.Collections.Generic.IEnumerable<global::Mega.Has.Commons.Messaging.EventMessage>> <>u__1;
+		}
+
+		// Token: 0x02000254 RID: 596
+		[global::System.Runtime.CompilerServices.CompilerGenerated]
+		[global::System.Runtime.InteropServices.StructLayout(global::System.Runtime.InteropServices.LayoutKind.Auto)]
+		private struct <Index>d__9 : global::System.Runtime.CompilerServices.IAsyncStateMachine
+		{
+			// Token: 0x06000DB9 RID: 3513 RVA: 0x0006FA7C File Offset: 0x0006DC7C
+			void global::System.Runtime.CompilerServices.IAsyncStateMachine.MoveNext()
+			{
+				int num = this.<>1__state;
+				global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller saml2Controller = this.<>4__this;
+				global::Microsoft.AspNetCore.Mvc.IActionResult actionResult;
+				try
+				{
+					global::System.Runtime.CompilerServices.TaskAwaiter<global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Models.ExternalProvider>> awaiter;
+					if (num != 0)
+					{
+						this.<list>5__2 = new global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel>();
+						global::System.Linq.IQueryable<global::Mega.Has.Modules.UAS.Models.ExternalProvider> externalProviders = saml2Controller._context.ExternalProviders;
+						global::System.Linq.Expressions.ParameterExpression parameterExpression = global::System.Linq.Expressions.Expression.Parameter(typeof(global::Mega.Has.Modules.UAS.Models.ExternalProvider), "e");
+						awaiter = externalProviders.Where(global::System.Linq.Expressions.Expression.Lambda<global::System.Func<global::Mega.Has.Modules.UAS.Models.ExternalProvider, bool>>(global::System.Linq.Expressions.Expression.Equal(global::System.Linq.Expressions.Expression.Property(parameterExpression, methodof(global::Mega.Has.Modules.UAS.Models.ExternalProvider.get_Type())), global::System.Linq.Expressions.Expression.Constant("Saml2Config", typeof(string))), new global::System.Linq.Expressions.ParameterExpression[] { parameterExpression })).ToListAsync(default(global::System.Threading.CancellationToken)).GetAwaiter();
+						if (!awaiter.IsCompleted)
+						{
+							num = (this.<>1__state = 0);
+							this.<>u__1 = awaiter;
+							this.<>t__builder.AwaitUnsafeOnCompleted<global::System.Runtime.CompilerServices.TaskAwaiter<global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Models.ExternalProvider>>, global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller.<Index>d__9>(ref awaiter, ref this);
+							return;
+						}
+					}
+					else
+					{
+						awaiter = this.<>u__1;
+						this.<>u__1 = default(global::System.Runtime.CompilerServices.TaskAwaiter<global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Models.ExternalProvider>>);
+						num = (this.<>1__state = -1);
+					}
+					global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Models.ExternalProvider> result = awaiter.GetResult();
+					global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Models.ExternalProvider>.Enumerator enumerator = result.GetEnumerator();
+					try
+					{
+						while (enumerator.MoveNext())
+						{
+							global::Mega.Has.Modules.UAS.Models.ExternalProvider provider = enumerator.Current;
+							global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config config = provider.GetConfiguration<global::Mega.Has.Modules.UAS.Providers.Saml2.Saml2Config>();
+							global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel configViewModel = new global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel
+							{
+								Enabled = provider.Enabled,
+								DisplayName = provider.DisplayName,
+								ClaimForRoles = config.ClaimForRoles,
+								Id = provider.Id
+							};
+							global::Mega.Has.Commons.IClusterConfiguration clusterConfiguration = saml2Controller._services.GetRequiredService<global::Mega.Has.Commons.IClusterConfiguration>();
+							global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel saml2ConfigViewModel = configViewModel;
+							string text;
+							if (clusterConfiguration == null)
+							{
+								text = null;
+							}
+							else
+							{
+								global::Mega.Has.Commons.IClusterSettings runtimeClusterSettings = clusterConfiguration.RuntimeClusterSettings;
+								text = ((runtimeClusterSettings != null) ? runtimeClusterSettings.PublicAddress : null);
+							}
+							saml2ConfigViewModel.PublicOrigin = text;
+							configViewModel.CertificateUses = saml2Controller._certificateUses;
+							configViewModel.SigninAlgorithms = saml2Controller._signinAlgorithms;
+							configViewModel.SigningBehaviors = saml2Controller._signingBehaviors;
+							configViewModel.EntityId = config.EntityId;
+							configViewModel.MetadataLocation = config.MetadataLocation;
+							configViewModel.AllowUnsolicitedAuthnResponse = config.AllowUnsolicitedAuthnResponse;
+							configViewModel.WantAssertionSigned = config.WantAssertionSigned;
+							configViewModel.WantAuthnRequestsSigned = config.WantAuthnRequestsSigned;
+							configViewModel.AuthenticateRequestSigningBehavior = config.AuthenticateRequestSigningBehavior;
+							configViewModel.CertificateName = config.CertificateName;
+							configViewModel.MinIncomingSigningAlgorithm = config.MinIncomingSigningAlgorithm;
+							configViewModel.OutboundSigningAlgorithm = config.OutboundSigningAlgorithm;
+							configViewModel.CertificateUse = config.CertificateUse;
+							global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel saml2ConfigViewModel2 = configViewModel;
+							global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson contactPerson = config.ContactPerson;
+							saml2ConfigViewModel2.ContactEmail = ((contactPerson != null) ? contactPerson.Email : null);
+							global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel saml2ConfigViewModel3 = configViewModel;
+							global::Mega.Has.Modules.UAS.Providers.Saml2.ContactPerson contactPerson2 = config.ContactPerson;
+							saml2ConfigViewModel3.ContactType = ((contactPerson2 != null) ? contactPerson2.Type : null) ?? "Other";
+							global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel saml2ConfigViewModel4 = configViewModel;
+							global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization organization = config.Organization;
+							saml2ConfigViewModel4.OrganizationEmail = ((organization != null) ? organization.Email : null);
+							global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel saml2ConfigViewModel5 = configViewModel;
+							global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization organization2 = config.Organization;
+							saml2ConfigViewModel5.OrganizationName = ((organization2 != null) ? organization2.Name : null);
+							global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel saml2ConfigViewModel6 = configViewModel;
+							global::Mega.Has.Modules.UAS.Providers.Saml2.UasOrganization organization3 = config.Organization;
+							saml2ConfigViewModel6.OrganizationUrl = ((organization3 != null) ? organization3.Url : null);
+							configViewModel.ClaimForRoles = config.ClaimForRoles;
+							configViewModel.ClaimForSub = config.ClaimForSub;
+							configViewModel.ModulePath = config.ModulePath;
+							configViewModel.GroupsAuthorized = config.GroupsAuthorized;
+							configViewModel.OutboundSigningAlgorithm = config.OutboundSigningAlgorithm;
+							this.<list>5__2.Add(configViewModel);
+						}
+					}
+					finally
+					{
+						if (num < 0)
+						{
+							((global::System.IDisposable)enumerator).Dispose();
+						}
+					}
+					actionResult = saml2Controller.View(this.<list>5__2);
+				}
+				catch (global::System.Exception ex)
+				{
+					this.<>1__state = -2;
+					this.<list>5__2 = null;
+					this.<>t__builder.SetException(ex);
+					return;
+				}
+				this.<>1__state = -2;
+				this.<list>5__2 = null;
+				this.<>t__builder.SetResult(actionResult);
+			}
+
+			// Token: 0x06000DBA RID: 3514 RVA: 0x0006FE30 File Offset: 0x0006E030
+			[global::System.Diagnostics.DebuggerHidden]
+			void global::System.Runtime.CompilerServices.IAsyncStateMachine.SetStateMachine([global::System.Runtime.CompilerServices.Nullable(1)] global::System.Runtime.CompilerServices.IAsyncStateMachine stateMachine)
+			{
+				this.<>t__builder.SetStateMachine(stateMachine);
+			}
+
+			// Token: 0x04000D4A RID: 3402
+			public int <>1__state;
+
+			// Token: 0x04000D4B RID: 3403
+			public global::System.Runtime.CompilerServices.AsyncTaskMethodBuilder<global::Microsoft.AspNetCore.Mvc.IActionResult> <>t__builder;
+
+			// Token: 0x04000D4C RID: 3404
+			public global::HAS.Modules.UAS.Areas.Admin.Controllers.Saml2Controller <>4__this;
+
+			// Token: 0x04000D4D RID: 3405
+			private global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Areas.Admin.ViewModels.Saml2ConfigViewModel> <list>5__2;
+
+			// Token: 0x04000D4E RID: 3406
+			[global::System.Runtime.CompilerServices.Nullable(new byte[] { 0, 1, 0 })]
+			private global::System.Runtime.CompilerServices.TaskAwaiter<global::System.Collections.Generic.List<global::Mega.Has.Modules.UAS.Models.ExternalProvider>> <>u__1;
+		}
 	}
 }

@@ -1,10 +1,2 @@
-wp elementor flush_css --allow_root
-Warning: The magic method Preloader_Plus\Preloader_Plus::__wakeup() must have public visibility in /var/www/wp-content/plugins/inc/preloader-plus.php on line 94
-Warning: The magic method Preloader_Plus_Pro\Preloader_Plus_Pro::__wakeup() must have public visibility in /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php on line 59
-Warning: unlink(/var/www/wp-content/uploads/elementor/css/test.css): Permission denied in /var/www/wp-content/plugins/elementor/core/files/manager.php on line 112
-Success: Flushed the Elementor CSS Cache
-Warning: PHP: 2025-11-24 15:43:38 [warning X 0][/var/www/wp-content/plugins/elementor/core/files/manager.php::112] unlink(/var/www/wp-content/uploads/elementor/css/test.css): Permission denied [array (
-  'trace' => '
-#0: Elementor\Core\Logger\Manager -> shutdown()
-',
-)]
+rm -f /var/www/wp-content/uploads/elementor/css/test.css
+cd /var/www && sudo -u nginx wp elementor flush-css --allow-root

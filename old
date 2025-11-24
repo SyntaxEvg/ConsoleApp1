@@ -1,24 +1,17 @@
-php -i | grep open_basedir
-open_basedir => no value => no value
+# Лог ошибок nginx
+tail -50 /var/log/nginx/error.log
 
-sudo grep -r "open_basedir" /etc/php* /etc/nginx* 2>/dev/null
-/etc/php.ini:; open_basedir, if set, limits all file operations to the defined directory
-/etc/php.ini:;open_basedir =
-/etc/php.ini:; Note: if open_basedir is set, the cache is disabled
+# Лог WordPress (если настроен)
+cat /var/www/wp-content/debug.log 2>/dev/null | tail -50
 
+# Проверим, включён ли WP_DEBUG
+grep -i "WP_DEBUG" /var/www/wp-config.php
 
-sudo tail -50 /var/log/php-fpm/error.log
-[23-Nov-2025 00:22:41] NOTICE: error log file re-opened
-[24-Nov-2025 15:16:18] NOTICE: Terminating ...
-[24-Nov-2025 15:16:18] NOTICE: exiting, bye-bye!
-[24-Nov-2025 15:16:21] WARNING: [pool www] ACL set, listen.owner = 'nginx' is ignored
-[24-Nov-2025 15:16:21] WARNING: [pool www] ACL set, listen.group = 'nginx' is ignored
-[24-Nov-2025 15:16:21] NOTICE: fpm is running, pid 758030
-[24-Nov-2025 15:16:21] NOTICE: ready to handle connections
-[24-Nov-2025 15:16:21] NOTICE: systemd monitor interval set to 10000ms
+# Удаляем кэш
+rm -rf /var/www/wp-content/uploads/elementor/css/*
+rm -rf /var/www/wp-content/cache/*
 
+# Восстанавливаем права
+chown -R nginx:nginx /var/www/wp-content/uploads/elementor/
 
-sudo lsattr /var/www/wp-content/uploads/elementor/css/post-28215.css
---------------e------- /var/www/wp-content/uploads/elementor/css/post-28215.css
-
-
+После этого зайди в админку WordPress → Elementor → Tools → Regenerate CSS.

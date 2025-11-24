@@ -1,20 +1,8 @@
-grep -n "\$unique\s*=" /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php | head -5
-837:                                    $unique = rand(2012,3554120);
+# Исправляем $x на $unique
+sed -i 's/echo esc_attr(\$x)/echo esc_attr($unique)/g' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
 
-sed -n '935,950p' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
-                                                                                  </li>
+# Исправляем $show_email на mailto ссылку
+sed -i 's/echo esc_html(\$show_email)/echo esc_attr("mailto:" . $settings["email"])/g' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
 
-                                                                                  <?php endif; ?>
-
-
-
-                                                                                  <?php if($settings['email']): ?>
-                                                                                  <li <?php echo wp_kses_post($popup_phn_email_color);?>>
-                                                                                  <span><?php echo esc_html('Email:', 'rsaddon');?> </span>
-                                                                                  <a href="<?php echo esc_html($show_email); ?>"<?php echo wp_kses_post($popup_phn_email_color);?>>
-                                                                                  <?php echo esc_html($settings['email']);?></a>
-                                                                                  </li>
-                                                                                  <?php endif; ?>
-                                                                                </ul>
-                                                                        </div>
-                                                                        <?php endif; ?>
+sed -n '912p' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
+sed -n '944p' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php

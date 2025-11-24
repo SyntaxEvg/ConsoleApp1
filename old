@@ -1,7 +1,10 @@
-sudo rm -f /var/www/wp-content/uploads/elementor/css/post-28215.css
-sudo systemctl restart php-fpm
-
-sudo ls -la /var/www/wp-content/uploads/elementor/css/post-28215.css
-sudo tail -5 /var/log/nginx/error.log
-
-sudo sed -n '190,200p' /var/www/wp-content/plugins/elementor/core/files/base.php
+wp elementor flush_css --allow_root
+Warning: The magic method Preloader_Plus\Preloader_Plus::__wakeup() must have public visibility in /var/www/wp-content/plugins/inc/preloader-plus.php on line 94
+Warning: The magic method Preloader_Plus_Pro\Preloader_Plus_Pro::__wakeup() must have public visibility in /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php on line 59
+Warning: unlink(/var/www/wp-content/uploads/elementor/css/test.css): Permission denied in /var/www/wp-content/plugins/elementor/core/files/manager.php on line 112
+Success: Flushed the Elementor CSS Cache
+Warning: PHP: 2025-11-24 15:43:38 [warning X 0][/var/www/wp-content/plugins/elementor/core/files/manager.php::112] unlink(/var/www/wp-content/uploads/elementor/css/test.css): Permission denied [array (
+  'trace' => '
+#0: Elementor\Core\Logger\Manager -> shutdown()
+',
+)]

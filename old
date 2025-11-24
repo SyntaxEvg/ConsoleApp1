@@ -1,3 +1,18 @@
 ls -laZ /var/www/wp-content/uploads/elementor/
-grep -E "^user|^group" /etc/php-fpm.d/www.conf
-getenforce
+sudo grep -E "^user|^group" /etc/php-fpm.d/www.conf
+sudo getenforce
+
+sudo ls -laZ /var/www/wp-content/uploads/elementor/итого 16
+drwxr-xr-x.  4 nginx nginx unconfined_u:object_r:httpd_sys_rw_content_t:s0 4096 ноя 20 12:44 .
+drwxr-xr-x. 26 nginx nginx unconfined_u:object_r:httpd_sys_rw_content_t:s0 4096 ноя 20 12:44 ..
+drwxr-xr-x.  2 nginx nginx unconfined_u:object_r:httpd_sys_rw_content_t:s0 4096 ноя 20 12:44 css
+drwxr-xr-x.  2 nginx nginx unconfined_u:object_r:httpd_sys_rw_content_t:s0 4096 ноя 20 12:44 thumbs
+
+sudo grep -E "^user|^group" /etc/php-fpm.d/www.conf
+user = nginx
+group = nginx
+
+sudo getenforce
+Permissive
+
+

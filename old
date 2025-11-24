@@ -1,12 +1,3 @@
-sed -n '575,585p' /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php
-                        Group_Control_Typography::get_type(),
-                        [
-                                'name' => 'menu_typography',
-                                'label' => esc_html__( 'Title Typography', 'rsaddon' ),
-                                'scheme' => Elementor\Core\Kits\Documents\Tabs\Global_Typography::TYPOGRAPHY_1,
-                                'selector' => '{{WRAPPER}} .portfolio-filter button',
-                        ]
-                );
+grep -rn "Schemes\|::TYPOGRAPHY_\|::COLOR_" /var/www/wp-content/plugins/widgets/ | head -20
 
-                $this->add_responsive_control(
-            'align_filter',
+tail -10 /var/log/nginx/wordpress_error.log | grep -i fatal

@@ -1,11 +1,5 @@
-# Исправляем $x на $unique
-sed -i 's/echo esc_attr(\$x)/echo esc_attr($unique)/g' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
+sed -i 's/Elementor\\Core\\Schemes\\Typography/Elementor\\Core\\Kits\\Documents\\Tabs\\Global_Typography/g' /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php
 
-# Исправляем $show_email на mailto ссылку
-sed -i 's/echo esc_html(\$show_email)/echo esc_attr("mailto:" . $settings["email"])/g' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
+sed -i 's/Elementor\\Core\\Schemes\\Color/Elementor\\Core\\Kits\\Documents\\Tabs\\Global_Colors/g' /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php
 
-sed -n '912p' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
-<h3 class="team-name"><a class="pointer-events" href="#rs_popupBox_<?php echo esc_attr($unique);?>" data-effect="mfp-zoom-in"><?php echo esc_html($settings['title']);?></a></h3>
-
-sudo sed -n '944p' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
-<a href="<?php echo esc_attr("mailto:" . $settings["email"]); ?>"<?php echo wp_kses_post($popup_phn_email_color);?>>
+systemctl restart php-fpm

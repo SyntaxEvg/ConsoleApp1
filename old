@@ -1,5 +1,35 @@
-sed -i 's/Elementor\\Core\\Schemes\\Typography/Elementor\\Core\\Kits\\Documents\\Tabs\\Global_Typography/g' /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php
-
-sed -i 's/Elementor\\Core\\Schemes\\Color/Elementor\\Core\\Kits\\Documents\\Tabs\\Global_Colors/g' /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php
-
-systemctl restart php-fpm
+wp-auth-check.min.js?ver=20251124133:2 
+ Uncaught TypeError: Cannot read properties of undefined (reading 'hasClass')
+    at HTMLDocument.<anonymous> (wp-auth-check.min.js…r=20251124133:2:655)
+    at HTMLDocument.dispatch (load-scripts.php?c=1…s&ver=6.8.3:2:40035)
+    at v.handle (load-scripts.php?c=1…s&ver=6.8.3:2:38006)
+    at Object.trigger (load-scripts.php?c=1…s&ver=6.8.3:2:70124)
+    at HTMLDocument.<anonymous> (load-scripts.php?c=1…s&ver=6.8.3:2:70726)
+    at ce.each (load-scripts.php?c=1…ks&ver=6.8.3:2:3129)
+    at e.<computed>.each (load-scripts.php?c=1…ks&ver=6.8.3:2:1594)
+    at e.<computed>.trigger (load-scripts.php?c=1…s&ver=6.8.3:2:70701)
+    at Object.<anonymous> (heartbeat.min.js?ver=20251124133:2:2186)
+    at c (load-scripts.php?c=1…s&ver=6.8.3:2:25304)
+load-scripts.php?c=1…p-hooks&ver=6.8.3:2 
+ 
+ POST http://10.13.20.51/wp-admin/admin-ajax.php 500 (Internal Server Error)
+send	@	load-scripts.php?c=1…p-hooks&ver=6.8.3:2
+ajax	@	load-scripts.php?c=1…p-hooks&ver=6.8.3:2
+(anonymous)	@	load-scripts.php?c=1…p-hooks&ver=6.8.3:5
+e.<computed>	@	load-scripts.php?c=1…p-hooks&ver=6.8.3:5
+send	@	common.min.js?ver=20251124133:2
+sendBatch	@	common.min.js?ver=20251124133:2
+u	@	load-scripts.php?c=1…hooks&ver=6.8.3:133
+setTimeout		
+(anonymous)	@	load-scripts.php?c=1…hooks&ver=6.8.3:133
+(anonymous)	@	load-scripts.php?c=1…hooks&ver=6.8.3:133
+addRequest	@	common.min.js?ver=20251124133:2
+requestWidgetsConfig	@	editor.min.js?ver=20251124133:2
+onStart	@	editor.min.js?ver=20251124133:2
+(anonymous)	@	editor.min.js?ver=20251124133:2
+onStart	@	editor.min.js?ver=20251124133:2
+(anonymous)	@	backbone.marionette.…?ver=20251124133:24
+f.triggerMethod	@	backbone.marionette.…?ver=20251124133:24
+start	@	backbone.marionette.…?ver=20251124133:25
+(anonymous)	@	editor-loader-v2.min…s?ver=20251124133:1
+(anonymous)	@	editor-loader-v2.min…s?ver=20251124133:1

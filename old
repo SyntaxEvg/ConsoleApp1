@@ -1,5 +1,18 @@
-sed -i 's/Elementor\\Core\\Schemes\\Typography/Elementor\\Core\\Kits\\Documents\\Tabs\\Global_Typography/g' /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php
-sed -i 's/Elementor\\Core\\Schemes\\Color/Elementor\\Core\\Kits\\Documents\\Tabs\\Global_Colors/g' /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php
-
 sed -n '905,920p' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
+                                                </div>
+                                                <div class="col-md-7">
+                                                        <div class="rsteam_content">
+                                                                <div class="team-content">
+                                                                        <div class="team-heading">
 
+                                                                                <?php if($settings['title']) : ?>
+                                                                                <h3 class="team-name"><a class="pointer-events" href="#rs_popupBox_<?php echo esc_attr($x);?>" data-effect="mfp-zoom-in"><?php echo esc_html($settings['title']);?></a></h3>
+                                                                                <?php endif; ?>
+                                                                                <?php if($settings['designation']) : ?>
+                                                                                  <span class="team-title"><?php echo esc_html($settings['designation']);?></span>
+                                                                                <?php endif; ?>
+                                                                        </div>
+
+
+                                                                        <?php if($settings['popup_description']) : ?>
+[agashkoev_a@vychqeaap02 www]$

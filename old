@@ -1,1 +1,4 @@
 cd /var/www && sudo -u nginx /usr/local/bin/wp elementor flush-css --allow-root
+Warning: The magic method Preloader_Plus\Preloader_Plus::__wakeup() must have public visibility in /var/www/wp-content/plugins/inc/preloader-plus.php on line 94
+Warning: The magic method Preloader_Plus_Pro\Preloader_Plus_Pro::__wakeup() must have public visibility in /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php on line 59
+Success: Flushed the Elementor CSS Cache

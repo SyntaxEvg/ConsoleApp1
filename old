@@ -1,4 +1,1 @@
-rm -f /var/www/wp-content/uploads/elementor/css/test.css
-cd /var/www && sudo -u nginx wp elementor flush-css --allow-root
-sudo: wp: команда не найдена
-
+cd /var/www && sudo -u nginx /usr/local/bin/wp elementor flush-css --allow-root

@@ -1,1 +1,11 @@
-http://10.13.20.51/teams/artemov-maxim/ - Удаленный сервер возвратил ошибку: (404) Не найден.
+Это не физический файл, а динамический URL WordPress (custom post type или страница). Проверь:
+bash# Поиск в базе данных
+cd /var/www && wp post list --post_type=any --post_name=artemov-maxim --allow-root
+
+# Или поиск по всем типам записей
+cd /var/www && wp db query "SELECT ID, post_title, post_type, post_status FROM wp_posts WHERE post_name = 'artemov-maxim'" --allow-root
+Если запись есть, но 404 — проблема в пермалинках:
+bash# Пересохранить пермалинки
+cd /var/www && wp rewrite flush --allow-root
+Также проверь, зарегистрирован ли тип записи teams:
+bashcd /var/www && wp post-type list --allow-root | grep team

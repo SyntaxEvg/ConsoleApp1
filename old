@@ -1,4 +1,44 @@
 sudo ps aux | grep "php-fpm: pool www" | head -3
+nginx     758038  0.0  3.8 266416 77240 ?        S    15:16   0:01 php-fpm: pool www
+nginx     758039  0.0  4.9 321800 98800 ?        S    15:16   0:00 php-fpm: pool www
+nginx     758040  0.0  3.2 262388 65864 ?        S    15:16   0:00 php-fpm: pool www
+
 sudo cat /etc/php-fpm.d/www.conf | grep -v "^;" | grep -v "^$"
+[www]
+user = nginx
+group = nginx
+listen = /run/php-fpm/www.sock
+listen.owner = nginx
+listen.group = nginx
+listen.mode = 0660
+listen.acl_users = nginx
+listen.allowed_clients = 127.0.0.1
+pm = dynamic
+pm.max_children = 50
+pm.start_servers = 5
+pm.min_spare_servers = 5
+pm.max_spare_servers = 35
+slowlog = /var/log/php-fpm/www-slow.log
+php_admin_value[error_log] = /var/log/php-fpm/www-error.log
+php_admin_flag[log_errors] = on
+php_value[session.save_handler] = files
+php_value[session.save_path]    = /var/lib/php/session
+php_value[soap.wsdl_cache_dir]  = /var/lib/php/wsdlcache
+
 sudo cat /etc/php-fpm.d/www.conf | grep -iE "security|chroot|chdir"
+; - 'chroot'
+; - 'chdir'
+; Chroot to this directory at the start. This value must be defined as an
+; absolute path. When this value is not set, chroot is not used.
+; Note: you can prefix with '$prefix' to chroot to the pool prefix or one
+; Note: chrooting is a great security feature and should be used whenever
+;       possible. However, all PHP paths will be relative to the chroot
+;chroot =
+; Chdir to this directory at the start.
+; Default Value: current directory or / when chroot
+;chdir = /var/www
+;security.limit_extensions = .php .php3 .php4 .php5 .php7
+
 sudo -u nginx php -r "file_put_contents('/var/www/wp-content/uploads/elementor/css/test.css', 'test');" && echo "PHP OK" || echo "PHP FAIL"
+PHP OK
+

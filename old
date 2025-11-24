@@ -1,11 +1,101 @@
-grep -rn "Schemes\|::TYPOGRAPHY_\|::COLOR_" /var/www/wp-content/plugins/widgets/ | head -20
-/var/www/wp-content/plugins/widgets/team-filter/team-filter-widget.php:823:       'scheme' => Elementor\Core\Schemes\Typography::TYPOGRAPHY_1,
-/var/www/wp-content/plugins/widgets/logo-widget/logo.php:949:                'scheme' => Elementor\Core\Schemes\Typography::TYPOGRAPHY_2,
-/var/www/wp-content/plugins/widgets/logo-widget/logo.php:1100:                'scheme' => Elementor\Core\Schemes\Typography::TYPOGRAPHY_2,
-/var/www/wp-content/plugins/widgets/counter/rs-counter.php:16:use Elementor\Core\Schemes\Typography;
-/var/www/wp-content/plugins/widgets/counter/rs-counter.php:18:use Elementor\Core\Schemes\Color;
-/var/www/wp-content/plugins/widgets/table/table-normal.php:6:use \Elementor\Core\Schemes\Typography;
-/var/www/wp-content/plugins/widgets/table/table.php:6:use \Elementor\Core\Schemes\Typography;
-[agashkoev_
+# wp-crawler.ps1
+# Скрипт для обхода всех страниц WordPress сайта
 
-tail -10 /var/log/nginx/wordpress_error.log | grep -i fatal
+param(
+    [string]$SiteUrl = "http://10.13.20.51",
+    [string]$OutputFile = "crawl_results.txt"
+)
+
+# Игнорируем SSL ошибки если есть
+add-type @"
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+public class TrustAllCertsPolicy : ICertificatePolicy {
+    public bool CheckValidationResult(
+        ServicePoint srvPoint, X509Certificate certificate,
+        WebRequest request, int certificateProblem) {
+        return true;
+    }
+}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+$visited = @{}
+$toVisit = [System.Collections.Queue]::new()
+$errors = @()
+
+$toVisit.Enqueue($SiteUrl)
+$visited[$SiteUrl] = $true
+
+Write-Host "Начинаю обход сайта: $SiteUrl" -ForegroundColor Cyan
+Write-Host "=" * 50
+
+$count = 0
+
+while ($toVisit.Count -gt 0) {
+    $url = $toVisit.Dequeue()
+    $count++
+    
+    Write-Host "[$count] $url" -NoNewline
+    
+    try {
+        $response = Invoke-WebRequest -Uri $url -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+        $statusCode = $response.StatusCode
+        
+        if ($statusCode -eq 200) {
+            Write-Host " [OK]" -ForegroundColor Green
+        } else {
+            Write-Host " [$statusCode]" -ForegroundColor Yellow
+            $errors += "[$statusCode] $url"
+        }
+        
+        # Ищем ссылки на страницы того же домена
+        $links = $response.Links | Where-Object { $_.href -match "^(/|$SiteUrl)" } | ForEach-Object {
+            if ($_.href -match "^/") {
+                "$SiteUrl$($_.href)"
+            } else {
+                $_.href
+            }
+        }
+        
+        foreach ($link in $links) {
+            # Очищаем URL от якорей и параметров
+            $cleanUrl = $link -replace '#.*$', '' -replace '\?.*$', ''
+            
+            # Пропускаем файлы, админку и уже посещённые
+            if ($cleanUrl -and 
+                -not $visited.ContainsKey($cleanUrl) -and
+                $cleanUrl -notmatch '\.(jpg|jpeg|png|gif|css|js|pdf|zip|woff|svg|ico)$' -and
+                $cleanUrl -notmatch '/wp-admin/' -and
+                $cleanUrl -notmatch '/wp-login' -and
+                $cleanUrl -notmatch '/feed/' -and
+                $cleanUrl -match "^$([regex]::Escape($SiteUrl))") {
+                
+                $visited[$cleanUrl] = $true
+                $toVisit.Enqueue($cleanUrl)
+            }
+        }
+        
+    } catch {
+        $errorMsg = $_.Exception.Message
+        Write-Host " [ERROR: $errorMsg]" -ForegroundColor Red
+        $errors += "[ERROR] $url - $errorMsg"
+    }
+    
+    # Небольшая пауза чтобы не нагружать сервер
+    Start-Sleep -Milliseconds 100
+}
+
+Write-Host ""
+Write-Host "=" * 50
+Write-Host "Обход завершён. Всего страниц: $count" -ForegroundColor Cyan
+
+if ($errors.Count -gt 0) {
+    Write-Host "Ошибок: $($errors.Count)" -ForegroundColor Red
+    $errors | Out-File -FilePath $OutputFile -Encoding UTF8
+    Write-Host "Ошибки сохранены в: $OutputFile"
+} else {
+    Write-Host "Ошибок не найдено!" -ForegroundColor Green
+}
+
+.\wp-crawler.ps1 -SiteUrl "http://10.13.20.51"

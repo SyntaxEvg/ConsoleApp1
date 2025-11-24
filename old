@@ -1,2 +1,60 @@
 sudo sed -n '1,50p' /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php
-sudo grep -n "foreach\|for\s*(\|\$x\s*=" /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php | head -20
+<?php
+/**
+ * Elementor rsgallery Widget.
+ *
+ * Elementor widget that inserts an embbedable content into the page, from any given URL.
+ *
+ * @since 1.0.0
+ */
+
+use Elementor\Group_Control_Css_Filter;
+use Elementor\Repeater;
+use Elementor\Controls_Manager;
+use Elementor\Group_Control_Box_Shadow;
+use Elementor\Group_Control_Image_Size;
+use Elementor\Group_Control_Typography;
+use Elementor\Utils;
+use Elementor\register_controls;
+
+defined( 'ABSPATH' ) || die();
+
+class Rsaddon_Elementor_pro_Team_Grid_Widget extends \Elementor\Widget_Base {
+        /**
+         * Get widget name.
+         *
+         * Retrieve rsgallery widget name.
+         *
+         * @since 1.0.0
+         * @access public
+         *
+         * @return string Widget name.
+         */
+        public function get_name() {
+                return 'rsteam';
+        }
+        /**
+         * Get widget title.
+         *
+         * Retrieve rsgallery widget title.
+         *
+         * @since 1.0.0
+         * @access public
+         *
+         * @return string Widget title.
+         */
+        public function get_title() {
+                return __( 'RS Team Grid', 'rsaddon' );
+        }
+        /**
+         * Get widget icon.
+         *
+
+grep -n "foreach\|for\s*(\|\$x\s*=" /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php | head -20
+850:                                                            <?php foreach ( $settings['social_icon_list'] as $index => $item ) :
+859:                                                       <?php  endforeach; ?>
+879:                                                                    <?php foreach ( $settings['social_icon_list'] as $index => $item ) :
+889:                                                                    <?php  endforeach; ?>
+954:                                                                            <?php foreach ( $settings['social_icon_list'] as $index => $item ) :
+963:                                                                       <?php  endforeach; ?>
+987:            foreach($terms as $post) {

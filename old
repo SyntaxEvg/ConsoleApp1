@@ -1,4 +1,16 @@
-tail -20 /var/log/nginx/error.log
-tail -20 /var/log/php-fpm/error.log
 
-ls -la /var/www/wp-content/uploads/elementor/css/ | grep 28215
+2025/11/24 15:51:58 [error] 627879#627879: *1060 FastCGI sent in stderr: "PHP message: PHP Warning:  Undefined variable $x in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 912PHP message: PHP Warning:  Undefined variable $show_email in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 944PHP message: PHP Warning:  Undefined variable $x in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 912PHP message: PHP Warning:  Undefined variable $show_email in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 944PHP message: PHP Warning:  Undefined variable $x in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 912PHP message: PHP Warning:  Undefined variable $show_email in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 944PHP message: PHP Warning:  Undefined variable $x in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 912PHP message: PHP Warning:  Undefined variable $show_email in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 944PHP message: PHP Warning:  Undefined variable $x in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 912PHP message: PHP Warning:  Undefined variable $show_email in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 944PHP message: PHP Warning:  Undefined variable $x in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 912PHP message: PHP Warning:  Undefined variable $show_email in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 944PHP message: PHP Warning:  Undefined variable $x in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 912PHP message: PHP Warning:  Undefined variable $show_email in /var/www/wp-content/plugins/widgets/team-member/team-grid-widget.php on line 944" while reading response header from upstream, client: 172.19.
+2025/11/24 15:52:01 [error] 627879#627879: *1060 FastCGI sent in stderr: "PHP message: PHP Fatal error:  Uncaught Error: Class "Elementor\Core\Schemes\Typography" not found in /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php:579
+Stack trace:
+#0 /var/www/wp-content/plugins/elementor/includes/base/controls-stack.php(2435): Rsaddon_Portfolio_pro_Filter_Widget->register_controls()
+#1 /var/www/wp-content/plugins/elementor/includes/base/widget-base.php(1049): Elementor\Controls_Stack->init_controls()
+#2 /var/www/wp-content/plugins/elementor/includes/base/controls-stack.php(570): Elementor\Widget_Base->init_controls()
+#3 /var/www/wp-content/plugins/elementor/includes/base/widget-base.php(185): Elementor\Controls_Stack->get_stack()
+#4 /var/www/wp-content/plugins/elementor/includes/managers/widgets.php(404): Elementor\Widget_Base->get_stack()
+#5 [internal function]: Elementor\Widgets_Manager->ajax_get_widget_types_controls_config()
+#6 /var/www/wp-content/plugins/elementor/core/common/modules/ajax/module.php(176): call_user_func()
+#7 /var/www/wp-in" while reading response header from upstream, client: 172.19.18.99, server: 10.13.20.51, request: "POST /wp-admin/admin-ajax.php HTTP/1.1", upstream: "fastcgi://unix:/run/php-fpm/www.sock:", host: "10.13.20.51", referrer: "http://10.13.20.51/wp-admin/post.php?post=28215&action=elementor"
+
+sudo ls -la /var/www/wp-content/uploads/elementor/css/ | grep 28215
+-rw-r--r--. 1 nginx nginx 27157 ноя 24 15:50 post-28215.css
+

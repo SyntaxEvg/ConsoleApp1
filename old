@@ -1,10 +1,1 @@
-sudo tail -30 /var/log/nginx/wordpress_error.log | grep -i "fatal\|error"
-2025/11/24 16:13:45 [error] 627879#627879: *1138 FastCGI sent in stderr: "PHP message: PHP Warning:  The magic method Preloader_Plus\Preloader_Plus::__wakeup() must have public visibility in /var/www/wp-content/plugins/inc/preloader-plus.php on line 94PHP message: PHP Warning:  The magic method Preloader_Plus_Pro\Preloader_Plus_Pro::__wakeup() must have public visibility in /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php on line 59" while reading response header from upstream, client: 172.19.18.99, server: 10.13.20.51, request: "POST /wp-admin/admin-ajax.php HTTP/1.1", upstream: "fastcgi://unix:/run/php-fpm/www.sock:", host: "10.13.20.51", referrer: "http://10.13.20.51/wp-admin/post.php?post=28215&action=elementor"
-2025/11/24 16:14:23 [error] 627879#627879: *1145 FastCGI sent in stderr: "PHP message: PHP Fatal error:  Uncaught Error: Undefined constant Elementor\Core\Kits\Documents\Tabs\Global_Typography::TYPOGRAPHY_1 in /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php:579
-2025/11/24 16:14:39 [error] 627881#627881: *1166 FastCGI sent in stderr: "PHP message: PHP Fatal error:  Uncaught Error: Undefined constant Elementor\Core\Kits\Documents\Tabs\Global_Typography::TYPOGRAPHY_1 in /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php:579
-2025/11/24 16:15:07 [error] 627881#627881: *1180 FastCGI sent in stderr: "PHP message: PHP Fatal error:  Uncaught Error: Undefined constant Elementor\Core\Kits\Documents\Tabs\Global_Typography::TYPOGRAPHY_1 in /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php:579
-
-
-sudo grep -n "Schemes\|Global_Typography" /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php | head -10
-579:                            'scheme' => Elementor\Core\Kits\Documents\Tabs\Global_Typography::TYPOGRAPHY_1,
-
+sed -n '575,585p' /var/www/wp-content/plugins/widgets/portfolio-filter/portfolio-filter-widget.php

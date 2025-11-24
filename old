@@ -1,3 +1,11 @@
 grep -rn "Schemes\|::TYPOGRAPHY_\|::COLOR_" /var/www/wp-content/plugins/widgets/ | head -20
+/var/www/wp-content/plugins/widgets/team-filter/team-filter-widget.php:823:       'scheme' => Elementor\Core\Schemes\Typography::TYPOGRAPHY_1,
+/var/www/wp-content/plugins/widgets/logo-widget/logo.php:949:                'scheme' => Elementor\Core\Schemes\Typography::TYPOGRAPHY_2,
+/var/www/wp-content/plugins/widgets/logo-widget/logo.php:1100:                'scheme' => Elementor\Core\Schemes\Typography::TYPOGRAPHY_2,
+/var/www/wp-content/plugins/widgets/counter/rs-counter.php:16:use Elementor\Core\Schemes\Typography;
+/var/www/wp-content/plugins/widgets/counter/rs-counter.php:18:use Elementor\Core\Schemes\Color;
+/var/www/wp-content/plugins/widgets/table/table-normal.php:6:use \Elementor\Core\Schemes\Typography;
+/var/www/wp-content/plugins/widgets/table/table.php:6:use \Elementor\Core\Schemes\Typography;
+[agashkoev_
 
 tail -10 /var/log/nginx/wordpress_error.log | grep -i fatal

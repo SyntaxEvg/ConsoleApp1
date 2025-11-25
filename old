@@ -1,21 +1,15 @@
-catch (Exception ex)
-{
-    Log.Error("========== ДЕТАЛИ ОШИБКИ ==========");
-    Log.Error($"Message: {ex.Message}");
-    Log.Error($"Type: {ex.GetType().FullName}");
-    
-    if (ex.InnerException != null)
-    {
-        Log.Error($"InnerException: {ex.InnerException.Message}");
-        Log.Error($"InnerException Type: {ex.InnerException.GetType().FullName}");
-    }
-    
-    Log.Error($"StackTrace: {ex.StackTrace}");
-    Log.Error("====================================");
-    throw;
-}
-```
-
-### Вариант 2: Пересоберите проект
-```
-Clean Solution → Rebuild Solution
+SQL Server миграция
+Миграция 1: Получение ApplicationDbContext...
+Миграция 1: ApplicationDbContext = OK
+Миграция 1: Проверка Database...
+Миграция 1: Database = OK
+Миграция 1: Проверка ProviderName...
+Миграция 1: ProviderName = Microsoft.EntityFrameworkCore.SqlServer
+Миграция 1: Проверка ConnectionString...
+Миграция 1: ConnectionString = OK (длина: 111)
+Миграция 1: Вызов Migrate()...
+ОШИБКА при миграции ApplicationDbContext
+=== MigrateDatabase: КРИТИЧЕСКАЯ ОШИБКА ===
+ОШИБКА в блоке SQL Server
+Закрытие соединения с БД...
+Unhandled exception

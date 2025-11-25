@@ -1,35 +1,91 @@
-=== EnsureSeedData: НАЧАЛО ===
-Шаг 1: BuildServiceProvider...
-Шаг 1: BuildServiceProvider - OK
-Шаг 2: Получение ApplicationDbContext...
-Шаг 2: ApplicationDbContext = OK
-Шаг 3: Получение ConfigurationDbContext...
-Шаг 3: ConfigurationDbContext = OK
-Шаг 4: Получение ILogger...
-Шаг 4: ILogger = OK
-Шаг 5: Проверка IsInMemory...
-Шаг 5.1: context.Database = OK
-Шаг 5: IsInMemory = False
-=== Режим SQL Server (не InMemory) ===
-Шаг 6: Получение ICryptoService...
-Шаг 6: ICryptoService = OK
-Шаг 7: Вызов MigrateDatabase...
-=== MigrateDatabase: НАЧАЛО ===
-Проверка Standalone режима...
-Standalone = False
-isStandalone = False
-=== SQL Server миграция ===
-Миграция 1: Получение ApplicationDbContext...
-Миграция 1: ApplicationDbContext = OK
-Миграция 1: Проверка Database...
-Миграция 1: Database = OK
-Миграция 1: Проверка ProviderName...
-Миграция 1: ProviderName = Microsoft.EntityFrameworkCore.SqlServer
-Миграция 1: Проверка ConnectionString...
-Миграция 1: ConnectionString = OK (длина: 111)
+// ApplicationDbContext
+try
+{
+    Log.Information("Миграция 1: Получение ApplicationDbContext...");
+    var appDbContext = services.GetRequiredService<ApplicationDbContext>();
+    Log.Information($"Миграция 1: ApplicationDbContext = {(appDbContext != null ? "OK" : "NULL")}");
+    
+    Log.Information("Миграция 1: Проверка Database...");
+    var database = appDbContext.Database;
+    Log.Information($"Миграция 1: Database = {(database != null ? "OK" : "NULL")}");
+    
+    Log.Information("Миграция 1: Проверка ProviderName...");
+    var providerName = database.ProviderName;
+    Log.Information($"Миграция 1: ProviderName = {providerName}");
+    
+    Log.Information("Миграция 1: Проверка ConnectionString...");
+    var connectionString = database.GetConnectionString();
+    Log.Information($"Миграция 1: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+    
+    // НОВОЕ: Выводим connection string (маскируем пароль)
+    if (!string.IsNullOrEmpty(connectionString))
+    {
+        var maskedCs = System.Text.RegularExpressions.Regex.Replace(
+            connectionString, 
+            @"(Password|Pwd)\s*=\s*[^;]+", 
+            "$1=***", 
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        Log.Information($"Миграция 1: ConnectionString (masked) = {maskedCs}");
+    }
+    
+    // НОВОЕ: Пробуем открыть соединение вручную
+    Log.Information("Миграция 1: Тест открытия соединения...");
+    try
+    {
+        database.OpenConnection();
+        Log.Information("Миграция 1: Соединение открыто успешно!");
+        database.CloseConnection();
+        Log.Information("Миграция 1: Соединение закрыто.");
+    }
+    catch (Exception connEx)
+    {
+        Log.Error($"Миграция 1: ОШИБКА открытия соединения: {connEx.Message}");
+        if (connEx.InnerException != null)
+        {
+            Log.Error($"Миграция 1: InnerException: {connEx.InnerException.Message}");
+        }
+        throw;
+    }
+    
+    Log.Information("Миграция 1: Вызов Migrate()...");
+    database.Migrate();
+    Log.Information("Миграция 1: ApplicationDbContext.Migrate() - OK");
+}
+catch (Exception ex)
+{
+    // НОВОЕ: Подробный вывод ошибки
+    Log.Error($"ОШИБКА при миграции ApplicationDbContext:");
+    Log.Error($"  Message: {ex.Message}");
+    Log.Error($"  Type: {ex.GetType().FullName}");
+    
+    if (ex.InnerException != null)
+    {
+        Log.Error($"  InnerException.Message: {ex.InnerException.Message}");
+        Log.Error($"  InnerException.Type: {ex.InnerException.GetType().FullName}");
+        
+        if (ex.InnerException.InnerException != null)
+        {
+            Log.Error($"  InnerException.InnerException: {ex.InnerException.InnerException.Message}");
+        }
+    }
+    
+    Log.Error($"  StackTrace: {ex.StackTrace}");
+    throw;
+}
+```
+
+## После запуска увидите что-то вроде:
+```
+Миграция 1: ConnectionString (masked) = Server=localhost;Database=UAS;User Id=sa;Password=***
+Миграция 1: Тест открытия соединения...
+Миграция 1: ОШИБКА открытия соединения: A network-related or instance-specific error...
+```
+
+Или:
+```
+Миграция 1: Тест открытия соединения...
+Миграция 1: Соединение открыто успешно!
 Миграция 1: Вызов Migrate()...
-ОШИБКА при миграции ApplicationDbContext
-=== MigrateDatabase: КРИТИЧЕСКАЯ ОШИБКА ===
-ОШИБКА в блоке SQL Server
-Закрытие соединения с БД...
-Unhandled exception
+ОШИБКА при миграции ApplicationDbContext:
+  Message: Object reference not set to an instance of an object
+  InnerException.Message: ...

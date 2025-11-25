@@ -1,21 +1,326 @@
-Application: HAS.Modules.UAS.exe
-CoreCLR Version: 8.0.1625.21506
-.NET Version: 8.0.16
-Description: The process was terminated due to an unhandled exception.
-Exception Info: System.NullReferenceException: Object reference not set to an instance of an object.
-   at Microsoft.Data.SqlClient.SqlConnection.get_State()
-   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.Open(Boolean errorsExpected)
-   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerDatabaseCreator.<>c__DisplayClass18_0.<Exists>b__0(DateTime giveUp)
-   at Microsoft.EntityFrameworkCore.ExecutionStrategyExtensions.<>c__DisplayClass12_0`2.<Execute>b__0(DbContext c, TState s)
-   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
-   at Microsoft.EntityFrameworkCore.ExecutionStrategyExtensions.Execute[TState,TResult](IExecutionStrategy strategy, TState state, Func`2 operation, Func`2 verifySucceeded)
-   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerDatabaseCreator.Exists(Boolean retryOnNotExists)
-   at Microsoft.EntityFrameworkCore.SqlServer.Storage.Internal.SqlServerDatabaseCreator.Exists()
-   at Microsoft.EntityFrameworkCore.Migrations.HistoryRepository.Exists()
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
-   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
-   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 92
-   at Mega.Has.Modules.UAS.SeedData.EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 47
-   at HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.ConfigureUAS(IServiceCollection services) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Extensions\ServiceCollectionExtensions.cs:line 185
-   at Program.Main(String[] args) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Program.cs:line 55
-   at Program.<Main>(String[] args)
+using Dapper;
+using HAS.Server.SiteModule.Cache;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Entities;
+using IdentityServer4.EntityFramework.Mappers;
+using IdentityServer4.Models;
+using Mega.Has.Commons;
+using Mega.Has.Commons.Security;
+using Mega.Has.Modules.UAS.Models;
+using Mega.Has.Modules.UAS.Providers;
+using Mega.Has.Modules.UAS.Providers.Google;
+using Mega.Has.Modules.UAS.Providers.Hopex;
+using Mega.Has.Modules.UAS.Providers.Saml2;
+using Mega.Has.Modules.UAS.Providers.Windows;
+using Mega.Has.Modules.UAS.Stores;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Runtime.CompilerServices;
+
+namespace Mega.Has.Modules.UAS
+{
+    public class SeedData
+    {
+        public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
+        {
+            ServiceProvider services = serviceCollection.BuildServiceProvider();
+            using (IServiceScope scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            {
+                ApplicationDbContext uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+                ConfigurationDbContext context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
+                ILogger<SeedData> logger = services.GetService<ILogger<SeedData>>();
+                if (!context.Database.IsInMemory())
+                {
+                    try
+                    {
+                        ICryptoService cryptoService = services.GetRequiredService<ICryptoService>();
+                        SeedData.MigrateDatabase(logger, services, cryptoService);
+                        SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
+                        SeedData.EnsureSeedData(logger, uasContext);
+                        Microsoft.Extensions.Logging.ILogger logger2 = logger;
+                        ConfigurationDbContext configurationDbContext = context;
+                        string publicAddress = serverConfigurations.RuntimeClusterSettings.PublicAddress;
+                        RunningMode? mode = serverConfigurations.RuntimeClusterSettings.Mode;
+                        RunningMode runningMode = RunningMode.Development;
+                        SeedData.EnsurePublicAddress(logger2, configurationDbContext, publicAddress, (mode.GetValueOrDefault() == runningMode) & (mode != null));
+                        return;
+                    }
+                    finally
+                    {
+                        bool? testMode = serverConfigurations.StartingArguments.TestMode;
+                        bool flag = false;
+                        if ((testMode.GetValueOrDefault() == flag) & (testMode != null))
+                        {
+                            context.Database.CloseConnection();
+                        }
+                    }
+                }
+                SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
+                SeedData.EnsureSeedData(logger, uasContext);
+            }
+        }
+
+        private static void EnsureSQLiteDatabaseCreated(DatabaseFacade database)
+        {
+            string sql = database.GenerateCreateScript();
+            try
+            {
+                database.ExecuteSqlRaw(sql, Array.Empty<object>());
+            }
+            catch
+            {
+            }
+        }
+
+        private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
+        {
+            bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
+            bool flag = true;
+            if (!((standalone.GetValueOrDefault() == flag) & (standalone != null)))
+            {
+                logger.LogInformation("Migrate databases", Array.Empty<object>());
+                services.GetRequiredService<ApplicationDbContext>().Database.Migrate();
+                services.GetRequiredService<ConfigurationDbContext>().Database.Migrate();
+                services.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
+                string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
+                SeedData.Migrate_HAS_5_0To5_0_1(cnx);
+                SeedData.Migrate_HAS_5_0_xTo5_0_5(cnx);
+                SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
+                if (slqCreator.CreateTableAndIndexes(cnx) != 0)
+                {
+                    throw new Exception("Unable to create cache tables in database");
+                }
+            }
+            else
+            {
+                SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
+                SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
+                SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
+            }
+        }
+
+        internal static void Migrate_HAS_5_0To5_0_1(string cnxString)
+        {
+            using (SqlConnection connection = new SqlConnection(cnxString))
+            {
+                SeedData.MigrateOldConfigTable<WindowsConfig>(connection);
+                SeedData.MigrateOldConfigTable<HopexConfig>(connection);
+                SeedData.MigrateOldConfigTable<Saml2Config>(connection);
+                SeedData.MigrateOldConfigTable<OpenIdConfig>(connection);
+                try
+                {
+                    foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>())
+                    {
+                        IdentityServer4.EntityFramework.Entities.ApiResource apiResource = connection.Query<IdentityServer4.EntityFramework.Entities.ApiResource>("select * from [dbo].[ApiResources] where Name='" + resource.Name + "'", null, null, true, null, null).FirstOrDefault();
+                        if (apiResource != null)
+                        {
+                            IDbConnection dbConnection = connection;
+                            DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(62, 1);
+                            defaultInterpolatedStringHandler.AppendLiteral("select * from [dbo].[ApiResourceScopes] where ApiResourceId='");
+                            defaultInterpolatedStringHandler.AppendFormatted<int>(apiResource.Id);
+                            defaultInterpolatedStringHandler.AppendLiteral("'");
+                            if (dbConnection.Query<ApiResourceScope>(defaultInterpolatedStringHandler.ToStringAndClear(), null, null, true, null, null).FirstOrDefault() == null)
+                            {
+                                var p = new
+                                {
+                                    ApiResourceId = apiResource.Id,
+                                    Scope = resource.Scopes.First<string>()
+                                };
+                                connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p, null, null, null);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Logger.Error(ex, "Warning");
+                }
+            }
+        }
+
+        internal static void Migrate_HAS_5_0_xTo5_0_5(string cnxString)
+        {
+            using (SqlConnection connection = new SqlConnection(cnxString))
+            {
+                try
+                {
+                    SeedData.updateClaimForSub<OpenIdConfig>(connection);
+                    SeedData.updateClaimForSub<Saml2Config>(connection);
+                }
+                catch (Exception ex)
+                {
+                    Log.Logger.Error(ex, "Warning");
+                }
+            }
+        }
+
+        private static void updateClaimForSub<T>(SqlConnection connection) where T : new()
+        {
+            IEnumerable<ExternalProvider> externalProviders = connection.Query<ExternalProvider>("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null);
+            foreach (ExternalProvider ep in externalProviders)
+            {
+                T cfg = ep.GetConfiguration<T>();
+                dynamic cfgDyn = cfg;
+                if (string.IsNullOrEmpty(cfgDyn.ClaimForSub))
+                {
+                    cfgDyn.ClaimForSub = "name";
+                    ep.SetConfiguration<T>(cfg);
+                    DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(77, 1);
+                    defaultInterpolatedStringHandler.AppendLiteral("update [dbo].[externalproviders] set Configuration=@Configuration where id = ");
+                    defaultInterpolatedStringHandler.AppendFormatted<int>(ep.Id);
+                    connection.Execute(defaultInterpolatedStringHandler.ToStringAndClear(), ep, null, null, null);
+                }
+            }
+        }
+
+        private static void MigrateOldConfigTable<T>(SqlConnection connection)
+        {
+            T cfg;
+            try
+            {
+                cfg = connection.Query<T>("select * from [dbo].[" + typeof(T).Name + "]", null, null, true, null, null).FirstOrDefault();
+            }
+            catch
+            {
+                return;
+            }
+            try
+            {
+                if (cfg != null)
+                {
+                    OldExternalProvider ep = connection.Query<OldExternalProvider>("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null).FirstOrDefault();
+                    if (ep != null)
+                    {
+                        (cfg as ProviderConfigBase).ClaimForRoles = ep.ClaimForRoles ?? (cfg as ProviderConfigBase).ClaimForRoles;
+                        if (typeof(T) == typeof(WindowsConfig))
+                        {
+                            WindowsConfig winCfg = cfg as WindowsConfig;
+                            winCfg.WindowsSourceIdentifier = ep.WindowsSourceIdentifier ?? winCfg.WindowsSourceIdentifier;
+                            winCfg.WindowsRole = ep.WindowsRole ?? winCfg.WindowsRole;
+                        }
+                        ep.SetConfiguration<T>(cfg);
+                        connection.Execute("update [dbo].[externalproviders] set Configuration=@Configuration where type = '" + typeof(T).Name + "'", ep, null, null, null);
+                    }
+                }
+                connection.Execute("drop table [dbo].[" + typeof(T).Name + "]", null, null, null, null);
+            }
+            catch (Exception ex)
+            {
+                Log.Logger.Error(ex, "Warning");
+            }
+        }
+
+        private static void EnsurePublicAddress(Microsoft.Extensions.Logging.ILogger logger, ConfigurationDbContext context, string publicAddress, bool isDevelopmentMode)
+        {
+            IIncludableQueryable<IdentityServer4.EntityFramework.Entities.Client, List<ClientRedirectUri>> query = context.Clients.Include((IdentityServer4.EntityFramework.Entities.Client x) => x.PostLogoutRedirectUris).Include((IdentityServer4.EntityFramework.Entities.Client x) => x.RedirectUris);
+            logger.LogInformation("URLS Redirections are updating to public address " + publicAddress + "...", Array.Empty<object>());
+            UriBuilder publicUri = new UriBuilder(publicAddress);
+            foreach (IdentityServer4.EntityFramework.Entities.Client client in query)
+            {
+                if (client.FrontChannelLogoutUri != null)
+                {
+                    client.FrontChannelLogoutUri = UpdateUri(client.FrontChannelLogoutUri, publicUri, isDevelopmentMode);
+                }
+                foreach (ClientRedirectUri redir in client.RedirectUris)
+                {
+                    redir.RedirectUri = UpdateUri(redir.RedirectUri, publicUri, isDevelopmentMode);
+                }
+                foreach (ClientPostLogoutRedirectUri redir2 in client.PostLogoutRedirectUris)
+                {
+                    redir2.PostLogoutRedirectUri = UpdateUri(redir2.PostLogoutRedirectUri, publicUri, isDevelopmentMode);
+                }
+            }
+            context.SaveChanges();
+        }
+
+        private static string UpdateUri(string uri, UriBuilder publicUri, bool isDevelopmentMode)
+        {
+            UriBuilder url = new UriBuilder(uri)
+            {
+                Port = publicUri.Port,
+                Host = publicUri.Host,
+                Scheme = publicUri.Scheme
+            };
+            if (url.Port == 80 || url.Port == 443)
+            {
+                url.Port = -1;
+            }
+            if (isDevelopmentMode && string.Compare(url.Path, "/authentication/login-callback", true) == 0)
+            {
+                return uri;
+            }
+            return url.ToString();
+        }
+
+        private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, IClusterConfiguration serverConfigurations, ApplicationDbContext uasContext, ConfigurationDbContext configurationStoreContext, ICryptoService cryptoService)
+        {
+            logger.LogInformation("Seeding database...", Array.Empty<object>());
+            logger.LogInformation("Updating AccessTokens...", Array.Empty<object>());
+            foreach (AccessToken user in DefaultConfiguration.GetAccessTokens(cryptoService))
+            {
+                if (uasContext.AccessTokens.FirstOrDefault((AccessToken a) => a.TokenName == user.TokenName) == null)
+                {
+                    uasContext.AccessTokens.Add(user);
+                }
+            }
+            logger.LogInformation("Updating Clients...", Array.Empty<object>());
+            foreach (IdentityServer4.Models.Client client in DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings))
+            {
+                if (configurationStoreContext.Clients.FirstOrDefault((IdentityServer4.EntityFramework.Entities.Client a) => a.ClientId == client.ClientId) == null)
+                {
+                    IdentityServer4.EntityFramework.Entities.Client c = client.ToEntity();
+                    c.NonEditable = true;
+                    configurationStoreContext.Clients.Add(c);
+                }
+            }
+            logger.LogInformation("Updating Scope...", Array.Empty<object>());
+            foreach (IdentityServer4.Models.ApiScope scope in DefaultConfiguration.GetApiScopes())
+            {
+                if (configurationStoreContext.ApiScopes.FirstOrDefault((IdentityServer4.EntityFramework.Entities.ApiScope a) => a.Name == scope.Name) == null)
+                {
+                    configurationStoreContext.ApiScopes.Add(scope.ToEntity());
+                }
+            }
+            logger.LogInformation("Updating IdentityResources...", Array.Empty<object>());
+            foreach (IdentityServer4.Models.IdentityResource resource in DefaultConfiguration.GetIdentityResources())
+            {
+                if (configurationStoreContext.IdentityResources.FirstOrDefault((IdentityServer4.EntityFramework.Entities.IdentityResource a) => a.Name == resource.Name) == null)
+                {
+                    configurationStoreContext.IdentityResources.Add(resource.ToEntity());
+                }
+            }
+            logger.LogInformation("Updating ApiResources...", Array.Empty<object>());
+            foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>())
+            {
+                if (configurationStoreContext.ApiResources.FirstOrDefault((IdentityServer4.EntityFramework.Entities.ApiResource a) => a.Name == resource.Name) == null)
+                {
+                    configurationStoreContext.ApiResources.Add(resource.ToEntity());
+                }
+            }
+            configurationStoreContext.SaveChanges();
+        }
+
+        private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, ApplicationDbContext uasContext)
+        {
+            logger.LogInformation("Updating External Providers...", Array.Empty<object>());
+            foreach (ExternalProvider externalProvider in DefaultConfiguration.GetExternalProviders())
+            {
+                if (uasContext.ExternalProviders.FirstOrDefault((ExternalProvider a) => a.AuthenticationScheme == externalProvider.AuthenticationScheme) == null)
+                {
+                    uasContext.ExternalProviders.Add(externalProvider);
+                }
+            }
+            uasContext.SaveChanges();
+        }
+    }
+}

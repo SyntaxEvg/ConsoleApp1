@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
 using HAS.Modules.UAS.Services;
@@ -34,297 +33,176 @@ using Serilog;
 
 namespace HAS.Modules.UAS.Extensions
 {
-	// Token: 0x020000CD RID: 205
-	public static class ServiceCollectionExtensions
-	{
-		// Token: 0x06000854 RID: 2132 RVA: 0x000194C4 File Offset: 0x000176C4
-		public static IServiceCollection ConfigureForwardedHeaders(this IServiceCollection services)
-		{
-			services.Configure(new Action<ForwardedHeadersOptions>(HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c.<>9.<ConfigureForwardedHeaders>b__0_0));
-			return services;
-		}
+    public static class ServiceCollectionExtensions
+    {
+        public static IServiceCollection ConfigureForwardedHeaders(this IServiceCollection services)
+        {
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.All;
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
+            return services;
+        }
 
-		// Token: 0x06000855 RID: 2133 RVA: 0x000194F0 File Offset: 0x000176F0
-		public static IServiceCollection ConfigureWindowsAuthentication(this IServiceCollection services)
-		{
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-			{
-				HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c__DisplayClass1_0 CS$<>8__locals1 = new HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c__DisplayClass1_0();
-				services.AddAuthentication("Windows");
-				CS$<>8__locals1.requireWindowsProviderPolicy = new AuthorizationPolicyBuilder(Array.Empty<string>()).RequireClaim("http://schemas.microsoft.com/identity/claims/identityprovider", new string[] { "Windows" }).Build();
-				services.AddAuthorization(new Action<AuthorizationOptions>(CS$<>8__locals1.<ConfigureWindowsAuthentication>b__0));
-			}
-			return services;
-		}
+        public static IServiceCollection ConfigureWindowsAuthentication(this IServiceCollection services)
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                services.AddAuthentication("Windows");
+                
+                var requireWindowsProviderPolicy = new AuthorizationPolicyBuilder()
+                    .RequireClaim("http://schemas.microsoft.com/identity/claims/identityprovider", "Windows")
+                    .Build();
+                
+                services.AddAuthorization(options =>
+                {
+                    options.AddPolicy("RequireWindowsProviderPolicy", requireWindowsProviderPolicy);
+                });
+            }
+            return services;
+        }
 
-		// Token: 0x06000856 RID: 2134 RVA: 0x0001955C File Offset: 0x0001775C
-		public static IServiceCollection ConfigureUAS(this IServiceCollection services)
-		{
-			HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c__DisplayClass2_0 CS$<>8__locals1 = new HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c__DisplayClass2_0();
-			CS$<>8__locals1.cryptoService = services.AddHASModule("DFBD9B76-B44D-44EC-86C2-81C5F6BE2C47", new Action<HASSecurityOptions>(HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c.<>9.<ConfigureUAS>b__2_0));
-			CS$<>8__locals1.serverConfigurations = CS$<>8__locals1.cryptoService.Configuration;
-			services.AddDbContext(new Action<DbContextOptionsBuilder>(CS$<>8__locals1.<ConfigureUAS>b__2), ServiceLifetime.Scoped, ServiceLifetime.Scoped);
-			services.AddSingleton<ILoginResolver, LoginResolver>();
-			services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-			services.AddScoped<IExternalProviderService, ExternalProviderService>();
-			services.AddScoped<IClientService, ClientService>();
-			services.AddScoped<IAccessTokenService, AccessTokenService>();
-			services.AddSingleton<ICurrentDateTimeProvider, CurrentDateTimeProvider>();
-			services.AddSingleton<ISupervisionServices, SupervisionServices>();
-			services.AddSingleton<IAuthenticationFailureRepository, AuthenticationFailureRepository>();
-			services.AddSingleton<IAuthenticationFailureHandlingService, AuthenticationFailureHandlingService>();
-			services.AddScoped<ITokenRevocationResponseGenerator, UasTokenRevocationResponseGenerator>();
-			services.AddSingleton<ICorsPolicyService, CorsPolicyService>();
-			services.AddHostedService<CorsOriginsService>();
-			IIdentityServerBuilder identityServerBuilder = services.AddIdentityServer(new Action<IdentityServerOptions>(CS$<>8__locals1.<ConfigureUAS>b__3)).AddConfigurationStore(new Action<ConfigurationStoreOptions>(CS$<>8__locals1.<ConfigureUAS>b__4)).AddOperationalStore(new Action<OperationalStoreOptions>(CS$<>8__locals1.<ConfigureUAS>b__5))
-				.AddSigningCredential(new SigningCredentials(new RsaSecurityKey(CS$<>8__locals1.cryptoService.PrivateKey), "RS256"))
-				.AddHopexUsers();
-			if (HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.ShouldUseInMemoryDatabase(CS$<>8__locals1.serverConfigurations))
-			{
-				identityServerBuilder.AddInMemoryApiResources(DefaultConfiguration.GetApiResources()).AddInMemoryApiScopes(DefaultConfiguration.GetApiScopes()).AddInMemoryClients(DefaultConfiguration.GetClients(CS$<>8__locals1.cryptoService.Configuration.RuntimeClusterSettings))
-					.AddInMemoryIdentityResources(DefaultConfiguration.GetIdentityResources())
-					.AddTestUsers(DefaultConfiguration.GetAccessTokens(null).Select(new Func<AccessToken, TestUser>(HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c.<>9.<ConfigureUAS>b__2_6)).ToList<TestUser>());
-			}
-			else if (ModuleConfiguration.Instance.RunningInHASContext)
-			{
-				AuthenticationBuilder authenticationBuilder = services.AddAuthentication();
-				services.AddScoped<IExternalProvider, OpenIdProvider>();
-				services.AddScoped<IExternalProvider, Saml2Provider>();
-				ServiceProvider serviceProvider = services.BuildServiceProvider();
-				using (serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope())
-				{
-					SeedData.EnsureSeedData(services, CS$<>8__locals1.cryptoService.Configuration, authenticationBuilder);
-					HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.ConfigureExternalProviders(services, serviceProvider, CS$<>8__locals1.serverConfigurations, authenticationBuilder);
-				}
-			}
-			return services;
-		}
+        public static IServiceCollection ConfigureUAS(this IServiceCollection services)
+        {
+            // Инициализация HAS модуля и получение конфигурации
+            var cryptoService = services.AddHASModule("DFBD9B76-B44D-44EC-86C2-81C5F6BE2C47", opts =>
+            {
+                opts.ConfigureAuthorization = options =>
+                {
+                    options.AddPolicy("Administrator", policy =>
+                    {
+                        policy.RequireAuthenticatedUser()
+                            .RequireAssertion(ctx =>
+                            {
+                                try
+                                {
+                                    return ctx.User.Identity.AuthenticationType == "InternalApiKeyScheme" ||
+                                           ctx.User.IsAuthorizedForModule("has.uas") ||
+                                           string.Compare(ctx.User.FindFirstValue("sub"), "admin", StringComparison.OrdinalIgnoreCase) == 0;
+                                }
+                                catch
+                                {
+                                    return false;
+                                }
+                            });
+                    });
+                };
+            });
 
-		// Token: 0x06000857 RID: 2135 RVA: 0x00019764 File Offset: 0x00017964
-		private static void ConfigureExternalProviders(IServiceCollection serviceCollection, ServiceProvider services, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
-		{
-			IEnumerable<IExternalProvider> providers = services.GetServices<IExternalProvider>();
-			if (providers != null)
-			{
-				foreach (IExternalProvider provider in providers)
-				{
-					try
-					{
-						Log.Information("Using external provider " + provider.GetType().Name);
-						provider.Configure(authenticationBuilder);
-					}
-					catch (Exception ex)
-					{
-						Log.Error(ex, "Provider " + ((provider != null) ? provider.GetType().Name : null) + " configuration failed.");
-						if (provider != null)
-						{
-							provider.Enabled = false;
-						}
-					}
-				}
-			}
-		}
+            var serverConfigurations = cryptoService.Configuration;
 
-		// Token: 0x06000858 RID: 2136 RVA: 0x00019814 File Offset: 0x00017A14
-		internal static bool ShouldUseInMemoryDatabase(IClusterConfiguration serverConfigurations)
-		{
-			bool? flag = serverConfigurations.StartingArguments.TestMode;
-			bool flag2 = true;
-			if (((flag.GetValueOrDefault() == flag2) & (flag != null)) || !serverConfigurations.IsInitialized)
-			{
-				flag = serverConfigurations.StartingArguments.Standalone;
-				flag2 = true;
-				return !((flag.GetValueOrDefault() == flag2) & (flag != null));
-			}
-			return false;
-		}
+            // ИСПРАВЛЕНИЕ: Добавляем DbContext с явным типом (замените ApplicationDbContext на ваш тип)
+            services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
+            {
+                ResolveDbOptions(serverConfigurations, options, "application");
+            }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
-		// Token: 0x02000216 RID: 534
-		[CompilerGenerated]
-		[Serializable]
-		private sealed class <>c
-		{
-			// Token: 0x06000D22 RID: 3362 RVA: 0x0006940E File Offset: 0x0006760E
-			[global::System.Runtime.CompilerServices.NullableContext(1)]
-			internal void <ConfigureForwardedHeaders>b__0_0(ForwardedHeadersOptions options)
-			{
-				options.ForwardedHeaders = ForwardedHeaders.All;
-				options.KnownNetworks.Clear();
-				options.KnownProxies.Clear();
-			}
+            // Регистрация сервисов
+            services.AddSingleton<ILoginResolver, LoginResolver>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddScoped<IExternalProviderService, ExternalProviderService>();
+            services.AddScoped<IClientService, ClientService>();
+            services.AddScoped<IAccessTokenService, AccessTokenService>();
+            services.AddSingleton<ICurrentDateTimeProvider, CurrentDateTimeProvider>();
+            services.AddSingleton<ISupervisionServices, SupervisionServices>();
+            services.AddSingleton<IAuthenticationFailureRepository, AuthenticationFailureRepository>();
+            services.AddSingleton<IAuthenticationFailureHandlingService, AuthenticationFailureHandlingService>();
+            services.AddScoped<ITokenRevocationResponseGenerator, UasTokenRevocationResponseGenerator>();
+            services.AddSingleton<ICorsPolicyService, CorsPolicyService>();
+            services.AddHostedService<CorsOriginsService>();
 
-			// Token: 0x06000D23 RID: 3363 RVA: 0x0006942D File Offset: 0x0006762D
-			internal void <ConfigureUAS>b__2_0(HASSecurityOptions opts)
-			{
-				opts.ConfigureAuthorization = new Action<AuthorizationOptions>(HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c.<>9.<ConfigureUAS>b__2_7);
-			}
+            // Настройка IdentityServer
+            var identityServerBuilder = services.AddIdentityServer(options =>
+            {
+                options.Events.RaiseErrorEvents = true;
+                options.Events.RaiseInformationEvents = true;
+                options.Events.RaiseFailureEvents = true;
+                options.Events.RaiseSuccessEvents = true;
+                options.Csp.AddDeprecatedHeader = false;
+                options.IssuerUri = cryptoService.Configuration.RuntimeClusterSettings.GetValidIssuer();
+                options.Cors.CorsPaths.Add("/Account/ExternalLogin");
+                options.Cors.CorsPaths.Add("/Account/Login");
+                options.UserInteraction.ErrorUrl = "/account/error";
+            })
+            .AddConfigurationStore(options =>
+            {
+                options.ResolveDbContextOptions = (serviceProvider, o) =>
+                {
+                    ResolveDbOptions(serverConfigurations, o, "uasConfiguration");
+                };
+            })
+            .AddOperationalStore(options =>
+            {
+                options.ResolveDbContextOptions = (serviceProvider, o) =>
+                {
+                    ResolveDbOptions(serverConfigurations, o, "uasGrant");
+                };
+                options.EnableTokenCleanup = true;
+                options.TokenCleanupBatchSize = 500;
+            })
+            .AddSigningCredential(new SigningCredentials(
+                new RsaSecurityKey(cryptoService.PrivateKey), 
+                SecurityAlgorithms.RsaSha256))
+            .AddHopexUsers();
 
-			// Token: 0x06000D24 RID: 3364 RVA: 0x00069454 File Offset: 0x00067654
-			internal void <ConfigureUAS>b__2_7(AuthorizationOptions options)
-			{
-				options.AddPolicy("Administrator", new Action<AuthorizationPolicyBuilder>(HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c.<>9.<ConfigureUAS>b__2_8));
-			}
+            // Настройка провайдеров
+            if (ShouldUseInMemoryDatabase(serverConfigurations))
+            {
+                // In-Memory режим (для тестирования)
+                identityServerBuilder
+                    .AddInMemoryApiResources(DefaultConfiguration.GetApiResources())
+                    .AddInMemoryApiScopes(DefaultConfiguration.GetApiScopes())
+                    .AddInMemoryClients(DefaultConfiguration.GetClients(cryptoService.Configuration.RuntimeClusterSettings))
+                    .AddInMemoryIdentityResources(DefaultConfiguration.GetIdentityResources())
+                    .AddTestUsers(DefaultConfiguration.GetAccessTokens(null)
+                        .Select(u => new TestUser
+                        {
+                            ProviderName = u.ProviderName,
+                            Username = u.TokenName,
+                            SubjectId = u.TokenName,
+                            IsActive = true,
+                            Claims = u.Claims.ToList(),
+                            Password = u.Password
+                        })
+                        .ToList());
+            }
+            else if (ModuleConfiguration.Instance.RunningInHASContext)
+            {
+                // Рабочий режим с БД
+                var authenticationBuilder = services.AddAuthentication();
+                services.AddScoped<IExternalProvider, OpenIdProvider>();
+                services.AddScoped<IExternalProvider, Saml2Provider>();
 
-			// Token: 0x06000D25 RID: 3365 RVA: 0x00069480 File Offset: 0x00067680
-			[global::System.Runtime.CompilerServices.NullableContext(1)]
-			internal void <ConfigureUAS>b__2_8(AuthorizationPolicyBuilder policy)
-			{
-				policy.RequireAuthenticatedUser().RequireAssertion(new Func<AuthorizationHandlerContext, bool>(HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c.<>9.<ConfigureUAS>b__2_9));
-			}
+                // ИСПРАВЛЕНИЕ: Создаем scope правильно
+                var serviceProvider = services.BuildServiceProvider();
+                using (var scope = serviceProvider.CreateScope())
+                {
+                    var scopedServices = scope.ServiceProvider;
+                    
+                    // ИСПРАВЛЕНИЕ: Инициализируем seed data внутри scope
+                    SeedData.EnsureSeedData(services, cryptoService.Configuration, authenticationBuilder);
+                    
+                    ConfigureExternalProviders(services, serviceProvider, serverConfigurations, authenticationBuilder);
+                }
+            }
 
-			// Token: 0x06000D26 RID: 3366 RVA: 0x000694B0 File Offset: 0x000676B0
-			[global::System.Runtime.CompilerServices.NullableContext(1)]
-			internal bool <ConfigureUAS>b__2_9(AuthorizationHandlerContext ctx)
-			{
-				bool flag;
-				try
-				{
-					flag = ctx.User.Identity.AuthenticationType == "InternalApiKeyScheme" || ctx.User.IsAuthorizedForModule("has.uas") || string.Compare(ctx.User.FindFirstValue("sub"), "admin", StringComparison.OrdinalIgnoreCase) == 0;
-				}
-				catch
-				{
-					flag = false;
-				}
-				return flag;
-			}
+            return services;
+        }
 
-			// Token: 0x06000D27 RID: 3367 RVA: 0x00069528 File Offset: 0x00067728
-			internal TestUser <ConfigureUAS>b__2_6(AccessToken u)
-			{
-				return new TestUser
-				{
-					ProviderName = u.ProviderName,
-					Username = u.TokenName,
-					SubjectId = u.TokenName,
-					IsActive = true,
-					Claims = u.Claims.ToList<Claim>(),
-					Password = u.Password
-				};
-			}
-
-			// Token: 0x04000C2B RID: 3115
-			public static readonly HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c <>9 = new HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.<>c();
-
-			// Token: 0x04000C2C RID: 3116
-			[global::System.Runtime.CompilerServices.Nullable(new byte[] { 0, 1 })]
-			public static Action<ForwardedHeadersOptions> <>9__0_0;
-
-			// Token: 0x04000C2D RID: 3117
-			[global::System.Runtime.CompilerServices.Nullable(new byte[] { 0, 1 })]
-			public static Func<AuthorizationHandlerContext, bool> <>9__2_9;
-
-			// Token: 0x04000C2E RID: 3118
-			[global::System.Runtime.CompilerServices.Nullable(new byte[] { 0, 1 })]
-			public static Action<AuthorizationPolicyBuilder> <>9__2_8;
-
-			// Token: 0x04000C2F RID: 3119
-			public static Action<AuthorizationOptions> <>9__2_7;
-
-			// Token: 0x04000C30 RID: 3120
-			public static Action<HASSecurityOptions> <>9__2_0;
-
-			// Token: 0x04000C31 RID: 3121
-			public static Func<AccessToken, TestUser> <>9__2_6;
-		}
-
-		// Token: 0x02000217 RID: 535
-		[CompilerGenerated]
-		private sealed class <>c__DisplayClass1_0
-		{
-			// Token: 0x06000D29 RID: 3369 RVA: 0x0006958A File Offset: 0x0006778A
-			[global::System.Runtime.CompilerServices.NullableContext(1)]
-			internal void <ConfigureWindowsAuthentication>b__0(AuthorizationOptions options)
-			{
-				options.AddPolicy("RequireWindowsProviderPolicy", this.requireWindowsProviderPolicy);
-			}
-
-			// Token: 0x04000C32 RID: 3122
-			public AuthorizationPolicy requireWindowsProviderPolicy;
-		}
-
-		// Token: 0x02000218 RID: 536
-		[CompilerGenerated]
-		private sealed class <>c__DisplayClass2_0
-		{
-			// Token: 0x06000D2B RID: 3371 RVA: 0x000695A8 File Offset: 0x000677A8
-			internal void <ConfigureUAS>g__resolveDbOptions|1(IServiceProvider _, DbContextOptionsBuilder options, string name)
-			{
-				if (HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.ShouldUseInMemoryDatabase(this.serverConfigurations))
-				{
-					options.UseInMemoryDatabase("test", null);
-					return;
-				}
-				options.UseSqlFromConfiguration(this.serverConfigurations, "_" + name + "MigrationsHistory", null, typeof(Startup).Assembly);
-			}
-
-			// Token: 0x06000D2C RID: 3372 RVA: 0x000695FD File Offset: 0x000677FD
-			[global::System.Runtime.CompilerServices.NullableContext(1)]
-			internal void <ConfigureUAS>b__2(DbContextOptionsBuilder options)
-			{
-				this.<ConfigureUAS>g__resolveDbOptions|1(null, options, "application");
-			}
-
-			// Token: 0x06000D2D RID: 3373 RVA: 0x0006960C File Offset: 0x0006780C
-			internal void <ConfigureUAS>b__3(IdentityServerOptions options)
-			{
-				options.Events.RaiseErrorEvents = true;
-				options.Events.RaiseInformationEvents = true;
-				options.Events.RaiseFailureEvents = true;
-				options.Events.RaiseSuccessEvents = true;
-				options.Csp.AddDeprecatedHeader = false;
-				options.IssuerUri = this.cryptoService.Configuration.RuntimeClusterSettings.GetValidIssuer();
-				options.Cors.CorsPaths.Add("/Account/ExternalLogin");
-				options.Cors.CorsPaths.Add("/Account/Login");
-				options.UserInteraction.ErrorUrl = "/account/error";
-			}
-
-			// Token: 0x06000D2E RID: 3374 RVA: 0x000696B4 File Offset: 0x000678B4
-			internal void <ConfigureUAS>b__4(ConfigurationStoreOptions options)
-			{
-				Action<IServiceProvider, DbContextOptionsBuilder> action;
-				if ((action = this.<>9__10) == null)
-				{
-					action = (this.<>9__10 = new Action<IServiceProvider, DbContextOptionsBuilder>(this.<ConfigureUAS>b__10));
-				}
-				options.ResolveDbContextOptions = action;
-			}
-
-			// Token: 0x06000D2F RID: 3375 RVA: 0x000696E6 File Offset: 0x000678E6
-			internal void <ConfigureUAS>b__10(IServiceProvider _, DbContextOptionsBuilder o)
-			{
-				this.<ConfigureUAS>g__resolveDbOptions|1(_, o, "uasConfiguration");
-			}
-
-			// Token: 0x06000D30 RID: 3376 RVA: 0x000696F8 File Offset: 0x000678F8
-			internal void <ConfigureUAS>b__5(OperationalStoreOptions options)
-			{
-				Action<IServiceProvider, DbContextOptionsBuilder> action;
-				if ((action = this.<>9__11) == null)
-				{
-					action = (this.<>9__11 = new Action<IServiceProvider, DbContextOptionsBuilder>(this.<ConfigureUAS>b__11));
-				}
-				options.ResolveDbContextOptions = action;
-				options.EnableTokenCleanup = true;
-				options.TokenCleanupBatchSize = 500;
-			}
-
-			// Token: 0x06000D31 RID: 3377 RVA: 0x0006973C File Offset: 0x0006793C
-			internal void <ConfigureUAS>b__11(IServiceProvider _, DbContextOptionsBuilder o)
-			{
-				this.<ConfigureUAS>g__resolveDbOptions|1(_, o, "uasGrant");
-			}
-
-			// Token: 0x04000C33 RID: 3123
-			public IClusterConfiguration serverConfigurations;
-
-			// Token: 0x04000C34 RID: 3124
-			public ICryptoService cryptoService;
-
-			// Token: 0x04000C35 RID: 3125
-			public Action<IServiceProvider, DbContextOptionsBuilder> <>9__10;
-
-			// Token: 0x04000C36 RID: 3126
-			public Action<IServiceProvider, DbContextOptionsBuilder> <>9__11;
-		}
-	}
-}
+        private static void ConfigureExternalProviders(
+            IServiceCollection serviceCollection,
+            ServiceProvider services,
+            IClusterConfiguration serverConfigurations,
+            AuthenticationBuilder authenticationBuilder)
+        {
+            var providers = services.GetServices<IExternalProvider>();
+            if (providers != null)
+            {
+                foreach (var provider in providers)
+                {
+                    try
+                    {
+                        Log.Information($"Using external provider {provider.GetType().Name}");
+                        p

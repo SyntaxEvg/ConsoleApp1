@@ -1,31 +1,20 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Dapper;
-using HAS.Server.SiteModule.Cache;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Entities;
 using IdentityServer4.EntityFramework.Mappers;
-using IdentityServer4.Models;
 using Mega.Has.Commons;
 using Mega.Has.Commons.Security;
 using Mega.Has.Modules.UAS.Models;
-using Mega.Has.Modules.UAS.Providers;
-using Mega.Has.Modules.UAS.Providers.Google;
-using Mega.Has.Modules.UAS.Providers.Hopex;
-using Mega.Has.Modules.UAS.Providers.Saml2;
-using Mega.Has.Modules.UAS.Providers.Windows;
-using Mega.Has.Modules.UAS.Stores;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace Mega.Has.Modules.UAS
 {
@@ -33,27 +22,103 @@ namespace Mega.Has.Modules.UAS
     {
         public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
         {
-            ServiceProvider services = serviceCollection.BuildServiceProvider();
+            Log.Information("=== EnsureSeedData: НАЧАЛО ===");
+            
+            ServiceProvider services = null;
+            try
+            {
+                Log.Information("Шаг 1: BuildServiceProvider...");
+                services = serviceCollection.BuildServiceProvider();
+                Log.Information("Шаг 1: BuildServiceProvider - OK");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "ОШИБКА на шаге 1: BuildServiceProvider");
+                throw;
+            }
+
             using (IServiceScope scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                ApplicationDbContext uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
-                ConfigurationDbContext context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
-                ILogger<SeedData> logger = services.GetService<ILogger<SeedData>>();
-                if (!context.Database.IsInMemory())
+                ApplicationDbContext uasContext = null;
+                ConfigurationDbContext context = null;
+                ILogger<SeedData> logger = null;
+
+                try
                 {
+                    Log.Information("Шаг 2: Получение ApplicationDbContext...");
+                    uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+                    Log.Information($"Шаг 2: ApplicationDbContext = {(uasContext != null ? "OK" : "NULL")}");
+
+                    Log.Information("Шаг 3: Получение ConfigurationDbContext...");
+                    context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
+                    Log.Information($"Шаг 3: ConfigurationDbContext = {(context != null ? "OK" : "NULL")}");
+
+                    Log.Information("Шаг 4: Получение ILogger...");
+                    logger = services.GetService<ILogger<SeedData>>();
+                    Log.Information($"Шаг 4: ILogger = {(logger != null ? "OK" : "NULL")}");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "ОШИБКА при получении сервисов (шаги 2-4)");
+                    throw;
+                }
+
+                // Проверяем context на null
+                if (context == null)
+                {
+                    Log.Error("ОШИБКА: ConfigurationDbContext равен NULL!");
+                    throw new InvalidOperationException("ConfigurationDbContext is null");
+                }
+
+                bool isInMemory = false;
+                try
+                {
+                    Log.Information("Шаг 5: Проверка IsInMemory...");
+                    Log.Information($"Шаг 5.1: context.Database = {(context.Database != null ? "OK" : "NULL")}");
+                    
+                    isInMemory = context.Database.IsInMemory();
+                    Log.Information($"Шаг 5: IsInMemory = {isInMemory}");
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "ОШИБКА на шаге 5: IsInMemory");
+                    throw;
+                }
+
+                if (!isInMemory)
+                {
+                    Log.Information("=== Режим SQL Server (не InMemory) ===");
                     try
                     {
+                        Log.Information("Шаг 6: Получение ICryptoService...");
                         ICryptoService cryptoService = services.GetRequiredService<ICryptoService>();
-                        SeedData.MigrateDatabase(logger, services, cryptoService);
-                        SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
-                        SeedData.EnsureSeedData(logger, uasContext);
-                        Microsoft.Extensions.Logging.ILogger logger2 = logger;
-                        ConfigurationDbContext configurationDbContext = context;
+                        Log.Information($"Шаг 6: ICryptoService = {(cryptoService != null ? "OK" : "NULL")}");
+
+                        Log.Information("Шаг 7: Вызов MigrateDatabase...");
+                        MigrateDatabase(logger, services, cryptoService);
+                        Log.Information("Шаг 7: MigrateDatabase - OK");
+
+                        Log.Information("Шаг 8: EnsureSeedData (с cryptoService)...");
+                        EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
+                        Log.Information("Шаг 8: EnsureSeedData - OK");
+
+                        Log.Information("Шаг 9: EnsureSeedData (uasContext)...");
+                        EnsureSeedData(logger, uasContext);
+                        Log.Information("Шаг 9: EnsureSeedData - OK");
+
+                        Log.Information("Шаг 10: EnsurePublicAddress...");
                         string publicAddress = serverConfigurations.RuntimeClusterSettings.PublicAddress;
                         RunningMode? mode = serverConfigurations.RuntimeClusterSettings.Mode;
-                        RunningMode runningMode = RunningMode.Development;
-                        SeedData.EnsurePublicAddress(logger2, configurationDbContext, publicAddress, (mode.GetValueOrDefault() == runningMode) & (mode != null));
-                        return;
+                        bool isDevelopment = (mode.GetValueOrDefault() == RunningMode.Development) & (mode != null);
+                        Log.Information($"Шаг 10: publicAddress = {publicAddress}, isDevelopment = {isDevelopment}");
+                        
+                        EnsurePublicAddress(logger, context, publicAddress, isDevelopment);
+                        Log.Information("Шаг 10: EnsurePublicAddress - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "ОШИБКА в блоке SQL Server");
+                        throw;
                     }
                     finally
                     {
@@ -61,13 +126,191 @@ namespace Mega.Has.Modules.UAS
                         bool flag = false;
                         if ((testMode.GetValueOrDefault() == flag) & (testMode != null))
                         {
+                            Log.Information("Закрытие соединения с БД...");
                             context.Database.CloseConnection();
                         }
                     }
                 }
-                SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
-                SeedData.EnsureSeedData(logger, uasContext);
+                else
+                {
+                    Log.Information("=== Режим InMemory ===");
+                    try
+                    {
+                        EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
+                        EnsureSeedData(logger, uasContext);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "ОШИБКА в блоке InMemory");
+                        throw;
+                    }
+                }
             }
+
+            Log.Information("=== EnsureSeedData: КОНЕЦ ===");
+        }
+
+        private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
+        {
+            Log.Information("=== MigrateDatabase: НАЧАЛО ===");
+
+            try
+            {
+                Log.Information("Проверка Standalone режима...");
+                bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
+                Log.Information($"Standalone = {standalone}");
+
+                bool isStandalone = (standalone.GetValueOrDefault() == true) & (standalone != null);
+                Log.Information($"isStandalone = {isStandalone}");
+
+                if (!isStandalone)
+                {
+                    Log.Information("=== SQL Server миграция ===");
+                    
+                    // ApplicationDbContext
+                    try
+                    {
+                        Log.Information("Миграция 1: Получение ApplicationDbContext...");
+                        var appDbContext = services.GetRequiredService<ApplicationDbContext>();
+                        Log.Information($"Миграция 1: ApplicationDbContext = {(appDbContext != null ? "OK" : "NULL")}");
+                        
+                        Log.Information("Миграция 1: Проверка Database...");
+                        var database = appDbContext.Database;
+                        Log.Information($"Миграция 1: Database = {(database != null ? "OK" : "NULL")}");
+                        
+                        Log.Information("Миграция 1: Проверка ProviderName...");
+                        var providerName = database.ProviderName;
+                        Log.Information($"Миграция 1: ProviderName = {providerName}");
+                        
+                        Log.Information("Миграция 1: Проверка ConnectionString...");
+                        var connectionString = database.GetConnectionString();
+                        Log.Information($"Миграция 1: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+                        
+                        if (string.IsNullOrEmpty(connectionString))
+                        {
+                            Log.Error("КРИТИЧЕСКАЯ ОШИБКА: Connection string пустая!");
+                            throw new InvalidOperationException("Connection string is null or empty for ApplicationDbContext");
+                        }
+                        
+                        Log.Information("Миграция 1: Вызов Migrate()...");
+                        database.Migrate();
+                        Log.Information("Миграция 1: ApplicationDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "ОШИБКА при миграции ApplicationDbContext");
+                        throw;
+                    }
+
+                    // ConfigurationDbContext
+                    try
+                    {
+                        Log.Information("Миграция 2: Получение ConfigurationDbContext...");
+                        var configDbContext = services.GetRequiredService<ConfigurationDbContext>();
+                        
+                        Log.Information("Миграция 2: Проверка ConnectionString...");
+                        var connectionString = configDbContext.Database.GetConnectionString();
+                        Log.Information($"Миграция 2: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK")}");
+                        
+                        Log.Information("Миграция 2: Вызов Migrate()...");
+                        configDbContext.Database.Migrate();
+                        Log.Information("Миграция 2: ConfigurationDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "ОШИБКА при миграции ConfigurationDbContext");
+                        throw;
+                    }
+
+                    // PersistedGrantDbContext
+                    try
+                    {
+                        Log.Information("Миграция 3: Получение PersistedGrantDbContext...");
+                        var grantDbContext = services.GetRequiredService<PersistedGrantDbContext>();
+                        
+                        Log.Information("Миграция 3: Проверка ConnectionString...");
+                        var connectionString = grantDbContext.Database.GetConnectionString();
+                        Log.Information($"Миграция 3: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK")}");
+                        
+                        Log.Information("Миграция 3: Вызов Migrate()...");
+                        grantDbContext.Database.Migrate();
+                        Log.Information("Миграция 3: PersistedGrantDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "ОШИБКА при миграции PersistedGrantDbContext");
+                        throw;
+                    }
+
+                    // Дополнительные миграции
+                    try
+                    {
+                        Log.Information("Шаг 4: Получение DatabaseConnectionString...");
+                        string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
+                        Log.Information($"Шаг 4: DatabaseConnectionString = {(string.IsNullOrEmpty(cnx) ? "ПУСТАЯ или NULL!" : "OK (длина: " + cnx.Length + ")")}");
+
+                        if (string.IsNullOrEmpty(cnx))
+                        {
+                            Log.Error("КРИТИЧЕСКАЯ ОШИБКА: DatabaseConnectionString пустая!");
+                            throw new InvalidOperationException("DatabaseConnectionString is null or empty");
+                        }
+
+                        Log.Information("Шаг 5: Migrate_HAS_5_0To5_0_1...");
+                        Migrate_HAS_5_0To5_0_1(cnx);
+                        Log.Information("Шаг 5: Migrate_HAS_5_0To5_0_1 - OK");
+
+                        Log.Information("Шаг 6: Migrate_HAS_5_0_xTo5_0_5...");
+                        Migrate_HAS_5_0_xTo5_0_5(cnx);
+                        Log.Information("Шаг 6: Migrate_HAS_5_0_xTo5_0_5 - OK");
+
+                        Log.Information("Шаг 7: SQLCacheTableCreator...");
+                        SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
+                        int result = slqCreator.CreateTableAndIndexes(cnx);
+                        Log.Information($"Шаг 7: SQLCacheTableCreator result = {result}");
+                        
+                        if (result != 0)
+                        {
+                            throw new Exception("Unable to create cache tables in database");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "ОШИБКА в дополнительных миграциях (шаги 4-7)");
+                        throw;
+                    }
+                }
+                else
+                {
+                    Log.Information("=== SQLite режим (Standalone) ===");
+                    
+                    try
+                    {
+                        Log.Information("SQLite: ApplicationDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
+                        Log.Information("SQLite: ApplicationDbContext - OK");
+
+                        Log.Information("SQLite: ConfigurationDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
+                        Log.Information("SQLite: ConfigurationDbContext - OK");
+
+                        Log.Information("SQLite: PersistedGrantDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
+                        Log.Information("SQLite: PersistedGrantDbContext - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, "ОШИБКА в SQLite режиме");
+                        throw;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "=== MigrateDatabase: КРИТИЧЕСКАЯ ОШИБКА ===");
+                throw;
+            }
+
+            Log.Information("=== MigrateDatabase: КОНЕЦ ===");
         }
 
         private static void EnsureSQLiteDatabaseCreated(DatabaseFacade database)
@@ -79,64 +322,45 @@ namespace Mega.Has.Modules.UAS
             }
             catch
             {
+                // Игнорируем ошибки (таблицы могут уже существовать)
             }
         }
 
-        private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
-        {
-            bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
-            bool flag = true;
-            if (!((standalone.GetValueOrDefault() == flag) & (standalone != null)))
-            {
-                logger.LogInformation("Migrate databases", Array.Empty<object>());
-                services.GetRequiredService<ApplicationDbContext>().Database.Migrate();
-                services.GetRequiredService<ConfigurationDbContext>().Database.Migrate();
-                services.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
-                string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
-                SeedData.Migrate_HAS_5_0To5_0_1(cnx);
-                SeedData.Migrate_HAS_5_0_xTo5_0_5(cnx);
-                SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
-                if (slqCreator.CreateTableAndIndexes(cnx) != 0)
-                {
-                    throw new Exception("Unable to create cache tables in database");
-                }
-            }
-            else
-            {
-                SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
-                SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
-                SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
-            }
-        }
-
+        // ... остальные методы оставляем без изменений ...
+        // (Migrate_HAS_5_0To5_0_1, Migrate_HAS_5_0_xTo5_0_5, и т.д.)
+        
         internal static void Migrate_HAS_5_0To5_0_1(string cnxString)
         {
+            Log.Information($"Migrate_HAS_5_0To5_0_1: Открытие соединения...");
             using (SqlConnection connection = new SqlConnection(cnxString))
             {
-                SeedData.MigrateOldConfigTable<WindowsConfig>(connection);
-                SeedData.MigrateOldConfigTable<HopexConfig>(connection);
-                SeedData.MigrateOldConfigTable<Saml2Config>(connection);
-                SeedData.MigrateOldConfigTable<OpenIdConfig>(connection);
+                Log.Information($"Migrate_HAS_5_0To5_0_1: Соединение создано, State = {connection.State}");
+                
+                MigrateOldConfigTable<WindowsConfig>(connection);
+                MigrateOldConfigTable<HopexConfig>(connection);
+                MigrateOldConfigTable<Saml2Config>(connection);
+                MigrateOldConfigTable<OpenIdConfig>(connection);
+                
                 try
                 {
-                    foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>())
+                    foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList())
                     {
-                        IdentityServer4.EntityFramework.Entities.ApiResource apiResource = connection.Query<IdentityServer4.EntityFramework.Entities.ApiResource>("select * from [dbo].[ApiResources] where Name='" + resource.Name + "'", null, null, true, null, null).FirstOrDefault();
+                        var apiResource = connection.Query<IdentityServer4.EntityFramework.Entities.ApiResource>(
+                            $"select * from [dbo].[ApiResources] where Name='{resource.Name}'").FirstOrDefault();
+                            
                         if (apiResource != null)
                         {
-                            IDbConnection dbConnection = connection;
-                            DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(62, 1);
-                            defaultInterpolatedStringHandler.AppendLiteral("select * from [dbo].[ApiResourceScopes] where ApiResourceId='");
-                            defaultInterpolatedStringHandler.AppendFormatted<int>(apiResource.Id);
-                            defaultInterpolatedStringHandler.AppendLiteral("'");
-                            if (dbConnection.Query<ApiResourceScope>(defaultInterpolatedStringHandler.ToStringAndClear(), null, null, true, null, null).FirstOrDefault() == null)
+                            var existingScope = connection.Query<ApiResourceScope>(
+                                $"select * from [dbo].[ApiResourceScopes] where ApiResourceId='{apiResource.Id}'").FirstOrDefault();
+                                
+                            if (existingScope == null)
                             {
                                 var p = new
                                 {
                                     ApiResourceId = apiResource.Id,
-                                    Scope = resource.Scopes.First<string>()
+                                    Scope = resource.Scopes.First()
                                 };
-                                connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p, null, null, null);
+                                connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p);
                             }
                         }
                     }
@@ -154,8 +378,8 @@ namespace Mega.Has.Modules.UAS
             {
                 try
                 {
-                    SeedData.updateClaimForSub<OpenIdConfig>(connection);
-                    SeedData.updateClaimForSub<Saml2Config>(connection);
+                    updateClaimForSub<OpenIdConfig>(connection);
+                    updateClaimForSub<Saml2Config>(connection);
                 }
                 catch (Exception ex)
                 {
@@ -166,8 +390,10 @@ namespace Mega.Has.Modules.UAS
 
         private static void updateClaimForSub<T>(SqlConnection connection) where T : new()
         {
-            IEnumerable<ExternalProvider> externalProviders = connection.Query<ExternalProvider>("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null);
-            foreach (ExternalProvider ep in externalProviders)
+            var externalProviders = connection.Query<ExternalProvider>(
+                $"select * from [dbo].[externalProviders] where type = '{typeof(T).Name}'");
+                
+            foreach (var ep in externalProviders)
             {
                 T cfg = ep.GetConfiguration<T>();
                 dynamic cfgDyn = cfg;
@@ -175,10 +401,8 @@ namespace Mega.Has.Modules.UAS
                 {
                     cfgDyn.ClaimForSub = "name";
                     ep.SetConfiguration<T>(cfg);
-                    DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(77, 1);
-                    defaultInterpolatedStringHandler.AppendLiteral("update [dbo].[externalproviders] set Configuration=@Configuration where id = ");
-                    defaultInterpolatedStringHandler.AppendFormatted<int>(ep.Id);
-                    connection.Execute(defaultInterpolatedStringHandler.ToStringAndClear(), ep, null, null, null);
+                    connection.Execute(
+                        $"update [dbo].[externalproviders] set Configuration=@Configuration where id = {ep.Id}", ep);
                 }
             }
         }
@@ -188,31 +412,37 @@ namespace Mega.Has.Modules.UAS
             T cfg;
             try
             {
-                cfg = connection.Query<T>("select * from [dbo].[" + typeof(T).Name + "]", null, null, true, null, null).FirstOrDefault();
+                cfg = connection.Query<T>($"select * from [dbo].[{typeof(T).Name}]").FirstOrDefault();
             }
             catch
             {
                 return;
             }
+
             try
             {
                 if (cfg != null)
                 {
-                    OldExternalProvider ep = connection.Query<OldExternalProvider>("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null).FirstOrDefault();
+                    var ep = connection.Query<OldExternalProvider>(
+                        $"select * from [dbo].[externalProviders] where type = '{typeof(T).Name}'").FirstOrDefault();
+                        
                     if (ep != null)
                     {
                         (cfg as ProviderConfigBase).ClaimForRoles = ep.ClaimForRoles ?? (cfg as ProviderConfigBase).ClaimForRoles;
+                        
                         if (typeof(T) == typeof(WindowsConfig))
                         {
                             WindowsConfig winCfg = cfg as WindowsConfig;
                             winCfg.WindowsSourceIdentifier = ep.WindowsSourceIdentifier ?? winCfg.WindowsSourceIdentifier;
                             winCfg.WindowsRole = ep.WindowsRole ?? winCfg.WindowsRole;
                         }
+                        
                         ep.SetConfiguration<T>(cfg);
-                        connection.Execute("update [dbo].[externalproviders] set Configuration=@Configuration where type = '" + typeof(T).Name + "'", ep, null, null, null);
+                        connection.Execute(
+                            $"update [dbo].[externalproviders] set Configuration=@Configuration where type = '{typeof(T).Name}'", ep);
                     }
                 }
-                connection.Execute("drop table [dbo].[" + typeof(T).Name + "]", null, null, null, null);
+                connection.Execute($"drop table [dbo].[{typeof(T).Name}]");
             }
             catch (Exception ex)
             {
@@ -222,22 +452,26 @@ namespace Mega.Has.Modules.UAS
 
         private static void EnsurePublicAddress(Microsoft.Extensions.Logging.ILogger logger, ConfigurationDbContext context, string publicAddress, bool isDevelopmentMode)
         {
-            IIncludableQueryable<IdentityServer4.EntityFramework.Entities.Client, List<ClientRedirectUri>> query = context.Clients.Include((IdentityServer4.EntityFramework.Entities.Client x) => x.PostLogoutRedirectUris).Include((IdentityServer4.EntityFramework.Entities.Client x) => x.RedirectUris);
-            logger.LogInformation("URLS Redirections are updating to public address " + publicAddress + "...", Array.Empty<object>());
+            var query = context.Clients
+                .Include(x => x.PostLogoutRedirectUris)
+                .Include(x => x.RedirectUris);
+                
+            logger.LogInformation($"URLS Redirections are updating to public address {publicAddress}...");
             UriBuilder publicUri = new UriBuilder(publicAddress);
-            foreach (IdentityServer4.EntityFramework.Entities.Client client in query)
+            
+            foreach (var client in query)
             {
                 if (client.FrontChannelLogoutUri != null)
                 {
                     client.FrontChannelLogoutUri = UpdateUri(client.FrontChannelLogoutUri, publicUri, isDevelopmentMode);
                 }
-                foreach (ClientRedirectUri redir in client.RedirectUris)
+                foreach (var redir in client.RedirectUris)
                 {
                     redir.RedirectUri = UpdateUri(redir.RedirectUri, publicUri, isDevelopmentMode);
                 }
-                foreach (ClientPostLogoutRedirectUri redir2 in client.PostLogoutRedirectUris)
+                foreach (var redir in client.PostLogoutRedirectUris)
                 {
-                    redir2.PostLogoutRedirectUri = UpdateUri(redir2.PostLogoutRedirectUri, publicUri, isDevelopmentMode);
+                    redir.PostLogoutRedirectUri = UpdateUri(redir.PostLogoutRedirectUri, publicUri, isDevelopmentMode);
                 }
             }
             context.SaveChanges();
@@ -251,75 +485,86 @@ namespace Mega.Has.Modules.UAS
                 Host = publicUri.Host,
                 Scheme = publicUri.Scheme
             };
+            
             if (url.Port == 80 || url.Port == 443)
             {
                 url.Port = -1;
             }
+            
             if (isDevelopmentMode && string.Compare(url.Path, "/authentication/login-callback", true) == 0)
             {
                 return uri;
             }
+            
             return url.ToString();
         }
 
         private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, IClusterConfiguration serverConfigurations, ApplicationDbContext uasContext, ConfigurationDbContext configurationStoreContext, ICryptoService cryptoService)
         {
-            logger.LogInformation("Seeding database...", Array.Empty<object>());
-            logger.LogInformation("Updating AccessTokens...", Array.Empty<object>());
-            foreach (AccessToken user in DefaultConfiguration.GetAccessTokens(cryptoService))
+            logger.LogInformation("Seeding database...");
+            
+            logger.LogInformation("Updating AccessTokens...");
+            foreach (var user in DefaultConfiguration.GetAccessTokens(cryptoService))
             {
-                if (uasContext.AccessTokens.FirstOrDefault((AccessToken a) => a.TokenName == user.TokenName) == null)
+                if (uasContext.AccessTokens.FirstOrDefault(a => a.TokenName == user.TokenName) == null)
                 {
                     uasContext.AccessTokens.Add(user);
                 }
             }
-            logger.LogInformation("Updating Clients...", Array.Empty<object>());
-            foreach (IdentityServer4.Models.Client client in DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings))
+            
+            logger.LogInformation("Updating Clients...");
+            foreach (var client in DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings))
             {
-                if (configurationStoreContext.Clients.FirstOrDefault((IdentityServer4.EntityFramework.Entities.Client a) => a.ClientId == client.ClientId) == null)
+                if (configurationStoreContext.Clients.FirstOrDefault(a => a.ClientId == client.ClientId) == null)
                 {
-                    IdentityServer4.EntityFramework.Entities.Client c = client.ToEntity();
+                    var c = client.ToEntity();
                     c.NonEditable = true;
                     configurationStoreContext.Clients.Add(c);
                 }
             }
-            logger.LogInformation("Updating Scope...", Array.Empty<object>());
-            foreach (IdentityServer4.Models.ApiScope scope in DefaultConfiguration.GetApiScopes())
+            
+            logger.LogInformation("Updating Scope...");
+            foreach (var scope in DefaultConfiguration.GetApiScopes())
             {
-                if (configurationStoreContext.ApiScopes.FirstOrDefault((IdentityServer4.EntityFramework.Entities.ApiScope a) => a.Name == scope.Name) == null)
+                if (configurationStoreContext.ApiScopes.FirstOrDefault(a => a.Name == scope.Name) == null)
                 {
                     configurationStoreContext.ApiScopes.Add(scope.ToEntity());
                 }
             }
-            logger.LogInformation("Updating IdentityResources...", Array.Empty<object>());
-            foreach (IdentityServer4.Models.IdentityResource resource in DefaultConfiguration.GetIdentityResources())
+            
+            logger.LogInformation("Updating IdentityResources...");
+            foreach (var resource in DefaultConfiguration.GetIdentityResources())
             {
-                if (configurationStoreContext.IdentityResources.FirstOrDefault((IdentityServer4.EntityFramework.Entities.IdentityResource a) => a.Name == resource.Name) == null)
+                if (configurationStoreContext.IdentityResources.FirstOrDefault(a => a.Name == resource.Name) == null)
                 {
                     configurationStoreContext.IdentityResources.Add(resource.ToEntity());
                 }
             }
-            logger.LogInformation("Updating ApiResources...", Array.Empty<object>());
-            foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>())
+            
+            logger.LogInformation("Updating ApiResources...");
+            foreach (var resource in DefaultConfiguration.GetApiResources().ToList())
             {
-                if (configurationStoreContext.ApiResources.FirstOrDefault((IdentityServer4.EntityFramework.Entities.ApiResource a) => a.Name == resource.Name) == null)
+                if (configurationStoreContext.ApiResources.FirstOrDefault(a => a.Name == resource.Name) == null)
                 {
                     configurationStoreContext.ApiResources.Add(resource.ToEntity());
                 }
             }
+            
             configurationStoreContext.SaveChanges();
         }
 
         private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, ApplicationDbContext uasContext)
         {
-            logger.LogInformation("Updating External Providers...", Array.Empty<object>());
-            foreach (ExternalProvider externalProvider in DefaultConfiguration.GetExternalProviders())
+            logger.LogInformation("Updating External Providers...");
+            
+            foreach (var externalProvider in DefaultConfiguration.GetExternalProviders())
             {
-                if (uasContext.ExternalProviders.FirstOrDefault((ExternalProvider a) => a.AuthenticationScheme == externalProvider.AuthenticationScheme) == null)
+                if (uasContext.ExternalProviders.FirstOrDefault(a => a.AuthenticationScheme == externalProvider.AuthenticationScheme) == null)
                 {
                     uasContext.ExternalProviders.Add(externalProvider);
                 }
             }
+            
             uasContext.SaveChanges();
         }
     }

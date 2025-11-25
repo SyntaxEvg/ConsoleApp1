@@ -205,4 +205,44 @@ namespace HAS.Modules.UAS.Extensions
                     try
                     {
                         Log.Information($"Using external provider {provider.GetType().Name}");
-                        p
+                        provider.Configure(authenticationBuilder);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error(ex, $"Provider {provider?.GetType().Name} configuration failed.");
+                        if (provider != null)
+                        {
+                            provider.Enabled = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        private static void ResolveDbOptions(
+            IClusterConfiguration serverConfigurations,
+            DbContextOptionsBuilder options,
+            string name)
+        {
+            if (ShouldUseInMemoryDatabase(serverConfigurations))
+            {
+                options.UseInMemoryDatabase("test");
+            }
+            else
+            {
+                options.UseSqlFromConfiguration(
+                    serverConfigurations,
+                    $"_{name}_MigrationsHistory",
+                    null,
+                    typeof(Startup).Assembly);
+            }
+        }
+
+        internal static bool ShouldUseInMemoryDatabase(IClusterConfiguration serverConfigurations)
+        {
+            return (serverConfigurations.StartingArguments.TestMode == true && 
+                    serverConfigurations.StartingArguments.Standalone != true) ||
+                   !serverConfigurations.IsInitialized;
+        }
+    }
+}

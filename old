@@ -1,35 +1,21 @@
-=== EnsureSeedData: НАЧАЛО ===
-Шаг 1: BuildServiceProvider...
-Шаг 1: BuildServiceProvider - OK
-Шаг 2: Получение ApplicationDbContext...
-Шаг 2: ApplicationDbContext = OK
-Шаг 3: Получение ConfigurationDbContext...
-Шаг 3: ConfigurationDbContext = OK
-Шаг 4: Получение ILogger...
-Шаг 4: ILogger = OK
-Шаг 5: Проверка IsInMemory...
-Шаг 5.1: context.Database = OK
-Шаг 5: IsInMemory = False
-=== Режим SQL Server (не InMemory) ===
-Шаг 6: Получение ICryptoService...
-Шаг 6: ICryptoService = OK
-Шаг 7: Вызов MigrateDatabase...
-=== MigrateDatabase: НАЧАЛО ===
-Проверка Standalone режима...
-Standalone = False
-isStandalone = False
-=== SQL Server миграция ===
-Миграция 1: Получение ApplicationDbContext...
-Миграция 1: ApplicationDbContext = OK
-Миграция 1: Проверка Database...
-Миграция 1: Database = OK
-Миграция 1: Проверка ProviderName...
-Миграция 1: ProviderName = Microsoft.EntityFrameworkCore.SqlServer
-Миграция 1: Проверка ConnectionString...
-Миграция 1: ConnectionString = OK (длина: 111)
-Миграция 1: Вызов Migrate()...
-ОШИБКА при миграции ApplicationDbContext
-=== MigrateDatabase: КРИТИЧЕСКАЯ ОШИБКА ===
-ОШИБКА в блоке SQL Server
-Закрытие соединения с БД...
-Unhandled exception
+catch (Exception ex)
+{
+    Log.Error("========== ДЕТАЛИ ОШИБКИ ==========");
+    Log.Error($"Message: {ex.Message}");
+    Log.Error($"Type: {ex.GetType().FullName}");
+    
+    if (ex.InnerException != null)
+    {
+        Log.Error($"InnerException: {ex.InnerException.Message}");
+        Log.Error($"InnerException Type: {ex.InnerException.GetType().FullName}");
+    }
+    
+    Log.Error($"StackTrace: {ex.StackTrace}");
+    Log.Error("====================================");
+    throw;
+}
+```
+
+### Вариант 2: Пересоберите проект
+```
+Clean Solution → Rebuild Solution

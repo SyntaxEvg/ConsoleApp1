@@ -1,3 +1,6 @@
-sudo -u nginx /usr/local/bin/wp plugin activate header-footer-elementor --allow-root --path=/var/www
-
-Правильный запуск плагина
+<ItemGroup>
+  <Content Include="wwwroot\**\*.*">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </Content>
+</ItemGroup>

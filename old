@@ -1,45 +1,956 @@
-!!! НОВАЯ ВЕРСИЯ КОДА v3 !!!
-=== EnsureSeedData: НАЧАЛО ===
-Шаг 1: BuildServiceProvider...
-Шаг 1: BuildServiceProvider - OK
-Шаг 2: Получение ApplicationDbContext...
-Шаг 2: ApplicationDbContext = OK
-Шаг 3: Получение ConfigurationDbContext...
-Шаг 3: ConfigurationDbContext = OK
-Шаг 4: Получение ILogger...
-Шаг 4: ILogger = OK
-Шаг 5: Проверка IsInMemory...
-Шаг 5.1: context.Database = OK
-Шаг 5: IsInMemory = False
-=== Режим SQL Server (не InMemory) ===
-Шаг 6: Получение ICryptoService...
-Шаг 6: ICryptoService = OK
-Шаг 7: Вызов MigrateDatabase...
-=== MigrateDatabase: НАЧАЛО ===
-Проверка Standalone режима...
-Standalone = False
-isStandalone = False
-=== SQL Server миграция ===
-Миграция 1: Получение ApplicationDbContext...
-Миграция 1: ApplicationDbContext = OK
-Миграция 1: Проверка Database...
-Миграция 1: Database = OK
-Миграция 1: Проверка ProviderName...
-Миграция 1: ProviderName = Microsoft.EntityFrameworkCore.SqlServer
-Миграция 1: Проверка ConnectionString...
-Миграция 1: ConnectionString = OK (длина: 111)
-Миграция 1: Вызов Migrate()...
-ОШИБКА в: MigrateDatabase -> ApplicationDbContext.Migrate()
-Message: Object reference not set to an instance of an object.
-Type: System.NullReferenceException
-ОШИБКА в: MigrateDatabase -> Главный блок
-Message: Object reference not set to an instance of an object.
-Type: System.NullReferenceException
-ОШИБКА в: EnsureSeedData -> Блок SQL Server
-Message: Object reference not set to an instance of an object.
-Type: System.NullReferenceException
-Закрытие соединения с БД...
-ОШИБКА в: EnsureSeedData -> Главный блок
-Message: Object reference not set to an instance of an object.
-Type: System.NullReferenceException
-Unhandled exception
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
+using Dapper;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Entities;
+using IdentityServer4.EntityFramework.Mappers;
+using Mega.Has.Commons;
+using Mega.Has.Commons.Security;
+using Mega.Has.Modules.UAS.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
+
+namespace Mega.Has.Modules.UAS
+{
+    public class SeedData
+    {
+        private static void LogException(string location, Exception ex)
+        {
+            Console.WriteLine("==========================================");
+            Console.WriteLine($"ОШИБКА в: {location}");
+            Console.WriteLine($"Message: {ex.Message}");
+            Console.WriteLine($"Type: {ex.GetType().FullName}");
+            
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"InnerException: {ex.InnerException.Message}");
+                Console.WriteLine($"InnerException Type: {ex.InnerException.GetType().FullName}");
+                
+                if (ex.InnerException.InnerException != null)
+                {
+                    Console.WriteLine($"Inner.Inner: {ex.InnerException.InnerException.Message}");
+                }
+            }
+            
+            Console.WriteLine("--- FULL EXCEPTION ---");
+            Console.WriteLine(ex.ToString());
+            Console.WriteLine("--- END FULL EXCEPTION ---");
+            Console.WriteLine("==========================================");
+            
+            Log.Error($"ОШИБКА в: {location}");
+            Log.Error(ex.ToString());
+        }
+
+        private static void LogInfo(string message)
+        {
+            Console.WriteLine(message);
+            Log.Information(message);
+        }
+
+        public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
+        {
+            Console.WriteLine("##################################################");
+            Console.WriteLine("!!! НОВАЯ ВЕРСИЯ КОДА v4 !!!");
+            Console.WriteLine("##################################################");
+            Log.Information("!!! НОВАЯ ВЕРСИЯ КОДА v4 !!!");
+            LogInfo("=== EnsureSeedData: НАЧАЛО ===");
+            
+            ServiceProvider services = null;
+            try
+            {
+                LogInfo("Шаг 1: BuildServiceProvider...");
+                services = serviceCollection.BuildServiceProvider();
+                LogInfo("Шаг 1: BuildServiceProvider - OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSeedData -> BuildServiceProvider", ex);
+                throw;
+            }
+
+            try
+            {
+                using (IServiceScope scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                {
+                    ApplicationDbContext uasContext = null;
+                    ConfigurationDbContext context = null;
+                    ILogger<SeedData> logger = null;
+
+                    try
+                    {
+                        LogInfo("Шаг 2: Получение ApplicationDbContext...");
+                        uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+                        LogInfo($"Шаг 2: ApplicationDbContext = {(uasContext != null ? "OK" : "NULL")}");
+
+                        LogInfo("Шаг 3: Получение ConfigurationDbContext...");
+                        context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
+                        LogInfo($"Шаг 3: ConfigurationDbContext = {(context != null ? "OK" : "NULL")}");
+
+                        LogInfo("Шаг 4: Получение ILogger...");
+                        logger = services.GetService<ILogger<SeedData>>();
+                        LogInfo($"Шаг 4: ILogger = {(logger != null ? "OK" : "NULL")}");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("EnsureSeedData -> Получение сервисов", ex);
+                        throw;
+                    }
+
+                    if (context == null)
+                    {
+                        LogInfo("ОШИБКА: ConfigurationDbContext равен NULL!");
+                        throw new InvalidOperationException("ConfigurationDbContext is null");
+                    }
+
+                    bool isInMemory = false;
+                    try
+                    {
+                        LogInfo("Шаг 5: Проверка IsInMemory...");
+                        LogInfo($"Шаг 5.1: context.Database = {(context.Database != null ? "OK" : "NULL")}");
+                        isInMemory = context.Database.IsInMemory();
+                        LogInfo($"Шаг 5: IsInMemory = {isInMemory}");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("EnsureSeedData -> IsInMemory", ex);
+                        throw;
+                    }
+
+                    if (!isInMemory)
+                    {
+                        LogInfo("=== Режим SQL Server (не InMemory) ===");
+                        try
+                        {
+                            LogInfo("Шаг 6: Получение ICryptoService...");
+                            ICryptoService cryptoService = services.GetRequiredService<ICryptoService>();
+                            LogInfo($"Шаг 6: ICryptoService = {(cryptoService != null ? "OK" : "NULL")}");
+
+                            LogInfo("Шаг 7: Вызов MigrateDatabase...");
+                            MigrateDatabase(logger, services, cryptoService);
+                            LogInfo("Шаг 7: MigrateDatabase - OK");
+
+                            LogInfo("Шаг 8: EnsureSeedData (с cryptoService)...");
+                            EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
+                            LogInfo("Шаг 8: EnsureSeedData - OK");
+
+                            LogInfo("Шаг 9: EnsureSeedData (uasContext)...");
+                            EnsureSeedData(logger, uasContext);
+                            LogInfo("Шаг 9: EnsureSeedData - OK");
+
+                            LogInfo("Шаг 10: EnsurePublicAddress...");
+                            string publicAddress = serverConfigurations.RuntimeClusterSettings.PublicAddress;
+                            RunningMode? mode = serverConfigurations.RuntimeClusterSettings.Mode;
+                            bool isDevelopment = (mode.GetValueOrDefault() == RunningMode.Development) & (mode != null);
+                            LogInfo($"Шаг 10: publicAddress = {publicAddress}, isDevelopment = {isDevelopment}");
+                            
+                            EnsurePublicAddress(logger, context, publicAddress, isDevelopment);
+                            LogInfo("Шаг 10: EnsurePublicAddress - OK");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogException("EnsureSeedData -> Блок SQL Server", ex);
+                            throw;
+                        }
+                        finally
+                        {
+                            try
+                            {
+                                bool? testMode = serverConfigurations.StartingArguments.TestMode;
+                                bool flag = false;
+                                if ((testMode.GetValueOrDefault() == flag) & (testMode != null))
+                                {
+                                    LogInfo("Закрытие соединения с БД...");
+                                    context.Database.CloseConnection();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                LogException("EnsureSeedData -> CloseConnection", ex);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        LogInfo("=== Режим InMemory ===");
+                        try
+                        {
+                            EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
+                            EnsureSeedData(logger, uasContext);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogException("EnsureSeedData -> Блок InMemory", ex);
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSeedData -> Главный блок", ex);
+                throw;
+            }
+
+            LogInfo("=== EnsureSeedData: КОНЕЦ ===");
+        }
+
+        private static void EnsureSQLiteDatabaseCreated(DatabaseFacade database)
+        {
+            LogInfo("EnsureSQLiteDatabaseCreated: НАЧАЛО");
+            try
+            {
+                string sql = database.GenerateCreateScript();
+                LogInfo($"EnsureSQLiteDatabaseCreated: SQL длина = {sql?.Length ?? 0}");
+                database.ExecuteSqlRaw(sql, Array.Empty<object>());
+                LogInfo("EnsureSQLiteDatabaseCreated: OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSQLiteDatabaseCreated", ex);
+                // Не пробрасываем - таблицы могут уже существовать
+            }
+        }
+
+        private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
+        {
+            Console.WriteLine("##################################################");
+            Console.WriteLine("!!! MigrateDatabase НАЧАЛО v4 !!!");
+            Console.WriteLine("##################################################");
+            LogInfo("=== MigrateDatabase: НАЧАЛО ===");
+
+            try
+            {
+                LogInfo("Проверка Standalone режима...");
+                bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
+                LogInfo($"Standalone = {standalone}");
+
+                bool isStandalone = (standalone.GetValueOrDefault() == true) & (standalone != null);
+                LogInfo($"isStandalone = {isStandalone}");
+
+                if (!isStandalone)
+                {
+                    LogInfo("=== SQL Server миграция ===");
+                    
+                    // ApplicationDbContext
+                    try
+                    {
+                        LogInfo("Миграция 1: Получение ApplicationDbContext...");
+                        var appDbContext = services.GetRequiredService<ApplicationDbContext>();
+                        LogInfo($"Миграция 1: ApplicationDbContext = {(appDbContext != null ? "OK" : "NULL")}");
+                        
+                        LogInfo("Миграция 1: Проверка Database...");
+                        var database = appDbContext.Database;
+                        LogInfo($"Миграция 1: Database = {(database != null ? "OK" : "NULL")}");
+                        
+                        LogInfo("Миграция 1: Проверка ProviderName...");
+                        var providerName = database.ProviderName;
+                        LogInfo($"Миграция 1: ProviderName = {providerName}");
+                        
+                        LogInfo("Миграция 1: Проверка ConnectionString...");
+                        var connectionString = database.GetConnectionString();
+                        LogInfo($"Миграция 1: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+                        
+                        // Выводим connection string (маскируем пароль)
+                        if (!string.IsNullOrEmpty(connectionString))
+                        {
+                            var maskedCs = Regex.Replace(
+                                connectionString, 
+                                @"(Password|Pwd)\s*=\s*[^;]+", 
+                                "$1=***", 
+                                RegexOptions.IgnoreCase);
+                            Console.WriteLine($"ConnectionString (masked): {maskedCs}");
+                        }
+                        
+                        // Тест соединения вручную
+                        Console.WriteLine(">>> Тест открытия соединения... <<<");
+                        try
+                        {
+                            using (var conn = new SqlConnection(connectionString))
+                            {
+                                Console.WriteLine($"SqlConnection создан, State = {conn.State}");
+                                conn.Open();
+                                Console.WriteLine($"SqlConnection открыт, State = {conn.State}");
+                                
+                                // Проверим версию SQL Server
+                                using (var cmd = conn.CreateCommand())
+                                {
+                                    cmd.CommandText = "SELECT @@VERSION";
+                                    var version = cmd.ExecuteScalar()?.ToString();
+                                    Console.WriteLine($"SQL Server Version: {version?.Substring(0, Math.Min(100, version?.Length ?? 0))}...");
+                                }
+                                
+                                conn.Close();
+                                Console.WriteLine("SqlConnection закрыт успешно");
+                            }
+                        }
+                        catch (Exception connEx)
+                        {
+                            Console.WriteLine($"ОШИБКА при тесте соединения: {connEx.Message}");
+                            LogException("Тест соединения", connEx);
+                            throw;
+                        }
+                        
+                        // Проверка миграций
+                        Console.WriteLine(">>> Проверка pending миграций... <<<");
+                        try
+                        {
+                            var pendingMigrations = database.GetPendingMigrations().ToList();
+                            Console.WriteLine($"Pending миграций: {pendingMigrations.Count}");
+                            foreach (var m in pendingMigrations)
+                            {
+                                Console.WriteLine($"  - {m}");
+                            }
+                        }
+                        catch (Exception migEx)
+                        {
+                            Console.WriteLine($"ОШИБКА при проверке pending миграций: {migEx.Message}");
+                            LogException("GetPendingMigrations", migEx);
+                            // Не пробрасываем, продолжаем
+                        }
+
+                        Console.WriteLine(">>> Проверка applied миграций... <<<");
+                        try
+                        {
+                            var appliedMigrations = database.GetAppliedMigrations().ToList();
+                            Console.WriteLine($"Applied миграций: {appliedMigrations.Count}");
+                            foreach (var m in appliedMigrations)
+                            {
+                                Console.WriteLine($"  - {m}");
+                            }
+                        }
+                        catch (Exception migEx)
+                        {
+                            Console.WriteLine($"ОШИБКА при проверке applied миграций: {migEx.Message}");
+                            LogException("GetAppliedMigrations", migEx);
+                            // Не пробрасываем, продолжаем
+                        }
+                        
+                        LogInfo("Миграция 1: Вызов Migrate()...");
+                        Console.WriteLine(">>> Перед вызовом database.Migrate() <<<");
+                        
+                        database.Migrate();
+                        
+                        Console.WriteLine(">>> После вызова database.Migrate() <<<");
+                        LogInfo("Миграция 1: ApplicationDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> ApplicationDbContext.Migrate()", ex);
+                        throw;
+                    }
+
+                    // ConfigurationDbContext
+                    try
+                    {
+                        LogInfo("Миграция 2: Получение ConfigurationDbContext...");
+                        var configDbContext = services.GetRequiredService<ConfigurationDbContext>();
+                        LogInfo($"Миграция 2: ConfigurationDbContext = {(configDbContext != null ? "OK" : "NULL")}");
+                        
+                        LogInfo("Миграция 2: Проверка ConnectionString...");
+                        var connectionString = configDbContext.Database.GetConnectionString();
+                        LogInfo($"Миграция 2: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+                        
+                        // Выводим connection string (маскируем пароль)
+                        if (!string.IsNullOrEmpty(connectionString))
+                        {
+                            var maskedCs = Regex.Replace(
+                                connectionString, 
+                                @"(Password|Pwd)\s*=\s*[^;]+", 
+                                "$1=***", 
+                                RegexOptions.IgnoreCase);
+                            Console.WriteLine($"ConnectionString 2 (masked): {maskedCs}");
+                        }
+
+                        Console.WriteLine(">>> Проверка pending миграций ConfigurationDbContext... <<<");
+                        try
+                        {
+                            var pendingMigrations = configDbContext.Database.GetPendingMigrations().ToList();
+                            Console.WriteLine($"Pending миграций: {pendingMigrations.Count}");
+                        }
+                        catch (Exception migEx)
+                        {
+                            Console.WriteLine($"ОШИБКА: {migEx.Message}");
+                        }
+                        
+                        LogInfo("Миграция 2: Вызов Migrate()...");
+                        Console.WriteLine(">>> Перед вызовом ConfigurationDbContext.Migrate() <<<");
+                        
+                        configDbContext.Database.Migrate();
+                        
+                        Console.WriteLine(">>> После вызова ConfigurationDbContext.Migrate() <<<");
+                        LogInfo("Миграция 2: ConfigurationDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> ConfigurationDbContext.Migrate()", ex);
+                        throw;
+                    }
+
+                    // PersistedGrantDbContext
+                    try
+                    {
+                        LogInfo("Миграция 3: Получение PersistedGrantDbContext...");
+                        var grantDbContext = services.GetRequiredService<PersistedGrantDbContext>();
+                        LogInfo($"Миграция 3: PersistedGrantDbContext = {(grantDbContext != null ? "OK" : "NULL")}");
+                        
+                        LogInfo("Миграция 3: Проверка ConnectionString...");
+                        var connectionString = grantDbContext.Database.GetConnectionString();
+                        LogInfo($"Миграция 3: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+                        
+                        // Выводим connection string (маскируем пароль)
+                        if (!string.IsNullOrEmpty(connectionString))
+                        {
+                            var maskedCs = Regex.Replace(
+                                connectionString, 
+                                @"(Password|Pwd)\s*=\s*[^;]+", 
+                                "$1=***", 
+                                RegexOptions.IgnoreCase);
+                            Console.WriteLine($"ConnectionString 3 (masked): {maskedCs}");
+                        }
+
+                        Console.WriteLine(">>> Проверка pending миграций PersistedGrantDbContext... <<<");
+                        try
+                        {
+                            var pendingMigrations = grantDbContext.Database.GetPendingMigrations().ToList();
+                            Console.WriteLine($"Pending миграций: {pendingMigrations.Count}");
+                        }
+                        catch (Exception migEx)
+                        {
+                            Console.WriteLine($"ОШИБКА: {migEx.Message}");
+                        }
+                        
+                        LogInfo("Миграция 3: Вызов Migrate()...");
+                        Console.WriteLine(">>> Перед вызовом PersistedGrantDbContext.Migrate() <<<");
+                        
+                        grantDbContext.Database.Migrate();
+                        
+                        Console.WriteLine(">>> После вызова PersistedGrantDbContext.Migrate() <<<");
+                        LogInfo("Миграция 3: PersistedGrantDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> PersistedGrantDbContext.Migrate()", ex);
+                        throw;
+                    }
+
+                    // Дополнительные миграции
+                    try
+                    {
+                        LogInfo("Шаг 4: Получение DatabaseConnectionString...");
+                        string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
+                        LogInfo($"Шаг 4: DatabaseConnectionString = {(string.IsNullOrEmpty(cnx) ? "ПУСТАЯ или NULL!" : "OK (длина: " + cnx.Length + ")")}");
+
+                        if (!string.IsNullOrEmpty(cnx))
+                        {
+                            var maskedCnx = Regex.Replace(
+                                cnx, 
+                                @"(Password|Pwd)\s*=\s*[^;]+", 
+                                "$1=***", 
+                                RegexOptions.IgnoreCase);
+                            Console.WriteLine($"DatabaseConnectionString (masked): {maskedCnx}");
+                        }
+
+                        LogInfo("Шаг 5: Migrate_HAS_5_0To5_0_1...");
+                        Migrate_HAS_5_0To5_0_1(cnx);
+                        LogInfo("Шаг 5: Migrate_HAS_5_0To5_0_1 - OK");
+
+                        LogInfo("Шаг 6: Migrate_HAS_5_0_xTo5_0_5...");
+                        Migrate_HAS_5_0_xTo5_0_5(cnx);
+                        LogInfo("Шаг 6: Migrate_HAS_5_0_xTo5_0_5 - OK");
+
+                        LogInfo("Шаг 7: SQLCacheTableCreator...");
+                        SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
+                        int result = slqCreator.CreateTableAndIndexes(cnx);
+                        LogInfo($"Шаг 7: SQLCacheTableCreator result = {result}");
+                        
+                        if (result != 0)
+                        {
+                            throw new Exception("Unable to create cache tables in database");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> Дополнительные миграции", ex);
+                        throw;
+                    }
+                }
+                else
+                {
+                    LogInfo("=== SQLite режим (Standalone) ===");
+                    
+                    try
+                    {
+                        LogInfo("SQLite: ApplicationDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
+                        LogInfo("SQLite: ApplicationDbContext - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> SQLite ApplicationDbContext", ex);
+                        throw;
+                    }
+
+                    try
+                    {
+                        LogInfo("SQLite: ConfigurationDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
+                        LogInfo("SQLite: ConfigurationDbContext - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> SQLite ConfigurationDbContext", ex);
+                        throw;
+                    }
+
+                    try
+                    {
+                        LogInfo("SQLite: PersistedGrantDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
+                        LogInfo("SQLite: PersistedGrantDbContext - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> SQLite PersistedGrantDbContext", ex);
+                        throw;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("MigrateDatabase -> Главный блок", ex);
+                throw;
+            }
+
+            LogInfo("=== MigrateDatabase: КОНЕЦ ===");
+        }
+
+        internal static void Migrate_HAS_5_0To5_0_1(string cnxString)
+        {
+            LogInfo("Migrate_HAS_5_0To5_0_1: НАЧАЛО");
+            
+            if (string.IsNullOrEmpty(cnxString))
+            {
+                LogInfo("Migrate_HAS_5_0To5_0_1: cnxString пустой, пропускаем");
+                return;
+            }
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(cnxString))
+                {
+                    LogInfo($"Migrate_HAS_5_0To5_0_1: Соединение создано, State = {connection.State}");
+                    
+                    try
+                    {
+                        connection.Open();
+                        LogInfo($"Migrate_HAS_5_0To5_0_1: Соединение открыто, State = {connection.State}");
+                    }
+                    catch (Exception openEx)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> Open()", openEx);
+                        throw;
+                    }
+                    
+                    try
+                    {
+                        LogInfo("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<WindowsConfig>...");
+                        MigrateOldConfigTable<WindowsConfig>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> WindowsConfig", ex);
+                    }
+
+                    try
+                    {
+                        LogInfo("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<HopexConfig>...");
+                        MigrateOldConfigTable<HopexConfig>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> HopexConfig", ex);
+                    }
+
+                    try
+                    {
+                        LogInfo("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<Saml2Config>...");
+                        MigrateOldConfigTable<Saml2Config>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> Saml2Config", ex);
+                    }
+
+                    try
+                    {
+                        LogInfo("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<OpenIdConfig>...");
+                        MigrateOldConfigTable<OpenIdConfig>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> OpenIdConfig", ex);
+                    }
+
+                    try
+                    {
+                        LogInfo("Migrate_HAS_5_0To5_0_1: Обработка ApiResources...");
+                        foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList())
+                        {
+                            var apiResource = connection.Query<IdentityServer4.EntityFramework.Entities.ApiResource>(
+                                $"select * from [dbo].[ApiResources] where Name='{resource.Name}'").FirstOrDefault();
+
+                            if (apiResource != null)
+                            {
+                                var existingScope = connection.Query<ApiResourceScope>(
+                                    $"select * from [dbo].[ApiResourceScopes] where ApiResourceId='{apiResource.Id}'").FirstOrDefault();
+
+                                if (existingScope == null)
+                                {
+                                    var p = new
+                                    {
+                                        ApiResourceId = apiResource.Id,
+                                        Scope = resource.Scopes.First()
+                                    };
+                                    connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p);
+                                }
+                            }
+                        }
+                        LogInfo("Migrate_HAS_5_0To5_0_1: ApiResources - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> ApiResources", ex);
+                        // Warning - не пробрасываем
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("Migrate_HAS_5_0To5_0_1 -> Главный блок", ex);
+                throw;
+            }
+            LogInfo("Migrate_HAS_5_0To5_0_1: КОНЕЦ");
+        }
+
+        internal static void Migrate_HAS_5_0_xTo5_0_5(string cnxString)
+        {
+            LogInfo("Migrate_HAS_5_0_xTo5_0_5: НАЧАЛО");
+            
+            if (string.IsNullOrEmpty(cnxString))
+            {
+                LogInfo("Migrate_HAS_5_0_xTo5_0_5: cnxString пустой, пропускаем");
+                return;
+            }
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(cnxString))
+                {
+                    try
+                    {
+                        connection.Open();
+                        LogInfo($"Migrate_HAS_5_0_xTo5_0_5: Соединение открыто");
+                    }
+                    catch (Exception openEx)
+                    {
+                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> Open()", openEx);
+                        throw;
+                    }
+
+                    try
+                    {
+                        LogInfo("Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<OpenIdConfig>...");
+                        updateClaimForSub<OpenIdConfig>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> OpenIdConfig", ex);
+                    }
+
+                    try
+                    {
+                        LogInfo("Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<Saml2Config>...");
+                        updateClaimForSub<Saml2Config>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> Saml2Config", ex);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("Migrate_HAS_5_0_xTo5_0_5 -> Главный блок", ex);
+                // Warning - не пробрасываем
+            }
+            LogInfo("Migrate_HAS_5_0_xTo5_0_5: КОНЕЦ");
+        }
+
+        private static void updateClaimForSub<T>(SqlConnection connection) where T : new()
+        {
+            LogInfo($"updateClaimForSub<{typeof(T).Name}>: НАЧАЛО");
+            try
+            {
+                var externalProviders = connection.Query<ExternalProvider>(
+                    $"select * from [dbo].[externalProviders] where type = '{typeof(T).Name}'");
+
+                foreach (var ep in externalProviders)
+                {
+                    T cfg = ep.GetConfiguration<T>();
+                    dynamic cfgDyn = cfg;
+                    if (string.IsNullOrEmpty(cfgDyn.ClaimForSub))
+                    {
+                        cfgDyn.ClaimForSub = "name";
+                        ep.SetConfiguration<T>(cfg);
+                        connection.Execute(
+                            $"update [dbo].[externalproviders] set Configuration=@Configuration where id = {ep.Id}", ep);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException($"updateClaimForSub<{typeof(T).Name}>", ex);
+                throw;
+            }
+            LogInfo($"updateClaimForSub<{typeof(T).Name}>: КОНЕЦ");
+        }
+
+        private static void MigrateOldConfigTable<T>(SqlConnection connection)
+        {
+            LogInfo($"MigrateOldConfigTable<{typeof(T).Name}>: НАЧАЛО");
+            T cfg;
+            try
+            {
+                cfg = connection.Query<T>($"select * from [dbo].[{typeof(T).Name}]").FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                LogInfo($"MigrateOldConfigTable<{typeof(T).Name}>: Таблица не найдена (это OK) - {ex.Message}");
+                return;
+            }
+
+            try
+            {
+                if (cfg != null)
+                {
+                    LogInfo($"MigrateOldConfigTable<{typeof(T).Name}>: cfg найден, обновляем...");
+                    var ep = connection.Query<OldExternalProvider>(
+                        $"select * from [dbo].[externalProviders] where type = '{typeof(T).Name}'").FirstOrDefault();
+
+                    if (ep != null)
+                    {
+                        (cfg as ProviderConfigBase).ClaimForRoles = ep.ClaimForRoles ?? (cfg as ProviderConfigBase).ClaimForRoles;
+
+                        if (typeof(T) == typeof(WindowsConfig))
+                        {
+                            WindowsConfig winCfg = cfg as WindowsConfig;
+                            winCfg.WindowsSourceIdentifier = ep.WindowsSourceIdentifier ?? winCfg.WindowsSourceIdentifier;
+                            winCfg.WindowsRole = ep.WindowsRole ?? winCfg.WindowsRole;
+                        }
+
+                        ep.SetConfiguration<T>(cfg);
+                        connection.Execute(
+                            $"update [dbo].[externalproviders] set Configuration=@Configuration where type = '{typeof(T).Name}'", ep);
+                    }
+                }
+                
+                LogInfo($"MigrateOldConfigTable<{typeof(T).Name}>: Удаление старой таблицы...");
+                connection.Execute($"drop table [dbo].[{typeof(T).Name}]");
+            }
+            catch (Exception ex)
+            {
+                LogException($"MigrateOldConfigTable<{typeof(T).Name}>", ex);
+                // Warning - не пробрасываем
+            }
+            LogInfo($"MigrateOldConfigTable<{typeof(T).Name}>: КОНЕЦ");
+        }
+
+        private static void EnsurePublicAddress(Microsoft.Extensions.Logging.ILogger logger, ConfigurationDbContext context, string publicAddress, bool isDevelopmentMode)
+        {
+            LogInfo("EnsurePublicAddress: НАЧАЛО");
+            LogInfo($"EnsurePublicAddress: publicAddress = {publicAddress}, isDevelopmentMode = {isDevelopmentMode}");
+            
+            try
+            {
+                var query = context.Clients
+                    .Include(x => x.PostLogoutRedirectUris)
+                    .Include(x => x.RedirectUris);
+
+                logger?.LogInformation($"URLS Redirections are updating to public address {publicAddress}...");
+                UriBuilder publicUri = new UriBuilder(publicAddress);
+                
+                LogInfo($"EnsurePublicAddress: publicUri = {publicUri}");
+
+                int clientCount = 0;
+                foreach (var client in query)
+                {
+                    clientCount++;
+                    if (client.FrontChannelLogoutUri != null)
+                    {
+                        client.FrontChannelLogoutUri = UpdateUri(client.FrontChannelLogoutUri, publicUri, isDevelopmentMode);
+                    }
+                    foreach (var redir in client.RedirectUris)
+                    {
+                        redir.RedirectUri = UpdateUri(redir.RedirectUri, publicUri, isDevelopmentMode);
+                    }
+                    foreach (var redir in client.PostLogoutRedirectUris)
+                    {
+                        redir.PostLogoutRedirectUri = UpdateUri(redir.PostLogoutRedirectUri, publicUri, isDevelopmentMode);
+                    }
+                }
+                
+                LogInfo($"EnsurePublicAddress: Обработано клиентов: {clientCount}");
+                
+                LogInfo("EnsurePublicAddress: SaveChanges...");
+                context.SaveChanges();
+                LogInfo("EnsurePublicAddress: SaveChanges - OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsurePublicAddress", ex);
+                throw;
+            }
+            LogInfo("EnsurePublicAddress: КОНЕЦ");
+        }
+
+        private static string UpdateUri(string uri, UriBuilder publicUri, bool isDevelopmentMode)
+        {
+            UriBuilder url = new UriBuilder(uri)
+            {
+                Port = publicUri.Port,
+                Host = publicUri.Host,
+                Scheme = publicUri.Scheme
+            };
+
+            if (url.Port == 80 || url.Port == 443)
+            {
+                url.Port = -1;
+            }
+
+            if (isDevelopmentMode && string.Compare(url.Path, "/authentication/login-callback", true) == 0)
+            {
+                return uri;
+            }
+
+            return url.ToString();
+        }
+
+        private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, IClusterConfiguration serverConfigurations, ApplicationDbContext uasContext, ConfigurationDbContext configurationStoreContext, ICryptoService cryptoService)
+        {
+            LogInfo("EnsureSeedData (with crypto): НАЧАЛО");
+            try
+            {
+                logger?.LogInformation("Seeding database...");
+
+                LogInfo("EnsureSeedData: Updating AccessTokens...");
+                int accessTokenCount = 0;
+                foreach (var user in DefaultConfiguration.GetAccessTokens(cryptoService))
+                {
+                    if (uasContext.AccessTokens.FirstOrDefault(a => a.TokenName == user.TokenName) == null)
+                    {
+                        uasContext.AccessTokens.Add(user);
+                        accessTokenCount++;
+                    }
+                }
+                LogInfo($"EnsureSeedData: Добавлено AccessTokens: {accessTokenCount}");
+
+                LogInfo("EnsureSeedData: Updating Clients...");
+                int clientCount = 0;
+                foreach (var client in DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings))
+                {
+                    if (configurationStoreContext.Clients.FirstOrDefault(a => a.ClientId == client.ClientId) == null)
+                    {
+                        var c = client.ToEntity();
+                        c.NonEditable = true;
+                        configurationStoreContext.Clients.Add(c);
+                        clientCount++;
+                    }
+                }
+                LogInfo($"EnsureSeedData: Добавлено Clients: {clientCount}");
+
+                LogInfo("EnsureSeedData: Updating Scope...");
+                int scopeCount = 0;
+                foreach (var scope in DefaultConfiguration.GetApiScopes())
+                {
+                    if (configurationStoreContext.ApiScopes.FirstOrDefault(a => a.Name == scope.Name) == null)
+                    {
+                        configurationStoreContext.ApiScopes.Add(scope.ToEntity());
+                        scopeCount++;
+                    }
+                }
+                LogInfo($"EnsureSeedData: Добавлено ApiScopes: {scopeCount}");
+
+                LogInfo("EnsureSeedData: Updating IdentityResources...");
+                int identityResourceCount = 0;
+                foreach (var resource in DefaultConfiguration.GetIdentityResources())
+                {
+                    if (configurationStoreContext.IdentityResources.FirstOrDefault(a => a.Name == resource.Name) == null)
+                    {
+                        configurationStoreContext.IdentityResources.Add(resource.ToEntity());
+                        identityResourceCount++;
+                    }
+                }
+                LogInfo($"EnsureSeedData: Добавлено IdentityResources: {identityResourceCount}");
+
+                LogInfo("EnsureSeedData: Updating ApiResources...");
+                int apiResourceCount = 0;
+                foreach (var resource in DefaultConfiguration.GetApiResources().ToList())
+                {
+                    if (configurationStoreContext.ApiResources.FirstOrDefault(a => a.Name == resource.Name) == null)
+                    {
+                        configurationStoreContext.ApiResources.Add(resource.ToEntity());
+                        apiResourceCount++;
+                    }
+                }
+                LogInfo($"EnsureSeedData: Добавлено ApiResources: {apiResourceCount}");
+
+                LogInfo("EnsureSeedData: SaveChanges...");
+                configurationStoreContext.SaveChanges();
+                LogInfo("EnsureSeedData: SaveChanges - OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSeedData (with crypto)", ex);
+                throw;
+            }
+            LogInfo("EnsureSeedData (with crypto): КОНЕЦ");
+        }
+
+        private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, ApplicationDbContext uasContext)
+        {
+            LogInfo("EnsureSeedData (uasContext): НАЧАЛО");
+            try
+            {
+                logger?.LogInformation("Updating External Providers...");
+
+                int providerCount = 0;
+                foreach (var externalProvider in DefaultConfiguration.GetExternalProviders())
+                {
+                    if (uasContext.ExternalProviders.FirstOrDefault(a => a.AuthenticationScheme == externalProvider.AuthenticationScheme) == null)
+                    {
+                        uasContext.ExternalProviders.Add(externalProvider);
+                        providerCount++;
+                    }
+                }
+                LogInfo($"EnsureSeedData (uasContext): Добавлено ExternalProviders: {providerCount}");
+
+                LogInfo("EnsureSeedData (uasContext): SaveChanges...");
+                uasContext.SaveChanges();
+                LogInfo("EnsureSeedData (uasContext): SaveChanges - OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSeedData (uasContext)", ex);
+                throw;
+            }
+            LogInfo("EnsureSeedData (uasContext): КОНЕЦ");
+        }
+    }
+}

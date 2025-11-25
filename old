@@ -1,24 +1,19 @@
-Faulting application name: HAS.Modules.UAS.exe, version: 16.0.2.35, time stamp: 0x67fe0000
-Faulting module name: KERNELBASE.dll, version: 10.0.17763.7553, time stamp: 0x296284f5
-Exception code: 0xe0434352
-Fault offset: 0x0000000000041b39
-Faulting process id: 0xd38
-Faulting application start time: 0x01dc5e186164975a
-Faulting application path: C:\MEGA\Hopex Application Server\2025\.shadowFiles\has.uas\16.0.2+42\HAS.Modules.UAS.exe
-Faulting module path: C:\Windows\System32\KERNELBASE.dll
-Report Id: a6515fe3-768b-42ca-8e98-3fa9a3ae4cec
-Faulting package full name: 
-Faulting package-relative application ID: 
-Application: HAS.Modules.UAS.exe
-CoreCLR Version: 8.0.1625.21506
-.NET Version: 8.0.16
-Description: The process was terminated due to an unhandled exception.
-Exception Info: System.IO.FileNotFoundException: Could not load file or assembly 'Jaeger.Core, Version=1.0.3.0, Culture=neutral, PublicKeyToken=9516061555a213a8'. The system cannot find the file specified.
-File name: 'Jaeger.Core, Version=1.0.3.0, Culture=neutral, PublicKeyToken=9516061555a213a8'
-   at Mega.Has.WebSite.Instrumentation.OpenTracing.HopexTracing..ctor(HopexInstrumentation instrumentation, IClusterConfiguration configuration)
-   at Mega.Has.WebSite.Instrumentation.HopexInstrumentation..ctor(ICryptoService cryptoService, ModuleConfiguration moduleConfiguration, Nullable`1 defaultVerbose)
-   at Microsoft.Extensions.Hosting.Extensions.UseHASInstrumentation(IWebHostBuilder builder, ICryptoService cryptoService, ModuleConfiguration moduleConfiguration, Nullable`1 verbose)
-   at Microsoft.Extensions.Hosting.Extensions.UseHASInstrumentation(IWebHostBuilder builder, ModuleConfiguration moduleConfiguration)
-   at Program.Main(String[] args) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Program.cs:line 36
-   at Program.<Main>(String[] args)
+<ItemGroup>
+  <Reference Include="lib\Jaeger.Core.dll">
+    <Private>true</Private>
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+  </Reference>
+  
+  <None Include="lib\Jaeger.Core.dll">
+    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+  </None>
+</ItemGroup>
+```
 
+**Важно:** используйте `Always` вместо `PreserveNewest`, чтобы гарантировать копирование.
+
+### Вариант 3: Положите в исходную папку
+
+Найдите, откуда Hopex копирует файлы. Возможно это:
+```
+C:\MEGA\Hopex Application Server\2025\has.uas\16.0.2+42\

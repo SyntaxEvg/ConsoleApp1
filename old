@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 using Dapper;
 using HAS.Server.SiteModule.Cache;
 using IdentityServer4.EntityFramework.DbContexts;
@@ -20,7 +14,6 @@ using Mega.Has.Modules.UAS.Providers.Saml2;
 using Mega.Has.Modules.UAS.Providers.Windows;
 using Mega.Has.Modules.UAS.Stores;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.CSharp.RuntimeBinder;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -28,399 +21,979 @@ using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
+
 
 namespace Mega.Has.Modules.UAS
 {
-	// Token: 0x02000051 RID: 81
-	public class SeedData
-	{
-		// Token: 0x060003B4 RID: 948 RVA: 0x0000E05C File Offset: 0x0000C25C
-		public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
-		{
-			ServiceProvider services = serviceCollection.BuildServiceProvider();
-			using (IServiceScope scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope())
-			{
-				ApplicationDbContext uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
-				ConfigurationDbContext context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
-				ILogger<SeedData> logger = services.GetService<ILogger<SeedData>>();
-				if (!context.Database.IsInMemory())
-				{
-					try
-					{
-						ICryptoService cryptoService = services.GetRequiredService<ICryptoService>();
-						SeedData.MigrateDatabase(logger, services, cryptoService);
-						SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
-						SeedData.EnsureSeedData(logger, uasContext);
-						Microsoft.Extensions.Logging.ILogger logger2 = logger;
-						ConfigurationDbContext configurationDbContext = context;
-						string publicAddress = serverConfigurations.RuntimeClusterSettings.PublicAddress;
-						RunningMode? mode = serverConfigurations.RuntimeClusterSettings.Mode;
-						RunningMode runningMode = RunningMode.Development;
-						SeedData.EnsurePublicAddress(logger2, configurationDbContext, publicAddress, (mode.GetValueOrDefault() == runningMode) & (mode != null));
-						return;
-					}
-					finally
-					{
-						bool? testMode = serverConfigurations.StartingArguments.TestMode;
-						bool flag = false;
-						if ((testMode.GetValueOrDefault() == flag) & (testMode != null))
-						{
-							context.Database.CloseConnection();
-						}
-					}
-				}
-				SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
-				SeedData.EnsureSeedData(logger, uasContext);
-			}
-		}
+    public class SeedData
+    {
+        private static void LogException(string location, Exception ex)
+        {
+            Log.Error("==========================================");
+            Log.Error($"ОШИБКА в: {location}");
+            Log.Error($"Message: {ex.Message}");
+            Log.Error($"Type: {ex.GetType().FullName}");
 
-		// Token: 0x060003B5 RID: 949 RVA: 0x0000E178 File Offset: 0x0000C378
-		private static void EnsureSQLiteDatabaseCreated(DatabaseFacade database)
-		{
-			string sql = database.GenerateCreateScript();
-			try
-			{
-				database.ExecuteSqlRaw(sql, Array.Empty<object>());
-			}
-			catch
-			{
-			}
-		}
+            if (ex.InnerException != null)
+            {
+                Log.Error($"InnerException: {ex.InnerException.Message}");
+                Log.Error($"InnerException Type: {ex.InnerException.GetType().FullName}");
 
-		// Token: 0x060003B6 RID: 950 RVA: 0x0000E1B0 File Offset: 0x0000C3B0
-		private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
-		{
-			bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
-			bool flag = true;
-			if (!((standalone.GetValueOrDefault() == flag) & (standalone != null)))
-			{
-				logger.LogInformation("Migrate databases", Array.Empty<object>());
-				services.GetRequiredService<ApplicationDbContext>().Database.Migrate();
-				services.GetRequiredService<ConfigurationDbContext>().Database.Migrate();
-				services.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
-				string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
-				SeedData.Migrate_HAS_5_0To5_0_1(cnx);
-				SeedData.Migrate_HAS_5_0_xTo5_0_5(cnx);
-				SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
-				if (slqCreator.CreateTableAndIndexes(cnx) != 0)
-				{
-					throw new Exception("Unable to create cache tables in database");
-				}
-			}
-			else
-			{
-				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
-				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
-				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
-			}
-		}
+                if (ex.InnerException.InnerException != null)
+                {
+                    Log.Error($"Inner.Inner: {ex.InnerException.InnerException.Message}");
+                }
+            }
 
-		// Token: 0x060003B7 RID: 951 RVA: 0x0000E28C File Offset: 0x0000C48C
-		internal static void Migrate_HAS_5_0To5_0_1(string cnxString)
-		{
-			using (SqlConnection connection = new SqlConnection(cnxString))
-			{
-				SeedData.MigrateOldConfigTable<WindowsConfig>(connection);
-				SeedData.MigrateOldConfigTable<HopexConfig>(connection);
-				SeedData.MigrateOldConfigTable<Saml2Config>(connection);
-				SeedData.MigrateOldConfigTable<OpenIdConfig>(connection);
-				try
-				{
-					foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>())
-					{
-						IdentityServer4.EntityFramework.Entities.ApiResource apiResource = connection.Query("select * from [dbo].[ApiResources] where Name='" + resource.Name + "'", null, null, true, null, null).FirstOrDefault<IdentityServer4.EntityFramework.Entities.ApiResource>();
-						if (apiResource != null)
-						{
-							IDbConnection dbConnection = connection;
-							DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(62, 1);
-							defaultInterpolatedStringHandler.AppendLiteral("select * from [dbo].[ApiResourceScopes] where ApiResourceId='");
-							defaultInterpolatedStringHandler.AppendFormatted<int>(apiResource.Id);
-							defaultInterpolatedStringHandler.AppendLiteral("'");
-							if (dbConnection.Query(defaultInterpolatedStringHandler.ToStringAndClear(), null, null, true, null, null).FirstOrDefault<ApiResourceScope>() == null)
-							{
-								var p = new
-								{
-									ApiResourceId = apiResource.Id,
-									Scope = resource.Scopes.First<string>()
-								};
-								connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p, null, null, null);
-							}
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					Log.Logger.Error(ex, "Warning");
-				}
-			}
-		}
+            Log.Error("--- FULL EXCEPTION ---");
+            Log.Error(ex.ToString());
+            Log.Error("--- END FULL EXCEPTION ---");
+            Log.Error("==========================================");
+        }
 
-		// Token: 0x060003B8 RID: 952 RVA: 0x0000E438 File Offset: 0x0000C638
-		internal static void Migrate_HAS_5_0_xTo5_0_5(string cnxString)
-		{
-			using (SqlConnection connection = new SqlConnection(cnxString))
-			{
-				try
-				{
-					SeedData.updateClaimForSub<OpenIdConfig>(connection);
-					SeedData.updateClaimForSub<Saml2Config>(connection);
-				}
-				catch (Exception ex)
-				{
-					Log.Logger.Error(ex, "Warning");
-				}
-			}
-		}
+        public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
+        {
+            Log.Information("##################################################");
+            Log.Information("!!! НОВАЯ ВЕРСИЯ КОДА v5 !!!");
+            Log.Information("##################################################");
+            Log.Information("=== EnsureSeedData: НАЧАЛО ===");
 
-		// Token: 0x060003B9 RID: 953 RVA: 0x0000E494 File Offset: 0x0000C694
-		private static void updateClaimForSub<T>(SqlConnection connection) where T : new()
-		{
-			IEnumerable<ExternalProvider> externalProviders = connection.Query("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null);
-			foreach (ExternalProvider ep in externalProviders)
-			{
-				T Cfg = ep.GetConfiguration<T>();
-				object CfgDyn = Cfg;
-				if (SeedData.<>o__5<T>.<>p__2 == null)
-				{
-					SeedData.<>o__5<T>.<>p__2 = CallSite<Func<CallSite, object, bool>>.Create(Binder.UnaryOperation(CSharpBinderFlags.None, ExpressionType.IsTrue, typeof(SeedData), new CSharpArgumentInfo[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) }));
-				}
-				Func<CallSite, object, bool> target = SeedData.<>o__5<T>.<>p__2.Target;
-				CallSite <>p__ = SeedData.<>o__5<T>.<>p__2;
-				if (SeedData.<>o__5<T>.<>p__1 == null)
-				{
-					SeedData.<>o__5<T>.<>p__1 = CallSite<Func<CallSite, Type, object, object>>.Create(Binder.InvokeMember(CSharpBinderFlags.None, "IsNullOrEmpty", null, typeof(SeedData), new CSharpArgumentInfo[]
-					{
-						CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType | CSharpArgumentInfoFlags.IsStaticType, null),
-						CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
-					}));
-				}
-				Func<CallSite, Type, object, object> target2 = SeedData.<>o__5<T>.<>p__1.Target;
-				CallSite <>p__2 = SeedData.<>o__5<T>.<>p__1;
-				Type typeFromHandle = typeof(string);
-				if (SeedData.<>o__5<T>.<>p__0 == null)
-				{
-					SeedData.<>o__5<T>.<>p__0 = CallSite<Func<CallSite, object, object>>.Create(Binder.GetMember(CSharpBinderFlags.None, "ClaimForSub", typeof(SeedData), new CSharpArgumentInfo[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) }));
-				}
-				if (target(<>p__, target2(<>p__2, typeFromHandle, SeedData.<>o__5<T>.<>p__0.Target(SeedData.<>o__5<T>.<>p__0, CfgDyn))))
-				{
-					if (SeedData.<>o__5<T>.<>p__3 == null)
-					{
-						SeedData.<>o__5<T>.<>p__3 = CallSite<Func<CallSite, object, string, object>>.Create(Binder.SetMember(CSharpBinderFlags.None, "ClaimForSub", typeof(SeedData), new CSharpArgumentInfo[]
-						{
-							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
-							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType | CSharpArgumentInfoFlags.Constant, null)
-						}));
-					}
-					SeedData.<>o__5<T>.<>p__3.Target(SeedData.<>o__5<T>.<>p__3, CfgDyn, "name");
-					if (SeedData.<>o__5<T>.<>p__4 == null)
-					{
-						SeedData.<>o__5<T>.<>p__4 = CallSite<Action<CallSite, ExternalProvider, object>>.Create(Binder.InvokeMember(CSharpBinderFlags.ResultDiscarded, "SetConfiguration", null, typeof(SeedData), new CSharpArgumentInfo[]
-						{
-							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType, null),
-							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
-						}));
-					}
-					SeedData.<>o__5<T>.<>p__4.Target(SeedData.<>o__5<T>.<>p__4, ep, CfgDyn);
-					DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(77, 1);
-					defaultInterpolatedStringHandler.AppendLiteral("update [dbo].[externalproviders] set Configuration=@Configuration where id = ");
-					defaultInterpolatedStringHandler.AppendFormatted<int>(ep.Id);
-					connection.Execute(defaultInterpolatedStringHandler.ToStringAndClear(), ep, null, null, null);
-				}
-			}
-		}
+            ServiceProvider services = null;
+            try
+            {
+                Log.Information("Шаг 1: BuildServiceProvider...");
+                services = serviceCollection.BuildServiceProvider();
+                Log.Information("Шаг 1: BuildServiceProvider - OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSeedData -> BuildServiceProvider", ex);
+                throw;
+            }
 
-		// Token: 0x060003BA RID: 954 RVA: 0x0000E730 File Offset: 0x0000C930
-		private static void MigrateOldConfigTable<T>(SqlConnection connection)
-		{
-			T cfg;
-			try
-			{
-				cfg = connection.Query("select * from [dbo].[" + typeof(T).Name + "]", null, null, true, null, null).FirstOrDefault<T>();
-			}
-			catch
-			{
-				return;
-			}
-			try
-			{
-				if (cfg != null)
-				{
-					OldExternalProvider ep = connection.Query("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null).FirstOrDefault<OldExternalProvider>();
-					if (ep != null)
-					{
-						(cfg as ProviderConfigBase).ClaimForRoles = ep.ClaimForRoles ?? (cfg as ProviderConfigBase).ClaimForRoles;
-						if (typeof(T) == typeof(WindowsConfig))
-						{
-							WindowsConfig winCfg = cfg as WindowsConfig;
-							winCfg.WindowsSourceIdentifier = ep.WindowsSourceIdentifier ?? winCfg.WindowsSourceIdentifier;
-							winCfg.WindowsRole = ep.WindowsRole ?? winCfg.WindowsRole;
-						}
-						ep.SetConfiguration<T>(cfg);
-						connection.Execute("update [dbo].[externalproviders] set Configuration=@Configuration where type = '" + typeof(T).Name + "'", ep, null, null, null);
-					}
-				}
-				connection.Execute("drop table [dbo].[" + typeof(T).Name + "]", null, null, null, null);
-			}
-			catch (Exception ex)
-			{
-				Log.Logger.Error(ex, "Warning");
-			}
-		}
+            try
+            {
+                using (IServiceScope scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+                {
+                    ApplicationDbContext uasContext = null;
+                    ConfigurationDbContext context = null;
+                    ILogger<SeedData> logger = null;
 
-		// Token: 0x060003BB RID: 955 RVA: 0x0000E91C File Offset: 0x0000CB1C
-		private static void EnsurePublicAddress(Microsoft.Extensions.Logging.ILogger logger, ConfigurationDbContext context, string publicAddress, bool isDevelopmentMode)
-		{
-			SeedData.<>c__DisplayClass7_0 CS$<>8__locals1;
-			CS$<>8__locals1.isDevelopmentMode = isDevelopmentMode;
-			IQueryable<IdentityServer4.EntityFramework.Entities.Client> clients = context.Clients;
-			ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "x");
-			IQueryable<IdentityServer4.EntityFramework.Entities.Client> queryable = clients.Include(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, List<ClientPostLogoutRedirectUri>>>(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_PostLogoutRedirectUris())), new ParameterExpression[] { parameterExpression }));
-			parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "x");
-			IIncludableQueryable<IdentityServer4.EntityFramework.Entities.Client, List<ClientRedirectUri>> query = queryable.Include(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, List<ClientRedirectUri>>>(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_RedirectUris())), new ParameterExpression[] { parameterExpression }));
-			logger.LogInformation("URLS Redirections are updating to public address " + publicAddress + "...", Array.Empty<object>());
-			CS$<>8__locals1.publicUri = new UriBuilder(publicAddress);
-			foreach (IdentityServer4.EntityFramework.Entities.Client client in query)
-			{
-				if (client.FrontChannelLogoutUri != null)
-				{
-					client.FrontChannelLogoutUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(client.FrontChannelLogoutUri, ref CS$<>8__locals1);
-				}
-				foreach (ClientRedirectUri redir in client.RedirectUris)
-				{
-					redir.RedirectUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(redir.RedirectUri, ref CS$<>8__locals1);
-				}
-				foreach (ClientPostLogoutRedirectUri redir2 in client.PostLogoutRedirectUris)
-				{
-					redir2.PostLogoutRedirectUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(redir2.PostLogoutRedirectUri, ref CS$<>8__locals1);
-				}
-			}
-			context.SaveChanges();
-		}
+                    try
+                    {
+                        Log.Information("Шаг 2: Получение ApplicationDbContext...");
+                        uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+                        Log.Information($"Шаг 2: ApplicationDbContext = {(uasContext != null ? "OK" : "NULL")}");
 
-		// Token: 0x060003BC RID: 956 RVA: 0x0000EAE4 File Offset: 0x0000CCE4
-		private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, IClusterConfiguration serverConfigurations, ApplicationDbContext uasContext, ConfigurationDbContext configurationStoreContext, ICryptoService cryptoService)
-		{
-			logger.LogInformation("Seeding database...", Array.Empty<object>());
-			logger.LogInformation("Updating AccessTokens...", Array.Empty<object>());
-			using (IEnumerator<AccessToken> enumerator = DefaultConfiguration.GetAccessTokens(cryptoService).GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					SeedData.<>c__DisplayClass8_0 CS$<>8__locals1 = new SeedData.<>c__DisplayClass8_0();
-					CS$<>8__locals1.user = enumerator.Current;
-					IQueryable<AccessToken> accessTokens = uasContext.AccessTokens;
-					ParameterExpression parameterExpression = Expression.Parameter(typeof(AccessToken), "a");
-					if (accessTokens.FirstOrDefault(Expression.Lambda<Func<AccessToken, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(AccessToken.get_TokenName())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals1, typeof(SeedData.<>c__DisplayClass8_0)), fieldof(SeedData.<>c__DisplayClass8_0.user)), methodof(AccessToken.get_TokenName()))), new ParameterExpression[] { parameterExpression })) == null)
-					{
-						uasContext.AccessTokens.Add(CS$<>8__locals1.user);
-					}
-				}
-			}
-			logger.LogInformation("Updating Clients...", Array.Empty<object>());
-			using (IEnumerator<IdentityServer4.Models.Client> enumerator2 = DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings).GetEnumerator())
-			{
-				while (enumerator2.MoveNext())
-				{
-					SeedData.<>c__DisplayClass8_1 CS$<>8__locals2 = new SeedData.<>c__DisplayClass8_1();
-					CS$<>8__locals2.client = enumerator2.Current;
-					IQueryable<IdentityServer4.EntityFramework.Entities.Client> clients = configurationStoreContext.Clients;
-					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "a");
-					if (clients.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_ClientId())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals2, typeof(SeedData.<>c__DisplayClass8_1)), fieldof(SeedData.<>c__DisplayClass8_1.client)), methodof(IdentityServer4.Models.Client.get_ClientId()))), new ParameterExpression[] { parameterExpression })) == null)
-					{
-						IdentityServer4.EntityFramework.Entities.Client c = CS$<>8__locals2.client.ToEntity();
-						c.NonEditable = true;
-						configurationStoreContext.Clients.Add(c);
-					}
-				}
-			}
-			logger.LogInformation("Updating Scope...", Array.Empty<object>());
-			using (IEnumerator<IdentityServer4.Models.ApiScope> enumerator3 = DefaultConfiguration.GetApiScopes().GetEnumerator())
-			{
-				while (enumerator3.MoveNext())
-				{
-					SeedData.<>c__DisplayClass8_2 CS$<>8__locals3 = new SeedData.<>c__DisplayClass8_2();
-					CS$<>8__locals3.scope = enumerator3.Current;
-					IQueryable<IdentityServer4.EntityFramework.Entities.ApiScope> apiScopes = configurationStoreContext.ApiScopes;
-					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.ApiScope), "a");
-					if (apiScopes.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.ApiScope, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.ApiScope.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals3, typeof(SeedData.<>c__DisplayClass8_2)), fieldof(SeedData.<>c__DisplayClass8_2.scope)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
-					{
-						configurationStoreContext.ApiScopes.Add(CS$<>8__locals3.scope.ToEntity());
-					}
-				}
-			}
-			logger.LogInformation("Updating IdentityResources...", Array.Empty<object>());
-			using (IEnumerator<IdentityServer4.Models.IdentityResource> enumerator4 = DefaultConfiguration.GetIdentityResources().GetEnumerator())
-			{
-				while (enumerator4.MoveNext())
-				{
-					SeedData.<>c__DisplayClass8_3 CS$<>8__locals4 = new SeedData.<>c__DisplayClass8_3();
-					CS$<>8__locals4.resource = enumerator4.Current;
-					IQueryable<IdentityServer4.EntityFramework.Entities.IdentityResource> identityResources = configurationStoreContext.IdentityResources;
-					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.IdentityResource), "a");
-					if (identityResources.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.IdentityResource, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.IdentityResource.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals4, typeof(SeedData.<>c__DisplayClass8_3)), fieldof(SeedData.<>c__DisplayClass8_3.resource)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
-					{
-						configurationStoreContext.IdentityResources.Add(CS$<>8__locals4.resource.ToEntity());
-					}
-				}
-			}
-			logger.LogInformation("Updating ApiResources...", Array.Empty<object>());
-			using (List<IdentityServer4.Models.ApiResource>.Enumerator enumerator5 = DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>().GetEnumerator())
-			{
-				while (enumerator5.MoveNext())
-				{
-					SeedData.<>c__DisplayClass8_4 CS$<>8__locals5 = new SeedData.<>c__DisplayClass8_4();
-					CS$<>8__locals5.resource = enumerator5.Current;
-					IQueryable<IdentityServer4.EntityFramework.Entities.ApiResource> apiResources = configurationStoreContext.ApiResources;
-					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.ApiResource), "a");
-					if (apiResources.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.ApiResource, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.ApiResource.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals5, typeof(SeedData.<>c__DisplayClass8_4)), fieldof(SeedData.<>c__DisplayClass8_4.resource)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
-					{
-						configurationStoreContext.ApiResources.Add(CS$<>8__locals5.resource.ToEntity());
-					}
-				}
-			}
-			configurationStoreContext.SaveChanges();
-		}
+                        Log.Information("Шаг 3: Получение ConfigurationDbContext...");
+                        context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
+                        Log.Information($"Шаг 3: ConfigurationDbContext = {(context != null ? "OK" : "NULL")}");
 
-		// Token: 0x060003BD RID: 957 RVA: 0x0000EFEC File Offset: 0x0000D1EC
-		private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, ApplicationDbContext uasContext)
-		{
-			logger.LogInformation("Updating External Providers...", Array.Empty<object>());
-			using (IEnumerator<ExternalProvider> enumerator = DefaultConfiguration.GetExternalProviders().GetEnumerator())
-			{
-				while (enumerator.MoveNext())
-				{
-					SeedData.<>c__DisplayClass9_0 CS$<>8__locals1 = new SeedData.<>c__DisplayClass9_0();
-					CS$<>8__locals1.externalProvider = enumerator.Current;
-					IQueryable<ExternalProvider> externalProviders = uasContext.ExternalProviders;
-					ParameterExpression parameterExpression = Expression.Parameter(typeof(ExternalProvider), "a");
-					if (externalProviders.FirstOrDefault(Expression.Lambda<Func<ExternalProvider, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(ExternalProvider.get_AuthenticationScheme())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals1, typeof(SeedData.<>c__DisplayClass9_0)), fieldof(SeedData.<>c__DisplayClass9_0.externalProvider)), methodof(ExternalProvider.get_AuthenticationScheme()))), new ParameterExpression[] { parameterExpression })) == null)
-					{
-						uasContext.ExternalProviders.Add(CS$<>8__locals1.externalProvider);
-					}
-				}
-			}
-			uasContext.SaveChanges();
-		}
+                        Log.Information("Шаг 4: Получение ILogger...");
+                        logger = services.GetService<ILogger<SeedData>>();
+                        Log.Information($"Шаг 4: ILogger = {(logger != null ? "OK" : "NULL")}");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("EnsureSeedData -> Получение сервисов", ex);
+                        throw;
+                    }
 
-		// Token: 0x060003BF RID: 959 RVA: 0x0000F0F4 File Offset: 0x0000D2F4
-		[CompilerGenerated]
-		internal static string <EnsurePublicAddress>g__UpdateUri|7_2(string uri, ref SeedData.<>c__DisplayClass7_0 A_1)
-		{
-			UriBuilder url = new UriBuilder(uri)
-			{
-				Port = A_1.publicUri.Port,
-				Host = A_1.publicUri.Host,
-				Scheme = A_1.publicUri.Scheme
-			};
-			if (url.Port == 80 || url.Port == 443)
-			{
-				url.Port = -1;
-			}
-			if (A_1.isDevelopmentMode && string.Compare(url.Path, "/authentication/login-callback", true) == 0)
-			{
-				return uri;
-			}
-			return url.ToString();
-		}
-	}
+                    if (context == null)
+                    {
+                        Log.Error("ОШИБКА: ConfigurationDbContext равен NULL!");
+                        throw new InvalidOperationException("ConfigurationDbContext is null");
+                    }
+
+                    bool isInMemory = false;
+                    try
+                    {
+                        Log.Information("Шаг 5: Проверка IsInMemory...");
+                        Log.Information($"Шаг 5.1: context.Database = {(context.Database != null ? "OK" : "NULL")}");
+                        isInMemory = context.Database.IsInMemory();
+                        Log.Information($"Шаг 5: IsInMemory = {isInMemory}");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("EnsureSeedData -> IsInMemory", ex);
+                        throw;
+                    }
+
+                    if (!isInMemory)
+                    {
+                        Log.Information("=== Режим SQL Server (не InMemory) ===");
+                        try
+                        {
+                            Log.Information("Шаг 6: Получение ICryptoService...");
+                            ICryptoService cryptoService = services.GetRequiredService<ICryptoService>();
+                            Log.Information($"Шаг 6: ICryptoService = {(cryptoService != null ? "OK" : "NULL")}");
+
+                            Log.Information("Шаг 7: Вызов MigrateDatabase...");
+                            MigrateDatabase(logger, services, cryptoService);
+                            Log.Information("Шаг 7: MigrateDatabase - OK");
+
+                            Log.Information("Шаг 8: EnsureSeedData (с cryptoService)...");
+                            EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
+                            Log.Information("Шаг 8: EnsureSeedData - OK");
+
+                            Log.Information("Шаг 9: EnsureSeedData (uasContext)...");
+                            EnsureSeedData(logger, uasContext);
+                            Log.Information("Шаг 9: EnsureSeedData - OK");
+
+                            Log.Information("Шаг 10: EnsurePublicAddress...");
+                            string publicAddress = serverConfigurations.RuntimeClusterSettings.PublicAddress;
+                            RunningMode? mode = serverConfigurations.RuntimeClusterSettings.Mode;
+                            bool isDevelopment = (mode.GetValueOrDefault() == RunningMode.Development) & (mode != null);
+                            Log.Information($"Шаг 10: publicAddress = {publicAddress}, isDevelopment = {isDevelopment}");
+
+                            EnsurePublicAddress(logger, context, publicAddress, isDevelopment);
+                            Log.Information("Шаг 10: EnsurePublicAddress - OK");
+                        }
+                        catch (Exception ex)
+                        {
+                            LogException("EnsureSeedData -> Блок SQL Server", ex);
+                            throw;
+                        }
+                        finally
+                        {
+                            try
+                            {
+                                bool? testMode = serverConfigurations.StartingArguments.TestMode;
+                                bool flag = false;
+                                if ((testMode.GetValueOrDefault() == flag) & (testMode != null))
+                                {
+                                    Log.Information("Закрытие соединения с БД...");
+                                    context.Database.CloseConnection();
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                LogException("EnsureSeedData -> CloseConnection", ex);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        Log.Information("=== Режим InMemory ===");
+                        try
+                        {
+                            EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
+                            EnsureSeedData(logger, uasContext);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogException("EnsureSeedData -> Блок InMemory", ex);
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSeedData -> Главный блок", ex);
+                throw;
+            }
+
+            Log.Information("=== EnsureSeedData: КОНЕЦ ===");
+        }
+
+        private static void EnsureSQLiteDatabaseCreated(DatabaseFacade database)
+        {
+            Log.Information("EnsureSQLiteDatabaseCreated: НАЧАЛО");
+            try
+            {
+                string sql = database.GenerateCreateScript();
+                Log.Information($"EnsureSQLiteDatabaseCreated: SQL длина = {sql?.Length ?? 0}");
+                database.ExecuteSqlRaw(sql, Array.Empty<object>());
+                Log.Information("EnsureSQLiteDatabaseCreated: OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSQLiteDatabaseCreated", ex);
+            }
+        }
+
+        private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
+        {
+            Log.Information("##################################################");
+            Log.Information("!!! MigrateDatabase НАЧАЛО v5 !!!");
+            Log.Information("##################################################");
+            Log.Information("=== MigrateDatabase: НАЧАЛО ===");
+
+            try
+            {
+                Log.Information("Проверка Standalone режима...");
+                bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
+                Log.Information($"Standalone = {standalone}");
+
+                bool isStandalone = (standalone.GetValueOrDefault() == true) & (standalone != null);
+                Log.Information($"isStandalone = {isStandalone}");
+
+                if (!isStandalone)
+                {
+                    Log.Information("=== SQL Server миграция ===");
+
+                    // ApplicationDbContext
+                    try
+                    {
+                        Log.Information("Миграция 1: Получение ApplicationDbContext...");
+                        var appDbContext = services.GetRequiredService<ApplicationDbContext>();
+                        Log.Information($"Миграция 1: ApplicationDbContext = {(appDbContext != null ? "OK" : "NULL")}");
+
+                        Log.Information("Миграция 1: Проверка Database...");
+                        var database = appDbContext.Database;
+                        Log.Information($"Миграция 1: Database = {(database != null ? "OK" : "NULL")}");
+
+                        Log.Information("Миграция 1: Проверка ProviderName...");
+                        var providerName = database.ProviderName;
+                        Log.Information($"Миграция 1: ProviderName = {providerName}");
+
+                        Log.Information("Миграция 1: Проверка ConnectionString...");
+                        var connectionString = database.GetConnectionString();
+                        Log.Information($"Миграция 1: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+
+                        // Выводим connection string (маскируем пароль)
+                        if (!string.IsNullOrEmpty(connectionString))
+                        {
+                            var maskedCs = Regex.Replace(
+                                connectionString,
+                                @"(Password|Pwd)\s*=\s*[^;]+",
+                                "$1=***",
+                                RegexOptions.IgnoreCase);
+                            Log.Information($"ConnectionString (masked): {maskedCs}");
+                        }
+
+                        // Диагностика Microsoft.Data.SqlClient
+                        try
+                        {
+                            var sqlClientAssembly = typeof(SqlConnection).Assembly;
+                            Log.Information($"Microsoft.Data.SqlClient Version: {sqlClientAssembly.GetName().Version}");
+                            Log.Information($"Microsoft.Data.SqlClient Location: {sqlClientAssembly.Location}");
+                        }
+                        catch (Exception verEx)
+                        {
+                            Log.Warning($"Не удалось получить версию SqlClient: {verEx.Message}");
+                        }
+
+                        // Проверка ConnectionString через SqlConnectionStringBuilder
+                        try
+                        {
+                            Log.Information(">>> Проверка ConnectionString через SqlConnectionStringBuilder...");
+                            var builder = new SqlConnectionStringBuilder(connectionString);
+                            Log.Information($"  Server: {builder.DataSource}");
+                            Log.Information($"  Database: {builder.InitialCatalog}");
+                            Log.Information($"  IntegratedSecurity: {builder.IntegratedSecurity}");
+                            Log.Information($"  UserID: {builder.UserID}");
+                            Log.Information($"  TrustServerCertificate: {builder.TrustServerCertificate}");
+                            Log.Information($"  Encrypt: {builder.Encrypt}");
+                            Log.Information("SqlConnectionStringBuilder - OK");
+                        }
+                        catch (Exception builderEx)
+                        {
+                            LogException("SqlConnectionStringBuilder", builderEx);
+                            throw;
+                        }
+
+                        // Тест соединения
+                        try
+                        {
+                            Log.Information(">>> Создание SqlConnection...");
+                            var conn = new SqlConnection();
+                            Log.Information("SqlConnection создан (пустой)");
+
+                            Log.Information(">>> Установка ConnectionString...");
+                            conn.ConnectionString = connectionString;
+                            Log.Information("ConnectionString установлен");
+
+                            Log.Information(">>> Проверка State...");
+                            var state = conn.State;
+                            Log.Information($"State = {state}");
+
+                            Log.Information(">>> Вызов Open()...");
+                            conn.Open();
+                            Log.Information($"Open() - OK, State = {conn.State}");
+
+                            // Проверим версию SQL Server
+                            try
+                            {
+                                using (var cmd = conn.CreateCommand())
+                                {
+                                    cmd.CommandText = "SELECT @@VERSION";
+                                    var version = cmd.ExecuteScalar()?.ToString();
+                                    if (version != null && version.Length > 100)
+                                    {
+                                        version = version.Substring(0, 100) + "...";
+                                    }
+                                    Log.Information($"SQL Server Version: {version}");
+                                }
+                            }
+                            catch (Exception sqlVerEx)
+                            {
+                                Log.Warning($"Не удалось получить версию SQL Server: {sqlVerEx.Message}");
+                            }
+
+                            conn.Close();
+                            conn.Dispose();
+                            Log.Information("Соединение закрыто и disposed");
+                        }
+                        catch (Exception connEx)
+                        {
+                            LogException("Тест соединения SqlConnection", connEx);
+                            throw;
+                        }
+
+                        // Проверка pending миграций
+                        try
+                        {
+                            Log.Information(">>> Проверка pending миграций...");
+                            var pendingMigrations = database.GetPendingMigrations().ToList();
+                            Log.Information($"Pending миграций: {pendingMigrations.Count}");
+                            foreach (var m in pendingMigrations)
+                            {
+                                Log.Information($"  - {m}");
+                            }
+                        }
+                        catch (Exception migEx)
+                        {
+                            Log.Warning($"ОШИБКА при проверке pending миграций: {migEx.Message}");
+                        }
+
+                        // Проверка applied миграций
+                        try
+                        {
+                            Log.Information(">>> Проверка applied миграций...");
+                            var appliedMigrations = database.GetAppliedMigrations().ToList();
+                            Log.Information($"Applied миграций: {appliedMigrations.Count}");
+                            foreach (var m in appliedMigrations)
+                            {
+                                Log.Information($"  - {m}");
+                            }
+                        }
+                        catch (Exception migEx)
+                        {
+                            Log.Warning($"ОШИБКА при проверке applied миграций: {migEx.Message}");
+                        }
+
+                        Log.Information("Миграция 1: Вызов Migrate()...");
+                        Log.Information(">>> Перед вызовом database.Migrate() <<<");
+
+                        database.Migrate();
+
+                        Log.Information(">>> После вызова database.Migrate() <<<");
+                        Log.Information("Миграция 1: ApplicationDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> ApplicationDbContext.Migrate()", ex);
+                        throw;
+                    }
+
+                    // ConfigurationDbContext
+                    try
+                    {
+                        Log.Information("Миграция 2: Получение ConfigurationDbContext...");
+                        var configDbContext = services.GetRequiredService<ConfigurationDbContext>();
+                        Log.Information($"Миграция 2: ConfigurationDbContext = {(configDbContext != null ? "OK" : "NULL")}");
+
+                        Log.Information("Миграция 2: Проверка ConnectionString...");
+                        var connectionString = configDbContext.Database.GetConnectionString();
+                        Log.Information($"Миграция 2: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+
+                        if (!string.IsNullOrEmpty(connectionString))
+                        {
+                            var maskedCs = Regex.Replace(
+                                connectionString,
+                                @"(Password|Pwd)\s*=\s*[^;]+",
+                                "$1=***",
+                                RegexOptions.IgnoreCase);
+                            Log.Information($"ConnectionString 2 (masked): {maskedCs}");
+                        }
+
+                        try
+                        {
+                            Log.Information(">>> Проверка pending миграций ConfigurationDbContext...");
+                            var pendingMigrations = configDbContext.Database.GetPendingMigrations().ToList();
+                            Log.Information($"Pending миграций: {pendingMigrations.Count}");
+                        }
+                        catch (Exception migEx)
+                        {
+                            Log.Warning($"ОШИБКА: {migEx.Message}");
+                        }
+
+                        Log.Information("Миграция 2: Вызов Migrate()...");
+                        Log.Information(">>> Перед вызовом ConfigurationDbContext.Migrate() <<<");
+
+                        configDbContext.Database.Migrate();
+
+                        Log.Information(">>> После вызова ConfigurationDbContext.Migrate() <<<");
+                        Log.Information("Миграция 2: ConfigurationDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> ConfigurationDbContext.Migrate()", ex);
+                        throw;
+                    }
+
+                    // PersistedGrantDbContext
+                    try
+                    {
+                        Log.Information("Миграция 3: Получение PersistedGrantDbContext...");
+                        var grantDbContext = services.GetRequiredService<PersistedGrantDbContext>();
+                        Log.Information($"Миграция 3: PersistedGrantDbContext = {(grantDbContext != null ? "OK" : "NULL")}");
+
+                        Log.Information("Миграция 3: Проверка ConnectionString...");
+                        var connectionString = grantDbContext.Database.GetConnectionString();
+                        Log.Information($"Миграция 3: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+
+                        if (!string.IsNullOrEmpty(connectionString))
+                        {
+                            var maskedCs = Regex.Replace(
+                                connectionString,
+                                @"(Password|Pwd)\s*=\s*[^;]+",
+                                "$1=***",
+                                RegexOptions.IgnoreCase);
+                            Log.Information($"ConnectionString 3 (masked): {maskedCs}");
+                        }
+
+                        try
+                        {
+                            Log.Information(">>> Проверка pending миграций PersistedGrantDbContext...");
+                            var pendingMigrations = grantDbContext.Database.GetPendingMigrations().ToList();
+                            Log.Information($"Pending миграций: {pendingMigrations.Count}");
+                        }
+                        catch (Exception migEx)
+                        {
+                            Log.Warning($"ОШИБКА: {migEx.Message}");
+                        }
+
+                        Log.Information("Миграция 3: Вызов Migrate()...");
+                        Log.Information(">>> Перед вызовом PersistedGrantDbContext.Migrate() <<<");
+
+                        grantDbContext.Database.Migrate();
+
+                        Log.Information(">>> После вызова PersistedGrantDbContext.Migrate() <<<");
+                        Log.Information("Миграция 3: PersistedGrantDbContext.Migrate() - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> PersistedGrantDbContext.Migrate()", ex);
+                        throw;
+                    }
+
+                    // Дополнительные миграции
+                    try
+                    {
+                        Log.Information("Шаг 4: Получение DatabaseConnectionString...");
+                        string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
+                        Log.Information($"Шаг 4: DatabaseConnectionString = {(string.IsNullOrEmpty(cnx) ? "ПУСТАЯ или NULL!" : "OK (длина: " + cnx.Length + ")")}");
+
+                        if (!string.IsNullOrEmpty(cnx))
+                        {
+                            var maskedCnx = Regex.Replace(
+                                cnx,
+                                @"(Password|Pwd)\s*=\s*[^;]+",
+                                "$1=***",
+                                RegexOptions.IgnoreCase);
+                            Log.Information($"DatabaseConnectionString (masked): {maskedCnx}");
+                        }
+
+                        Log.Information("Шаг 5: Migrate_HAS_5_0To5_0_1...");
+                        Migrate_HAS_5_0To5_0_1(cnx);
+                        Log.Information("Шаг 5: Migrate_HAS_5_0To5_0_1 - OK");
+
+                        Log.Information("Шаг 6: Migrate_HAS_5_0_xTo5_0_5...");
+                        Migrate_HAS_5_0_xTo5_0_5(cnx);
+                        Log.Information("Шаг 6: Migrate_HAS_5_0_xTo5_0_5 - OK");
+
+                        Log.Information("Шаг 7: SQLCacheTableCreator...");
+                        SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
+                        int result = slqCreator.CreateTableAndIndexes(cnx);
+                        Log.Information($"Шаг 7: SQLCacheTableCreator result = {result}");
+
+                        if (result != 0)
+                        {
+                            throw new Exception("Unable to create cache tables in database");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> Дополнительные миграции", ex);
+                        throw;
+                    }
+                }
+                else
+                {
+                    Log.Information("=== SQLite режим (Standalone) ===");
+
+                    try
+                    {
+                        Log.Information("SQLite: ApplicationDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
+                        Log.Information("SQLite: ApplicationDbContext - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> SQLite ApplicationDbContext", ex);
+                        throw;
+                    }
+
+                    try
+                    {
+                        Log.Information("SQLite: ConfigurationDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
+                        Log.Information("SQLite: ConfigurationDbContext - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> SQLite ConfigurationDbContext", ex);
+                        throw;
+                    }
+
+                    try
+                    {
+                        Log.Information("SQLite: PersistedGrantDbContext...");
+                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
+                        Log.Information("SQLite: PersistedGrantDbContext - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("MigrateDatabase -> SQLite PersistedGrantDbContext", ex);
+                        throw;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("MigrateDatabase -> Главный блок", ex);
+                throw;
+            }
+
+            Log.Information("=== MigrateDatabase: КОНЕЦ ===");
+        }
+
+        internal static void Migrate_HAS_5_0To5_0_1(string cnxString)
+        {
+            Log.Information("Migrate_HAS_5_0To5_0_1: НАЧАЛО");
+
+            if (string.IsNullOrEmpty(cnxString))
+            {
+                Log.Information("Migrate_HAS_5_0To5_0_1: cnxString пустой, пропускаем");
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(cnxString))
+                {
+                    Log.Information($"Migrate_HAS_5_0To5_0_1: Соединение создано");
+
+                    try
+                    {
+                        connection.Open();
+                        Log.Information($"Migrate_HAS_5_0To5_0_1: Соединение открыто, State = {connection.State}");
+                    }
+                    catch (Exception openEx)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> Open()", openEx);
+                        throw;
+                    }
+
+                    try
+                    {
+                        Log.Information("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<WindowsConfig>...");
+                        MigrateOldConfigTable<WindowsConfig>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> WindowsConfig", ex);
+                    }
+
+                    try
+                    {
+                        Log.Information("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<HopexConfig>...");
+                        MigrateOldConfigTable<HopexConfig>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> HopexConfig", ex);
+                    }
+
+                    try
+                    {
+                        Log.Information("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<Saml2Config>...");
+                        MigrateOldConfigTable<Saml2Config>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> Saml2Config", ex);
+                    }
+
+                    try
+                    {
+                        Log.Information("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<OpenIdConfig>...");
+                        MigrateOldConfigTable<OpenIdConfig>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> OpenIdConfig", ex);
+                    }
+
+                    try
+                    {
+                        Log.Information("Migrate_HAS_5_0To5_0_1: Обработка ApiResources...");
+                        foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList())
+                        {
+                            var apiResource = connection.Query<IdentityServer4.EntityFramework.Entities.ApiResource>(
+                                $"select * from [dbo].[ApiResources] where Name='{resource.Name}'").FirstOrDefault();
+
+                            if (apiResource != null)
+                            {
+                                var existingScope = connection.Query<ApiResourceScope>(
+                                    $"select * from [dbo].[ApiResourceScopes] where ApiResourceId='{apiResource.Id}'").FirstOrDefault();
+
+                                if (existingScope == null)
+                                {
+                                    var p = new
+                                    {
+                                        ApiResourceId = apiResource.Id,
+                                        Scope = resource.Scopes.First()
+                                    };
+                                    connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p);
+                                }
+                            }
+                        }
+                        Log.Information("Migrate_HAS_5_0To5_0_1: ApiResources - OK");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0To5_0_1 -> ApiResources", ex);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("Migrate_HAS_5_0To5_0_1 -> Главный блок", ex);
+                throw;
+            }
+            Log.Information("Migrate_HAS_5_0To5_0_1: КОНЕЦ");
+        }
+
+        internal static void Migrate_HAS_5_0_xTo5_0_5(string cnxString)
+        {
+            Log.Information("Migrate_HAS_5_0_xTo5_0_5: НАЧАЛО");
+
+            if (string.IsNullOrEmpty(cnxString))
+            {
+                Log.Information("Migrate_HAS_5_0_xTo5_0_5: cnxString пустой, пропускаем");
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(cnxString))
+                {
+                    try
+                    {
+                        connection.Open();
+                        Log.Information($"Migrate_HAS_5_0_xTo5_0_5: Соединение открыто");
+                    }
+                    catch (Exception openEx)
+                    {
+                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> Open()", openEx);
+                        throw;
+                    }
+
+                    try
+                    {
+                        Log.Information("Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<OpenIdConfig>...");
+                        updateClaimForSub<OpenIdConfig>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> OpenIdConfig", ex);
+                    }
+
+                    try
+                    {
+                        Log.Information("Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<Saml2Config>...");
+                        updateClaimForSub<Saml2Config>(connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> Saml2Config", ex);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException("Migrate_HAS_5_0_xTo5_0_5 -> Главный блок", ex);
+            }
+            Log.Information("Migrate_HAS_5_0_xTo5_0_5: КОНЕЦ");
+        }
+
+        private static void updateClaimForSub<T>(SqlConnection connection) where T : new()
+        {
+            Log.Information($"updateClaimForSub<{typeof(T).Name}>: НАЧАЛО");
+            try
+            {
+                var externalProviders = connection.Query<ExternalProvider>(
+                    $"select * from [dbo].[externalProviders] where type = '{typeof(T).Name}'");
+
+                foreach (var ep in externalProviders)
+                {
+                    T cfg = ep.GetConfiguration<T>();
+                    dynamic cfgDyn = cfg;
+                    if (string.IsNullOrEmpty(cfgDyn.ClaimForSub))
+                    {
+                        cfgDyn.ClaimForSub = "name";
+                        ep.SetConfiguration<T>(cfg);
+                        connection.Execute(
+                            $"update [dbo].[externalproviders] set Configuration=@Configuration where id = {ep.Id}", ep);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                LogException($"updateClaimForSub<{typeof(T).Name}>", ex);
+                throw;
+            }
+            Log.Information($"updateClaimForSub<{typeof(T).Name}>: КОНЕЦ");
+        }
+
+        private static void MigrateOldConfigTable<T>(SqlConnection connection)
+        {
+            Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: НАЧАЛО");
+            T cfg;
+            try
+            {
+                cfg = connection.Query<T>($"select * from [dbo].[{typeof(T).Name}]").FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: Таблица не найдена (это OK) - {ex.Message}");
+                return;
+            }
+
+            try
+            {
+                if (cfg != null)
+                {
+                    Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: cfg найден, обновляем...");
+                    var ep = connection.Query<OldExternalProvider>(
+                        $"select * from [dbo].[externalProviders] where type = '{typeof(T).Name}'").FirstOrDefault();
+
+                    if (ep != null)
+                    {
+                        (cfg as ProviderConfigBase).ClaimForRoles = ep.ClaimForRoles ?? (cfg as ProviderConfigBase).ClaimForRoles;
+
+                        if (typeof(T) == typeof(WindowsConfig))
+                        {
+                            WindowsConfig winCfg = cfg as WindowsConfig;
+                            winCfg.WindowsSourceIdentifier = ep.WindowsSourceIdentifier ?? winCfg.WindowsSourceIdentifier;
+                            winCfg.WindowsRole = ep.WindowsRole ?? winCfg.WindowsRole;
+                        }
+
+                        ep.SetConfiguration<T>(cfg);
+                        connection.Execute(
+                            $"update [dbo].[externalproviders] set Configuration=@Configuration where type = '{typeof(T).Name}'", ep);
+                    }
+                }
+
+                Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: Удаление старой таблицы...");
+                connection.Execute($"drop table [dbo].[{typeof(T).Name}]");
+            }
+            catch (Exception ex)
+            {
+                LogException($"MigrateOldConfigTable<{typeof(T).Name}>", ex);
+            }
+            Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: КОНЕЦ");
+        }
+
+        private static void EnsurePublicAddress(Microsoft.Extensions.Logging.ILogger logger, ConfigurationDbContext context, string publicAddress, bool isDevelopmentMode)
+        {
+            Log.Information("EnsurePublicAddress: НАЧАЛО");
+            Log.Information($"EnsurePublicAddress: publicAddress = {publicAddress}, isDevelopmentMode = {isDevelopmentMode}");
+
+            try
+            {
+                var query = context.Clients
+                    .Include(x => x.PostLogoutRedirectUris)
+                    .Include(x => x.RedirectUris);
+
+                logger?.LogInformation($"URLS Redirections are updating to public address {publicAddress}...");
+                UriBuilder publicUri = new UriBuilder(publicAddress);
+
+                Log.Information($"EnsurePublicAddress: publicUri = {publicUri}");
+
+                int clientCount = 0;
+                foreach (var client in query)
+                {
+                    clientCount++;
+                    if (client.FrontChannelLogoutUri != null)
+                    {
+                        client.FrontChannelLogoutUri = UpdateUri(client.FrontChannelLogoutUri, publicUri, isDevelopmentMode);
+                    }
+                    foreach (var redir in client.RedirectUris)
+                    {
+                        redir.RedirectUri = UpdateUri(redir.RedirectUri, publicUri, isDevelopmentMode);
+                    }
+                    foreach (var redir in client.PostLogoutRedirectUris)
+                    {
+                        redir.PostLogoutRedirectUri = UpdateUri(redir.PostLogoutRedirectUri, publicUri, isDevelopmentMode);
+                    }
+                }
+
+                Log.Information($"EnsurePublicAddress: Обработано клиентов: {clientCount}");
+
+                Log.Information("EnsurePublicAddress: SaveChanges...");
+                context.SaveChanges();
+                Log.Information("EnsurePublicAddress: SaveChanges - OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsurePublicAddress", ex);
+                throw;
+            }
+            Log.Information("EnsurePublicAddress: КОНЕЦ");
+        }
+
+        private static string UpdateUri(string uri, UriBuilder publicUri, bool isDevelopmentMode)
+        {
+            UriBuilder url = new UriBuilder(uri)
+            {
+                Port = publicUri.Port,
+                Host = publicUri.Host,
+                Scheme = publicUri.Scheme
+            };
+
+            if (url.Port == 80 || url.Port == 443)
+            {
+                url.Port = -1;
+            }
+
+            if (isDevelopmentMode && string.Compare(url.Path, "/authentication/login-callback", true) == 0)
+            {
+                return uri;
+            }
+
+            return url.ToString();
+        }
+
+        private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, IClusterConfiguration serverConfigurations, ApplicationDbContext uasContext, ConfigurationDbContext configurationStoreContext, ICryptoService cryptoService)
+        {
+            Log.Information("EnsureSeedData (with crypto): НАЧАЛО");
+            try
+            {
+                logger?.LogInformation("Seeding database...");
+
+                Log.Information("EnsureSeedData: Updating AccessTokens...");
+                int accessTokenCount = 0;
+                foreach (var user in DefaultConfiguration.GetAccessTokens(cryptoService))
+                {
+                    if (uasContext.AccessTokens.FirstOrDefault(a => a.TokenName == user.TokenName) == null)
+                    {
+                        uasContext.AccessTokens.Add(user);
+                        accessTokenCount++;
+                    }
+                }
+                Log.Information($"EnsureSeedData: Добавлено AccessTokens: {accessTokenCount}");
+
+                Log.Information("EnsureSeedData: Updating Clients...");
+                int clientCount = 0;
+                foreach (var client in DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings))
+                {
+                    if (configurationStoreContext.Clients.FirstOrDefault(a => a.ClientId == client.ClientId) == null)
+                    {
+                        var c = client.ToEntity();
+                        c.NonEditable = true;
+                        configurationStoreContext.Clients.Add(c);
+                        clientCount++;
+                    }
+                }
+                Log.Information($"EnsureSeedData: Добавлено Clients: {clientCount}");
+
+                Log.Information("EnsureSeedData: Updating Scope...");
+                int scopeCount = 0;
+                foreach (var scope in DefaultConfiguration.GetApiScopes())
+                {
+                    if (configurationStoreContext.ApiScopes.FirstOrDefault(a => a.Name == scope.Name) == null)
+                    {
+                        configurationStoreContext.ApiScopes.Add(scope.ToEntity());
+                        scopeCount++;
+                    }
+                }
+                Log.Information($"EnsureSeedData: Добавлено ApiScopes: {scopeCount}");
+
+                Log.Information("EnsureSeedData: Updating IdentityResources...");
+                int identityResourceCount = 0;
+                foreach (var resource in DefaultConfiguration.GetIdentityResources())
+                {
+                    if (configurationStoreContext.IdentityResources.FirstOrDefault(a => a.Name == resource.Name) == null)
+                    {
+                        configurationStoreContext.IdentityResources.Add(resource.ToEntity());
+                        identityResourceCount++;
+                    }
+                }
+                Log.Information($"EnsureSeedData: Добавлено IdentityResources: {identityResourceCount}");
+
+                Log.Information("EnsureSeedData: Updating ApiResources...");
+                int apiResourceCount = 0;
+                foreach (var resource in DefaultConfiguration.GetApiResources().ToList())
+                {
+                    if (configurationStoreContext.ApiResources.FirstOrDefault(a => a.Name == resource.Name) == null)
+                    {
+                        configurationStoreContext.ApiResources.Add(resource.ToEntity());
+                        apiResourceCount++;
+                    }
+                }
+                Log.Information($"EnsureSeedData: Добавлено ApiResources: {apiResourceCount}");
+
+                Log.Information("EnsureSeedData: SaveChanges...");
+                configurationStoreContext.SaveChanges();
+                Log.Information("EnsureSeedData: SaveChanges - OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSeedData (with crypto)", ex);
+                throw;
+            }
+            Log.Information("EnsureSeedData (with crypto): КОНЕЦ");
+        }
+
+        private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, ApplicationDbContext uasContext)
+        {
+            Log.Information("EnsureSeedData (uasContext): НАЧАЛО");
+            try
+            {
+                logger?.LogInformation("Updating External Providers...");
+
+                int providerCount = 0;
+                foreach (var externalProvider in DefaultConfiguration.GetExternalProviders())
+                {
+                    if (uasContext.ExternalProviders.FirstOrDefault(a => a.AuthenticationScheme == externalProvider.AuthenticationScheme) == null)
+                    {
+                        uasContext.ExternalProviders.Add(externalProvider);
+                        providerCount++;
+                    }
+                }
+                Log.Information($"EnsureSeedData (uasContext): Добавлено ExternalProviders: {providerCount}");
+
+                Log.Information("EnsureSeedData (uasContext): SaveChanges...");
+                uasContext.SaveChanges();
+                Log.Information("EnsureSeedData (uasContext): SaveChanges - OK");
+            }
+            catch (Exception ex)
+            {
+                LogException("EnsureSeedData (uasContext)", ex);
+                throw;
+            }
+            Log.Information("EnsureSeedData (uasContext): КОНЕЦ");
+        }
+    }
 }

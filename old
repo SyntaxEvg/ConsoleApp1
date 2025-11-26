@@ -1,100 +1,272 @@
-Unable to find package Microsoft.IdentityModel.Xml. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.IO.Pipes.AccessControl. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Sinks.Seq. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package TestableIO.System.IO.Abstractions. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package BirdMessenger. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.Win32.Registry. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.Extensions.Caching.SqlServer. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package IdentityModel.AspNetCore.OAuth2Introspection. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package CSharpFunctionalExtensions. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.Extensions.DependencyModel. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package IdentityModel. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.IdentityModel.Tokens.Saml. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.AspNetCore. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package IdentityServer4.EntityFramework. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package ApacheThrift. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Sustainsys.Saml2.AspNetCore2. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package SQLitePCLRaw.lib.e_sqlite3. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Sinks.PeriodicBatching. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package IdentityServer4.AccessTokenValidation. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.Net.Http.WinHttpHandler. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.SourceLink.AzureRepos.Git. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package FluentAssertions. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package IdentityServer4.EntityFramework.Storage. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.IO.FileSystem.AccessControl. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Jaeger.Core. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Sustainsys.Saml2. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Ben.Demystifier. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Enrichers.AssemblyName. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.EntityFrameworkCore.InMemory. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.AspNetCore.Authentication.JwtBearer. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Jaeger.Senders.Thrift. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.EntityFrameworkCore.Sqlite. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.DirectoryServices.Protocols. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Extensions.Hosting. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.DirectoryServices. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package AutoMapper. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package SQLitePCLRaw.bundle_e_sqlite3. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package IdentityModel.AspNetCore. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package IdentityServer4.Storage. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package NuGet.Versioning. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.AspNetCore.Authentication.OpenIdConnect. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Extensions.Logging. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Sinks.Debug. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package SQLitePCLRaw.provider.e_sqlite3. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Sinks.Console. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Settings.Configuration. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package SQLitePCLRaw.core. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.IO.Abstractions. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package IdentityServer4. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.Data.Sqlite.Core. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package TestableIO.System.IO.Abstractions.Wrappers. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Easy.Password.Validator. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package CSharpFunctionalExtensions.FluentAssertions. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Jaeger.Communication.Thrift. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.CodeAnalysis.NetAnalyzers. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.DirectoryServices.AccountManagement. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Dapper. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.Security.Cryptography.Xml. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Serilog.Formatting.Compact. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package Microsoft.EntityFrameworkCore.Design. No packages exist with this id in source(s): C:\Program Files\dotnet\library-packs, Microsoft Visual Studio Offline Packages, nugetL
-Unable to find package System.ComponentModel.Annotations with version (>= 5.0.0)
-  - Found 1 version(s) in Microsoft Visual Studio Offline Packages [ Nearest version: 4.0.10 ]
-  - Found 0 version(s) in nugetL
-  - Found 0 version(s) in C:\Program Files\dotnet\library-packs
-Unable to find package System.Threading.Tasks.Dataflow with version (>= 4.11.1)
-  - Found 1 version(s) in Microsoft Visual Studio Offline Packages [ Nearest version: 4.5.25 ]
-  - Found 0 version(s) in nugetL
-  - Found 0 version(s) in C:\Program Files\dotnet\library-packs
-Warning As Error: Detected package downgrade: Microsoft.Identity.Client from 4.61.3 to 4.56.0. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Azure.Identity 1.11.4 -> Microsoft.Identity.Client (>= 4.61.3) 
- HAS.Modules.UAS -> Microsoft.Identity.Client (>= 4.56.0)
-Warning As Error: Detected package downgrade: Microsoft.Extensions.Configuration from 3.1.18 to 3.1.0. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Microsoft.Extensions.Configuration.EnvironmentVariables 3.1.18 -> Microsoft.Extensions.Configuration (>= 3.1.18) 
- HAS.Modules.UAS -> Microsoft.Extensions.Configuration (>= 2.2.0)
-Warning As Error: Detected package downgrade: System.Memory from 4.5.5 to 4.5.4. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> System.Text.Encodings.Web 9.0.4 -> System.Memory (>= 4.5.5) 
- HAS.Modules.UAS -> System.Memory (>= 4.5.4)
-Warning As Error: Detected package downgrade: Microsoft.Extensions.Configuration.Abstractions from 9.0.5 to 9.0.4. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Microsoft.Extensions.Hosting.Abstractions 9.0.5 -> Microsoft.Extensions.Configuration.Abstractions (>= 9.0.5) 
- HAS.Modules.UAS -> Microsoft.Extensions.Configuration.Abstractions (>= 8.0.0)
-Warning As Error: Detected package downgrade: Microsoft.Extensions.DependencyInjection.Abstractions from 9.0.5 to 9.0.4. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Microsoft.Extensions.Hosting.Abstractions 9.0.5 -> Microsoft.Extensions.DependencyInjection.Abstractions (>= 9.0.5) 
- HAS.Modules.UAS -> Microsoft.Extensions.DependencyInjection.Abstractions (>= 8.0.0)
-Warning As Error: Detected package downgrade: Microsoft.Extensions.FileProviders.Abstractions from 9.0.5 to 9.0.4. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Microsoft.Extensions.Hosting.Abstractions 9.0.5 -> Microsoft.Extensions.FileProviders.Abstractions (>= 9.0.5) 
- HAS.Modules.UAS -> Microsoft.Extensions.FileProviders.Abstractions (>= 7.0.0)
-Warning As Error: Detected package downgrade: Microsoft.Extensions.Logging.Abstractions from 9.0.5 to 9.0.4. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Microsoft.Extensions.Hosting.Abstractions 9.0.5 -> Microsoft.Extensions.Logging.Abstractions (>= 9.0.5) 
- HAS.Modules.UAS -> Microsoft.Extensions.Logging.Abstractions (>= 8.0.0)
-Warning As Error: Detected package downgrade: Serilog from 4.0.0 to 2.12.0. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Serilog.Sinks.Async 2.0.0 -> Serilog (>= 4.0.0) 
- HAS.Modules.UAS -> Serilog (>= 2.12.0)
-Warning As Error: Detected package downgrade: System.Diagnostics.DiagnosticSource from 9.0.4 to 6.0.1. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Microsoft.Extensions.Logging 9.0.4 -> System.Diagnostics.DiagnosticSource (>= 9.0.4) 
- HAS.Modules.UAS -> System.Diagnostics.DiagnosticSource (>= 6.0.1)
-Warning As Error: Detected package downgrade: Microsoft.Extensions.Options from 9.0.5 to 9.0.4. Reference the package directly from the project to select a different version. 
- HAS.Modules.UAS -> Microsoft.Extensions.Hosting.Abstractions 9.0.5 -> Microsoft.Extensions.Diagnostics.Abstractions 9.0.5 -> Microsoft.Extensions.Options (>= 9.0.5) 
- HAS.Modules.UAS -> Microsoft.Extensions.Options (>= 8.0.0)
-Duplicate 'Content' items were included. The .NET SDK includes 'Content' items from your project directory by default. You can either remove these items from your project file, or set the 'EnableDefaultContentItems' property to 'false' if you want to explicitly include them in your project file. For more information, see https://aka.ms/sdkimplicititems. The duplicate items were: 'wwwroot\css\font\Montserrat Medium 500.ttf'; 'wwwroot\css\font\Montserrat-Medium.otf'; 'wwwroot\css\login.css'; 'wwwroot\css\portal.css'; 'wwwroot\css\site.css'; 'wwwroot\error.html'; 'wwwroot\error403.html'; 'wwwroot\favicon.ico'; 'wwwroot\images\apple-touch-icon.png'; 'wwwroot\images\browserconfig.xml'; 'wwwroot\images\error.png'; 'wwwroot\images\favicon-16x16.png'; 'wwwroot\images\favicon-32x32.png'; 'wwwroot\images\favicon.ico'; 'wwwroot\images\help.png'; 'wwwroot\images\loginbackground.jpg'; 'wwwroot\images\logo-H-white.png'; 'wwwroot\images\logo-H.png'; 'wwwroot\images\logout.png'; 'wwwroot\images\portalbackground.jpg'; 'wwwroot\images\user.jpg'; 'wwwroot\js\apiKey.js'; 'wwwroot\js\login.js'; 'wwwroot\js\mapping.js'; 'wwwroot\js\signout-redirect.js'; 'wwwroot\js\userAccount.js'; 'wwwroot\lib\bootstrap\dist\css\bootstrap.min.css'; 'wwwroot\lib\bootstrap\dist\css\bootstrap.min.css.map'; 'wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js'; 'wwwroot\lib\bootstrap\dist\js\bootstrap.bundle.min.js.map'; 'wwwroot\lib\bootstrap\dist\js\bootstrap.min.js'; 'wwwroot\lib\bootstrap\dist\js\bootstrap.min.js.map'; 'wwwroot\lib\font-awesome\css\all.min.css'; 'wwwroot\lib\font-awesome\js\all.min.js'; 'wwwroot\lib\font-awesome\sprites\brands.svg'; 'wwwroot\lib\font-awesome\sprites\regular.svg'; 'wwwroot\lib\font-awesome\sprites\solid.svg'; 'wwwroot\lib\font-awesome\webfonts\fa-brands-400.eot'; 'wwwroot\lib\font-awesome\webfonts\fa-brands-400.svg'; 'wwwroot\lib\font-awesome\webfonts\fa-brands-400.ttf'; 'wwwroot\lib\font-awesome\webfonts\fa-brands-400.woff'; 'wwwroot\lib\font-awesome\webfonts\fa-brands-400.woff2'; 'wwwroot\lib\font-awesome\webfonts\fa-regular-400.eot'; 'wwwroot\lib\font-awesome\webfonts\fa-regular-400.svg'; 'wwwroot\lib\font-awesome\webfonts\fa-regular-400.ttf'; 'wwwroot\lib\font-awesome\webfonts\fa-regular-400.woff'; 'wwwroot\lib\font-awesome\webfonts\fa-regular-400.woff2'; 'wwwroot\lib\font-awesome\webfonts\fa-solid-900.eot'; 'wwwroot\lib\font-awesome\webfonts\fa-solid-900.svg'; 'wwwroot\lib\font-awesome\webfonts\fa-solid-900.ttf'; 'wwwroot\lib\font-awesome\webfonts\fa-solid-900.woff'; 'wwwroot\lib\font-awesome\webfonts\fa-solid-900.woff2'; 'wwwroot\lib\jqueryui\jquery-ui.js'; 'wwwroot\lib\jqueryui\jquery-ui.min.js'; 'wwwroot\lib\jqueryui\themes\base\images\ui-icons_444444_256x240.png'; 'wwwroot\lib\jqueryui\themes\base\images\ui-icons_555555_256x240.png'; 'wwwroot\lib\jqueryui\themes\base\images\ui-icons_777620_256x240.png'; 'wwwroot\lib\jqueryui\themes\base\images\ui-icons_777777_256x240.png'; 'wwwroot\lib\jqueryui\themes\base\images\ui-icons_cc0000_256x240.png'; 'wwwroot\lib\jqueryui\themes\base\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\base\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\base\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\base\theme.css'; 'wwwroot\lib\jqueryui\themes\base\theme.min.css'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-bg_diagonals-thick_8_333333_40x40.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-bg_glass_40_111111_1x400.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-bg_glass_55_1c1c1c_1x400.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-bg_highlight-hard_100_f9f9f9_1x100.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-bg_highlight-hard_40_aaaaaa_1x100.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-bg_highlight-soft_50_aaaaaa_1x100.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-bg_inset-hard_45_cd0a0a_1x100.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-bg_inset-hard_55_ffeb80_1x100.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-icons_222222_256x240.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-icons_4ca300_256x240.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-icons_bbbbbb_256x240.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-icons_ededed_256x240.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-icons_ffcf29_256x240.png'; 'wwwroot\lib\jqueryui\themes\black-tie\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\black-tie\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\black-tie\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\black-tie\theme.css'; 'wwwroot\lib\jqueryui\themes\black-tie\theme.min.css'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-bg_diagonals-thick_75_f3d8d8_40x40.png'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-bg_dots-small_65_a6a6a6_2x2.png'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-bg_glass_55_fbf8ee_1x400.png'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-bg_highlight-hard_100_eeeeee_1x100.png'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-bg_highlight-hard_100_f6f6f6_1x100.png'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-bg_highlight-soft_15_cc0000_1x100.png'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-icons_004276_256x240.png'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-icons_cc0000_256x240.png'; 'wwwroot\lib\jqueryui\themes\blitzer\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\blitzer\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\blitzer\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\blitzer\theme.css'; 'wwwroot\lib\jqueryui\themes\blitzer\theme.min.css'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-bg_diagonals-thick_90_eeeeee_40x40.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-bg_glass_100_e4f1fb_1x400.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-bg_glass_50_3baae3_1x400.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-bg_glass_80_d7ebf9_1x400.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-bg_highlight-hard_100_f2f5f7_1x100.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-bg_highlight-hard_70_000000_1x100.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-bg_highlight-soft_100_deedf7_1x100.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-bg_highlight-soft_25_ffef8f_1x100.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-icons_2694e8_256x240.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-icons_2e83ff_256x240.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-icons_3d80b3_256x240.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-icons_72a7cf_256x240.png'; 'wwwroot\lib\jqueryui\themes\cupertino\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\cupertino\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\cupertino\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\cupertino\theme.css'; 'wwwroot\lib\jqueryui\themes\cupertino\theme.min.css'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-bg_glass_40_ffc73d_1x400.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-bg_highlight-hard_20_0972a5_1x100.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-bg_highlight-soft_33_003147_1x100.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-bg_highlight-soft_35_222222_1x100.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-bg_highlight-soft_44_444444_1x100.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-bg_highlight-soft_80_eeeeee_1x100.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-bg_loop_25_000000_21x21.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-icons_222222_256x240.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-icons_4b8e0b_256x240.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-icons_a83300_256x240.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-icons_cccccc_256x240.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\dark-hive\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\dark-hive\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\dark-hive\theme.css'; 'wwwroot\lib\jqueryui\themes\dark-hive\theme.min.css'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-bg_diagonals-thick_15_0b3e6f_40x40.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-bg_dots-medium_30_0b58a2_4x4.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-bg_dots-small_20_333333_2x2.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-bg_dots-small_30_a32d00_2x2.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-bg_dots-small_40_00498f_2x2.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-bg_gloss-wave_20_111111_500x100.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-icons_00498f_256x240.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-icons_98d2fb_256x240.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-icons_9ccdfc_256x240.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\dot-luv\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\dot-luv\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\dot-luv\theme.css'; 'wwwroot\lib\jqueryui\themes\dot-luv\theme.min.css'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-bg_gloss-wave_30_3d3644_500x100.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-bg_highlight-soft_100_dcd9de_1x100.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-bg_highlight-soft_100_eae6ea_1x100.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-bg_highlight-soft_25_30273a_1x100.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-bg_highlight-soft_45_5f5964_1x100.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-icons_454545_256x240.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-icons_734d99_256x240.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-icons_8d78a5_256x240.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-icons_a8a3ae_256x240.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-icons_ebccce_256x240.png'; 'wwwroot\lib\jqueryui\themes\eggplant\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\eggplant\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\eggplant\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\eggplant\theme.css'; 'wwwroot\lib\jqueryui\themes\eggplant\theme.min.css'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-bg_diagonals-small_25_c5ddfc_40x40.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-bg_diagonals-thick_20_e69700_40x40.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-bg_diagonals-thick_22_1484e6_40x40.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-bg_diagonals-thick_26_2293f7_40x40.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-bg_highlight-soft_100_f9f9f9_1x100.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-bg_inset-hard_100_eeeeee_1x100.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-icons_0a82eb_256x240.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-icons_0b54d5_256x240.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-icons_5fa5e3_256x240.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-icons_fcdd4a_256x240.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\excite-bike\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\excite-bike\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\excite-bike\theme.css'; 'wwwroot\lib\jqueryui\themes\excite-bike\theme.min.css'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-bg_glass_65_ffffff_1x400.png'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-bg_highlight-soft_100_f6f6f6_1x100.png'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-bg_highlight-soft_25_0073ea_1x100.png'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-bg_highlight-soft_50_dddddd_1x100.png'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-icons_0073ea_256x240.png'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-icons_454545_256x240.png'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-icons_666666_256x240.png'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-icons_ff0084_256x240.png'; 'wwwroot\lib\jqueryui\themes\flick\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\flick\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\flick\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\flick\theme.css'; 'wwwroot\lib\jqueryui\themes\flick\theme.min.css'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-bg_diagonals-small_40_db4865_40x40.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-bg_diagonals-small_50_93c3cd_40x40.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-bg_diagonals-small_50_ff3853_40x40.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-bg_diagonals-small_75_ccd232_40x40.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-bg_dots-medium_80_ffff38_4x4.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-bg_dots-small_35_35414f_2x2.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-bg_white-lines_85_f7f7ba_40x100.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-icons_454545_256x240.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-icons_88a206_256x240.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-icons_c02669_256x240.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-icons_e1e463_256x240.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-icons_ffeb33_256x240.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\theme.css'; 'wwwroot\lib\jqueryui\themes\hot-sneaks\theme.min.css'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-bg_glass_100_f5f0e5_1x400.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-bg_glass_25_cb842e_1x400.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-bg_glass_70_ede4d4_1x400.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-bg_highlight-hard_100_f4f0ec_1x100.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-bg_highlight-hard_65_fee4bd_1x100.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-bg_highlight-hard_75_f5f5b5_1x100.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-bg_inset-soft_100_f4f0ec_1x100.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-icons_c47a23_256x240.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-icons_cb672b_256x240.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-icons_f08000_256x240.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-icons_f35f07_256x240.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-icons_ff7519_256x240.png'; 'wwwroot\lib\jqueryui\themes\humanity\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\humanity\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\humanity\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\humanity\theme.css'; 'wwwroot\lib\jqueryui\themes\humanity\theme.min.css'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_diagonals-small_0_aaaaaa_40x40.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_diagonals-thick_15_444444_40x40.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_diagonals-thick_95_ffdc2e_40x40.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_glass_55_fbf5d0_1x400.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_highlight-hard_30_285c00_1x100.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_highlight-soft_33_3a8104_1x100.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_highlight-soft_50_4eb305_1x100.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_highlight-soft_60_4ca20b_1x100.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-bg_inset-soft_10_285c00_1x100.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-icons_4eb305_256x240.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-icons_72b42d_256x240.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-icons_cd0a0a_256x240.png'; 'wwwroot\lib\jqueryui\themes\le-frog\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\le-frog\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\le-frog\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\le-frog\theme.css'; 'wwwroot\lib\jqueryui\themes\le-frog\theme.min.css'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-bg_glass_15_5f391b_1x400.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-bg_gloss-wave_20_1c160d_500x100.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-bg_gloss-wave_25_453326_500x100.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-bg_gloss-wave_30_44372c_500x100.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-bg_highlight-soft_20_201913_1x100.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-bg_highlight-soft_20_619226_1x100.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-bg_inset-soft_10_201913_1x100.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-icons_222222_256x240.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-icons_9bcc60_256x240.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-icons_add978_256x240.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-icons_e3ddc9_256x240.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-icons_f1fd86_256x240.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\mint-choc\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\mint-choc\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\mint-choc\theme.css'; 'wwwroot\lib\jqueryui\themes\mint-choc\theme.min.css'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-bg_glass_100_f8f8f8_1x400.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-bg_glass_35_dddddd_1x400.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-bg_glass_60_eeeeee_1x400.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-bg_inset-hard_75_999999_1x100.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-bg_inset-soft_50_c9c9c9_1x100.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-icons_3383bb_256x240.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-icons_454545_256x240.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-icons_70b2e1_256x240.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-icons_999999_256x240.png'; 'wwwroot\lib\jqueryui\themes\overcast\images\ui-icons_fbc856_256x240.png'; 'wwwroot\lib\jqueryui\themes\overcast\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\overcast\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\overcast\theme.css'; 'wwwroot\lib\jqueryui\themes\overcast\theme.min.css'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_diagonal-maze_20_6e4f1c_10x10.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_diagonal-maze_40_000000_10x10.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_fine-grain_10_eceadf_60x60.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_fine-grain_10_f8f7f6_60x60.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_fine-grain_15_eceadf_60x60.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_fine-grain_15_f7f3de_60x60.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_fine-grain_15_ffffff_60x60.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_fine-grain_65_654b24_60x60.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-bg_fine-grain_68_b83400_60x60.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-icons_222222_256x240.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-icons_3572ac_256x240.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-icons_8c291d_256x240.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-icons_b83400_256x240.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-icons_fbdb93_256x240.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\theme.css'; 'wwwroot\lib\jqueryui\themes\pepper-grinder\theme.min.css'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-bg_glass_75_d0e5f5_1x400.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-bg_glass_85_dfeffc_1x400.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-bg_glass_95_fef1ec_1x400.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-bg_gloss-wave_55_5c9ccc_500x100.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-bg_inset-hard_100_f5f8f9_1x100.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-bg_inset-hard_100_fcfdfd_1x100.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-icons_217bc0_256x240.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-icons_2e83ff_256x240.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-icons_469bdd_256x240.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-icons_6da8d5_256x240.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-icons_cd0a0a_256x240.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-icons_d8e7f3_256x240.png'; 'wwwroot\lib\jqueryui\themes\redmond\images\ui-icons_f9bd01_256x240.png'; 'wwwroot\lib\jqueryui\themes\redmond\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\redmond\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\redmond\theme.css'; 'wwwroot\lib\jqueryui\themes\redmond\theme.min.css'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-bg_glass_55_fbf9ee_1x400.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-bg_glass_65_ffffff_1x400.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-bg_glass_75_dadada_1x400.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-bg_glass_75_e6e6e6_1x400.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-bg_glass_95_fef1ec_1x400.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-bg_highlight-soft_75_cccccc_1x100.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-icons_222222_256x240.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-icons_2e83ff_256x240.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-icons_454545_256x240.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-icons_888888_256x240.png'; 'wwwroot\lib\jqueryui\themes\smoothness\images\ui-icons_cd0a0a_256x240.png'; 'wwwroot\lib\jqueryui\themes\smoothness\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\smoothness\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\smoothness\theme.css'; 'wwwroot\lib\jqueryui\themes\smoothness\theme.min.css'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_glass_55_fcf0ba_1x400.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_gloss-wave_100_ece8da_500x100.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_highlight-hard_100_f5f3e5_1x100.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_highlight-hard_100_fafaf4_1x100.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_highlight-hard_15_459e00_1x100.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_highlight-hard_95_cccccc_1x100.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_highlight-soft_25_67b021_1x100.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_highlight-soft_95_ffedad_1x100.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-bg_inset-soft_15_2b2922_1x100.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-icons_808080_256x240.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-icons_847e71_256x240.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-icons_8DC262_256x240.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-icons_cd0a0a_256x240.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-icons_eeeeee_256x240.png'; 'wwwroot\lib\jqueryui\themes\south-street\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\south-street\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\south-street\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\south-street\theme.css'; 'wwwroot\lib\jqueryui\themes\south-street\theme.min.css'; 'wwwroot\lib\jqueryui\themes\start\images\ui-bg_glass_45_0078ae_1x400.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-bg_glass_55_f8da4e_1x400.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-bg_glass_75_79c9ec_1x400.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-bg_gloss-wave_45_e14f1c_500x100.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-bg_gloss-wave_50_6eac2c_500x100.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-bg_gloss-wave_75_2191c0_500x100.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-bg_inset-hard_100_fcfdfd_1x100.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-icons_0078ae_256x240.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-icons_056b93_256x240.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-icons_d8e7f3_256x240.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-icons_e0fdff_256x240.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-icons_f5e175_256x240.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-icons_f7a50d_256x240.png'; 'wwwroot\lib\jqueryui\themes\start\images\ui-icons_fcd113_256x240.png'; 'wwwroot\lib\jqueryui\themes\start\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\start\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\start\theme.css'; 'wwwroot\lib\jqueryui\themes\start\theme.min.css'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-bg_diagonals-medium_20_d34d17_40x40.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-bg_gloss-wave_45_817865_500x100.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-bg_gloss-wave_60_fece2f_500x100.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-bg_gloss-wave_70_ffdd57_500x100.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-bg_gloss-wave_90_fff9e5_500x100.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-bg_highlight-soft_100_feeebd_1x100.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-bg_inset-soft_30_ffffff_1x100.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-icons_3d3d3d_256x240.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-icons_bd7b00_256x240.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-icons_d19405_256x240.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-icons_eb990f_256x240.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-icons_ed9f26_256x240.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-icons_fadc7a_256x240.png'; 'wwwroot\lib\jqueryui\themes\sunny\images\ui-icons_ffe180_256x240.png'; 'wwwroot\lib\jqueryui\themes\sunny\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\sunny\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\sunny\theme.css'; 'wwwroot\lib\jqueryui\themes\sunny\theme.min.css'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-bg_diamond_10_4f4221_10x8.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-bg_diamond_20_372806_10x8.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-bg_diamond_25_675423_10x8.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-bg_diamond_25_d5ac5d_10x8.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-bg_diamond_8_261803_10x8.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-bg_diamond_8_443113_10x8.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-bg_highlight-hard_65_fee4bd_1x100.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-icons_070603_256x240.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-icons_e8e2b5_256x240.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-icons_e9cd86_256x240.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-icons_efec9f_256x240.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-icons_f2ec64_256x240.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-icons_f9f2bd_256x240.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\images\ui-icons_ff7519_256x240.png'; 'wwwroot\lib\jqueryui\themes\swanky-purse\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\swanky-purse\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\swanky-purse\theme.css'; 'wwwroot\lib\jqueryui\themes\swanky-purse\theme.min.css'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-bg_diagonals-small_50_262626_40x40.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-bg_glass_40_0a0a0a_1x400.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-bg_glass_55_f1fbe5_1x400.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-bg_glass_60_000000_1x400.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-bg_gloss-wave_55_000000_500x100.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-bg_gloss-wave_85_9fda58_500x100.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-bg_gloss-wave_95_f6ecd5_500x100.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-icons_000000_256x240.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-icons_1f1f1f_256x240.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-icons_9fda58_256x240.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-icons_b8ec79_256x240.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-icons_cd0a0a_256x240.png'; 'wwwroot\lib\jqueryui\themes\trontastic\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\trontastic\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\trontastic\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\trontastic\theme.css'; 'wwwroot\lib\jqueryui\themes\trontastic\theme.min.css'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-bg_glass_20_555555_1x400.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-bg_glass_40_0078a3_1x400.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-bg_glass_40_ffc73d_1x400.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-bg_gloss-wave_25_333333_500x100.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-bg_highlight-soft_80_eeeeee_1x100.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-bg_inset-soft_25_000000_1x100.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-bg_inset-soft_30_f58400_1x100.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-icons_222222_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-icons_4b8e0b_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-icons_a83300_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-icons_cccccc_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-darkness\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\ui-darkness\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\ui-darkness\theme.css'; 'wwwroot\lib\jqueryui\themes\ui-darkness\theme.min.css'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-bg_diagonals-thick_18_b81900_40x40.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-bg_diagonals-thick_20_666666_40x40.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-bg_glass_100_f6f6f6_1x400.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-bg_glass_100_fdf5ce_1x400.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-bg_glass_65_ffffff_1x400.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-bg_gloss-wave_35_f6a828_500x100.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-bg_highlight-soft_100_eeeeee_1x100.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-bg_highlight-soft_75_ffe45c_1x100.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-icons_222222_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-icons_228ef1_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-icons_ef8c08_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-icons_ffd27a_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\images\ui-icons_ffffff_256x240.png'; 'wwwroot\lib\jqueryui\themes\ui-lightness\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\ui-lightness\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\ui-lightness\theme.css'; 'wwwroot\lib\jqueryui\themes\ui-lightness\theme.min.css'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-bg_glass_95_fef1ec_1x400.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-bg_gloss-wave_16_121212_500x100.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-bg_highlight-hard_15_888888_1x100.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-bg_highlight-hard_55_555555_1x100.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-bg_highlight-soft_35_adadad_1x100.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-bg_highlight-soft_60_dddddd_1x100.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-bg_inset-soft_15_121212_1x100.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-icons_666666_256x240.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-icons_777777_256x240.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-icons_aaaaaa_256x240.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-icons_c98000_256x240.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-icons_cccccc_256x240.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-icons_cd0a0a_256x240.png'; 'wwwroot\lib\jqueryui\themes\vader\images\ui-icons_f29a00_256x240.png'; 'wwwroot\lib\jqueryui\themes\vader\jquery-ui.css'; 'wwwroot\lib\jqueryui\themes\vader\jquery-ui.min.css'; 'wwwroot\lib\jqueryui\themes\vader\theme.css'; 'wwwroot\lib\jqueryui\themes\vader\theme.min.css'; 'wwwroot\lib\jquery\jquery.min.js'; 'wwwroot\lib\popper\umd\popper.min.js'; 'wwwroot\privacy-policy.html'
+# ============================================================
+# PowerShell скрипт для скачивания NuGet пакетов
+# Для проекта HAS.Modules.UAS
+# ============================================================
+
+# Папка для скачивания пакетов
+$downloadPath = "C:\NuGetPackages"
+
+# Создаём папку если нет
+if (-not (Test-Path $downloadPath)) {
+    New-Item -ItemType Directory -Path $downloadPath -Force
+    Write-Host "Создана папка: $downloadPath" -ForegroundColor Green
+}
+
+# Список пакетов (название и версия)
+$packages = @(
+    # === КРИТИЧНЫЕ для Microsoft.Data.SqlClient ===
+    @{Name="Microsoft.Data.SqlClient"; Version="5.1.5"},
+    @{Name="Microsoft.Data.SqlClient.SNI.runtime"; Version="5.1.1"},
+    @{Name="Microsoft.Identity.Client"; Version="4.56.0"},
+    @{Name="Microsoft.Identity.Client.Extensions.Msal"; Version="4.56.0"},
+    @{Name="Azure.Identity"; Version="1.10.3"},
+    @{Name="Azure.Core"; Version="1.35.0"},
+    @{Name="Microsoft.SqlServer.Server"; Version="1.0.0"},
+    @{Name="System.Configuration.ConfigurationManager"; Version="6.0.1"},
+    @{Name="System.Runtime.Caching"; Version="6.0.0"},
+    @{Name="System.Security.Cryptography.ProtectedData"; Version="6.0.0"},
+    @{Name="System.Security.Cryptography.Cng"; Version="5.0.0"},
+    @{Name="System.Security.Principal.Windows"; Version="5.0.0"},
+    @{Name="System.Text.Encoding.CodePages"; Version="6.0.0"},
+    @{Name="System.Text.Encodings.Web"; Version="8.0.0"},
+    @{Name="System.Text.Json"; Version="8.0.0"},
+    @{Name="System.Diagnostics.DiagnosticSource"; Version="6.0.1"},
+    @{Name="System.Memory.Data"; Version="1.0.2"},
+    @{Name="System.Formats.Asn1"; Version="8.0.0"},
+    
+    # === Entity Framework Core ===
+    @{Name="Microsoft.EntityFrameworkCore"; Version="6.0.27"},
+    @{Name="Microsoft.EntityFrameworkCore.Abstractions"; Version="6.0.27"},
+    @{Name="Microsoft.EntityFrameworkCore.Analyzers"; Version="6.0.27"},
+    @{Name="Microsoft.EntityFrameworkCore.Design"; Version="6.0.27"},
+    @{Name="Microsoft.EntityFrameworkCore.InMemory"; Version="6.0.27"},
+    @{Name="Microsoft.EntityFrameworkCore.Relational"; Version="6.0.27"},
+    @{Name="Microsoft.EntityFrameworkCore.SqlServer"; Version="6.0.27"},
+    @{Name="Microsoft.EntityFrameworkCore.Sqlite"; Version="6.0.27"},
+    @{Name="Microsoft.EntityFrameworkCore.Sqlite.Core"; Version="6.0.27"},
+    @{Name="Microsoft.Data.Sqlite.Core"; Version="6.0.27"},
+    
+    # === IdentityServer4 ===
+    @{Name="IdentityServer4"; Version="4.1.2"},
+    @{Name="IdentityServer4.Storage"; Version="4.1.2"},
+    @{Name="IdentityServer4.EntityFramework"; Version="4.1.2"},
+    @{Name="IdentityServer4.EntityFramework.Storage"; Version="4.1.2"},
+    @{Name="IdentityServer4.AccessTokenValidation"; Version="3.0.1"},
+    
+    # === IdentityModel ===
+    @{Name="IdentityModel"; Version="6.1.0"},
+    @{Name="IdentityModel.AspNetCore"; Version="4.3.0"},
+    @{Name="IdentityModel.AspNetCore.OAuth2Introspection"; Version="4.0.1"},
+    
+    # === Microsoft.IdentityModel ===
+    @{Name="Microsoft.IdentityModel.Abstractions"; Version="6.35.0"},
+    @{Name="Microsoft.IdentityModel.JsonWebTokens"; Version="6.35.0"},
+    @{Name="Microsoft.IdentityModel.Logging"; Version="6.35.0"},
+    @{Name="Microsoft.IdentityModel.Protocols"; Version="6.35.0"},
+    @{Name="Microsoft.IdentityModel.Protocols.OpenIdConnect"; Version="6.35.0"},
+    @{Name="Microsoft.IdentityModel.Tokens"; Version="6.35.0"},
+    @{Name="Microsoft.IdentityModel.Tokens.Saml"; Version="5.2.4"},
+    @{Name="Microsoft.IdentityModel.Xml"; Version="5.2.4"},
+    @{Name="System.IdentityModel.Tokens.Jwt"; Version="6.35.0"},
+    
+    # === Microsoft.AspNetCore ===
+    @{Name="Microsoft.AspNetCore.Authentication.JwtBearer"; Version="6.0.27"},
+    @{Name="Microsoft.AspNetCore.Authentication.OpenIdConnect"; Version="6.0.27"},
+    @{Name="Microsoft.AspNetCore.Cryptography.Internal"; Version="6.0.27"},
+    @{Name="Microsoft.AspNetCore.DataProtection"; Version="6.0.27"},
+    @{Name="Microsoft.AspNetCore.DataProtection.Abstractions"; Version="6.0.27"},
+    @{Name="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore"; Version="6.0.27"},
+    @{Name="Microsoft.AspNetCore.Http.Abstractions"; Version="2.2.0"},
+    @{Name="Microsoft.AspNetCore.Http.Features"; Version="2.2.0"},
+    @{Name="Microsoft.AspNetCore.Mvc.Razor.Extensions"; Version="6.0.27"},
+    @{Name="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation"; Version="6.0.27"},
+    @{Name="Microsoft.AspNetCore.Razor.Language"; Version="6.0.27"},
+    
+    # === Microsoft.Extensions ===
+    @{Name="Microsoft.Extensions.Caching.Abstractions"; Version="6.0.0"},
+    @{Name="Microsoft.Extensions.Caching.Memory"; Version="6.0.1"},
+    @{Name="Microsoft.Extensions.Caching.SqlServer"; Version="6.0.27"},
+    @{Name="Microsoft.Extensions.Configuration"; Version="2.2.0"},
+    @{Name="Microsoft.Extensions.Configuration.Abstractions"; Version="8.0.0"},
+    @{Name="Microsoft.Extensions.Configuration.Binder"; Version="7.0.0"},
+    @{Name="Microsoft.Extensions.Configuration.EnvironmentVariables"; Version="2.2.0"},
+    @{Name="Microsoft.Extensions.DependencyInjection"; Version="8.0.0"},
+    @{Name="Microsoft.Extensions.DependencyInjection.Abstractions"; Version="8.0.0"},
+    @{Name="Microsoft.Extensions.DependencyModel"; Version="7.0.0"},
+    @{Name="Microsoft.Extensions.FileProviders.Abstractions"; Version="7.0.0"},
+    @{Name="Microsoft.Extensions.FileSystemGlobbing"; Version="8.0.0"},
+    @{Name="Microsoft.Extensions.Hosting.Abstractions"; Version="7.0.0"},
+    @{Name="Microsoft.Extensions.Http"; Version="8.0.0"},
+    @{Name="Microsoft.Extensions.Logging"; Version="8.0.0"},
+    @{Name="Microsoft.Extensions.Logging.Abstractions"; Version="8.0.0"},
+    @{Name="Microsoft.Extensions.Logging.Configuration"; Version="3.1.0"},
+    @{Name="Microsoft.Extensions.Logging.Console"; Version="3.1.0"},
+    @{Name="Microsoft.Extensions.Logging.Debug"; Version="3.1.0"},
+    @{Name="Microsoft.Extensions.Options"; Version="8.0.0"},
+    @{Name="Microsoft.Extensions.Options.ConfigurationExtensions"; Version="3.1.0"},
+    @{Name="Microsoft.Extensions.Primitives"; Version="8.0.0"},
+    
+    # === Serilog ===
+    @{Name="Serilog"; Version="2.12.0"},
+    @{Name="Serilog.AspNetCore"; Version="7.0.0"},
+    @{Name="Serilog.Enrichers.AssemblyName"; Version="1.0.9"},
+    @{Name="Serilog.Extensions.Hosting"; Version="7.0.0"},
+    @{Name="Serilog.Extensions.Logging"; Version="7.0.0"},
+    @{Name="Serilog.Formatting.Compact"; Version="1.1.0"},
+    @{Name="Serilog.Settings.Configuration"; Version="7.0.0"},
+    @{Name="Serilog.Sinks.Async"; Version="1.5.0"},
+    @{Name="Serilog.Sinks.Console"; Version="4.1.0"},
+    @{Name="Serilog.Sinks.Debug"; Version="2.0.0"},
+    @{Name="Serilog.Sinks.File"; Version="5.0.0"},
+    @{Name="Serilog.Sinks.PeriodicBatching"; Version="3.1.0"},
+    @{Name="Serilog.Sinks.Seq"; Version="5.2.2"},
+    
+    # === SAML2 ===
+    @{Name="Sustainsys.Saml2"; Version="2.9.2"},
+    @{Name="Sustainsys.Saml2.AspNetCore2"; Version="2.9.2"},
+    
+    # === System.DirectoryServices ===
+    @{Name="System.DirectoryServices"; Version="6.0.0"},
+    @{Name="System.DirectoryServices.AccountManagement"; Version="6.0.0"},
+    @{Name="System.DirectoryServices.Protocols"; Version="6.0.0"},
+    
+    # === Другие System.* ===
+    @{Name="System.Reactive"; Version="6.0.0"},
+    @{Name="System.Drawing.Common"; Version="6.0.0"},
+    @{Name="System.Security.AccessControl"; Version="6.0.0"},
+    @{Name="System.Security.Permissions"; Version="6.0.0"},
+    @{Name="System.Security.Cryptography.Pkcs"; Version="8.0.0"},
+    @{Name="System.Security.Cryptography.Xml"; Version="8.0.0"},
+    @{Name="System.Windows.Extensions"; Version="6.0.0"},
+    @{Name="System.IO.Abstractions"; Version="19.2.29"},
+    @{Name="System.Collections.Immutable"; Version="6.0.0"},
+    @{Name="System.ComponentModel.Annotations"; Version="5.0.0"},
+    @{Name="System.IO.FileSystem.AccessControl"; Version="5.0.0"},
+    @{Name="System.IO.Pipes.AccessControl"; Version="4.5.1"},
+    @{Name="System.Memory"; Version="4.5.4"},
+    @{Name="System.Numerics.Vectors"; Version="4.5.0"},
+    @{Name="System.Reflection.Emit"; Version="4.7.0"},
+    @{Name="System.Reflection.Metadata"; Version="5.0.0"},
+    @{Name="System.Runtime.CompilerServices.Unsafe"; Version="6.0.0"},
+    @{Name="System.Threading.Tasks.Dataflow"; Version="4.11.1"},
+    @{Name="System.Threading.Tasks.Extensions"; Version="4.5.4"},
+    @{Name="System.Net.Http.WinHttpHandler"; Version="4.7.0"},
+    
+    # === Jaeger/OpenTracing ===
+    @{Name="Jaeger"; Version="1.0.3"},
+    @{Name="Jaeger.Core"; Version="1.0.3"},
+    @{Name="Jaeger.Senders.Thrift"; Version="1.0.3"},
+    @{Name="Jaeger.Communication.Thrift"; Version="1.0.3"},
+    @{Name="OpenTracing"; Version="0.12.1"},
+    @{Name="ApacheThrift"; Version="0.14.1"},
+    
+    # === SQLite ===
+    @{Name="SQLitePCLRaw.bundle_e_sqlite3"; Version="2.1.2"},
+    @{Name="SQLitePCLRaw.core"; Version="2.1.2"},
+    @{Name="SQLitePCLRaw.lib.e_sqlite3"; Version="2.1.2"},
+    @{Name="SQLitePCLRaw.provider.e_sqlite3"; Version="2.1.2"},
+    
+    # === Другие библиотеки ===
+    @{Name="Dapper"; Version="2.0.138"},
+    @{Name="Newtonsoft.Json"; Version="12.0.2"},
+    @{Name="AutoMapper"; Version="10.0.0"},
+    @{Name="FluentAssertions"; Version="6.8.0"},
+    @{Name="CSharpFunctionalExtensions"; Version="2.36.1"},
+    @{Name="CSharpFunctionalExtensions.FluentAssertions"; Version="1.1.0"},
+    @{Name="Easy.Password.Validator"; Version="1.1.8"},
+    @{Name="NuGet.Versioning"; Version="6.6.1"},
+    @{Name="Humanizer.Core"; Version="2.8.26"},
+    @{Name="Ben.Demystifier"; Version="0.4.1"},
+    @{Name="BirdMessenger"; Version="2.2.1"},
+    @{Name="Microsoft.Win32.SystemEvents"; Version="6.0.0"},
+    @{Name="Microsoft.Win32.Registry"; Version="5.0.0"},
+    @{Name="Microsoft.CSharp"; Version="4.7.0"},
+    @{Name="Microsoft.Bcl.AsyncInterfaces"; Version="1.1.1"},
+    
+    # === TestableIO ===
+    @{Name="TestableIO.System.IO.Abstractions"; Version="19.2.29"},
+    @{Name="TestableIO.System.IO.Abstractions.Wrappers"; Version="19.2.29"},
+    
+    # === CodeAnalysis (для Razor) ===
+    @{Name="Microsoft.CodeAnalysis.Common"; Version="4.0.0"},
+    @{Name="Microsoft.CodeAnalysis.CSharp"; Version="4.0.0"},
+    @{Name="Microsoft.CodeAnalysis.Razor"; Version="6.0.27"},
+    @{Name="Microsoft.CodeAnalysis.Analyzers"; Version="3.3.2"},
+    @{Name="Microsoft.CodeAnalysis.NetAnalyzers"; Version="8.0.0"},
+    
+    # === SourceLink (опционально) ===
+    @{Name="Microsoft.SourceLink.Common"; Version="8.0.0"},
+    @{Name="Microsoft.SourceLink.AzureRepos.Git"; Version="8.0.0"},
+    @{Name="Microsoft.Build.Tasks.Git"; Version="8.0.0"}
+)
+
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "Скачивание NuGet пакетов" -ForegroundColor Cyan
+Write-Host "Всего пакетов: $($packages.Count)" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+
+$successCount = 0
+$failCount = 0
+$failedPackages = @()
+
+foreach ($pkg in $packages) {
+    $name = $pkg.Name
+    $version = $pkg.Version
+    $fileName = "$name.$version.nupkg"
+    $filePath = Join-Path $downloadPath $fileName
+    
+    # Пропускаем если уже скачан
+    if (Test-Path $filePath) {
+        Write-Host "[SKIP] $name $version - уже существует" -ForegroundColor Yellow
+        $successCount++
+        continue
+    }
+    
+    # URL для скачивания
+    $url = "https://www.nuget.org/api/v2/package/$name/$version"
+    
+    Write-Host "[DOWN] $name $version ... " -NoNewline
+    
+    try {
+        # Скачиваем пакет
+        Invoke-WebRequest -Uri $url -OutFile $filePath -UseBasicParsing -ErrorAction Stop
+        Write-Host "OK" -ForegroundColor Green
+        $successCount++
+    }
+    catch {
+        Write-Host "ОШИБКА: $($_.Exception.Message)" -ForegroundColor Red
+        $failCount++
+        $failedPackages += "$name $version"
+    }
+    
+    # Небольшая пауза чтобы не перегружать сервер
+    Start-Sleep -Milliseconds 100
+}
+
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "Результат:" -ForegroundColor Cyan
+Write-Host "  Успешно: $successCount" -ForegroundColor Green
+Write-Host "  Ошибок:  $failCount" -ForegroundColor $(if ($failCount -gt 0) { "Red" } else { "Green" })
+Write-Host "============================================" -ForegroundColor Cyan
+
+if ($failedPackages.Count -gt 0) {
+    Write-Host ""
+    Write-Host "Не удалось скачать:" -ForegroundColor Red
+    foreach ($fp in $failedPackages) {
+        Write-Host "  - $fp" -ForegroundColor Red
+    }
+}
+
+Write-Host ""
+Write-Host "Пакеты скачаны в: $downloadPath" -ForegroundColor Green
+Write-Host ""
+Write-Host "Следующий шаг - добавить локальный источник в NuGet:" -ForegroundColor Yellow
+Write-Host "  nuget sources Add -Name LocalPackages -Source $downloadPath" -ForegroundColor White
+Write-Host ""
+Write-Host "Или в Visual Studio:" -ForegroundColor Yellow
+Write-Host "  Tools > NuGet Package Manager > Package Manager Settings" -ForegroundColor White
+Write-Host "  Package Sources > Add > Name: LocalPackages, Source: $downloadPath" -ForegroundColor White
+Write-Host ""

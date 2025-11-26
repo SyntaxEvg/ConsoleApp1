@@ -1,417 +1,484 @@
- ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
- Starting module 2025-HAS Identity Provider - Mode : "Production"
- Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
- Migrate databases
- Seeding database...
- Updating AccessTokens...
- Updating Clients...
- Updating Scope...
- Updating IdentityResources...
- Updating ApiResources...
- Updating External Providers...
- URLS Redirections are updating to public address https://vmshqeat04.npr.nornick.ru...
- Using external provider OpenIdProvider
- Using external provider Saml2Provider
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Starting IdentityServer4 version 4.1.2+997a6cdd643e46cd5762b710c4ddc43574cbec2e
- Custom IssuerUri set to https://vmshqeat04.npr.nornick.ru
- Using the default authentication scheme Cookies for IdentityServer
- Using Cookies as default ASP.NET Core scheme for authentication
- Using Cookies as default ASP.NET Core scheme for sign-in
- Using Cookies as default ASP.NET Core scheme for sign-out
- Using OpenIdConnect as default ASP.NET Core scheme for challenge
- Using OpenIdConnect as default ASP.NET Core scheme for forbid
- Loading application settings from SQL database
- Declaring setting UasSettings
- Dispatch notification RELOAD_SETTINGS_CACHE locally
- Receive notification RELOAD_SETTINGS_CACHE from node local, module has.uas
- Loading application settings from SQL database
- Sending notification RELOAD_SETTINGS_CACHE from server local, module has.uas
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
- Dispatch notification RELOAD_SETTINGS locally
- Sending notification RELOAD_SETTINGS from server local, module has.uas
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Saml2 logging enabled.
- Login Url: /Account/Login
- Login Return Url Parameter: ReturnUrl
- Logout Url: /Account/Logout
- ConsentUrl Url: /consent
- Consent Return Url Parameter: returnUrl
- Error Url: /account/error
- Error Id Parameter: errorId
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification RELOAD_SETTINGS_CACHE locally
- Receive notification RELOAD_SETTINGS_CACHE from node local, module hopex.supervisor
- Loading application settings from SQL database
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification RELOAD_SETTINGS locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification ALL_MODULES_STARTED locally
- Receive notification ALL_MODULES_STARTED from node local, module <server>
- No endpoint entry found for request path: /api/registerclient
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification NODE_READY locally
- Receive notification NODE_READY from node local, module <server>
- No endpoint entry found for request path: /api/registerclient
- No endpoint entry found for request path: /api/registerclient
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Client has.console registered by UAS with path console
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Client has.console registered by UAS with path console
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Client hopex.supervisor registered by UAS with path supervisor
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification STOP_NODE locally
- No endpoint entry found for request path: /__exec/Unload
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STOPPED locally
- ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
- Starting module 2025-HAS Identity Provider - Mode : "Production"
- Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
- Migrate databases
- Seeding database...
- Updating AccessTokens...
- Updating Clients...
- Updating Scope...
- Updating IdentityResources...
- Updating ApiResources...
- Updating External Providers...
- URLS Redirections are updating to public address https://vmshqeat04.npr.nornick.ru...
- Using external provider OpenIdProvider
- Using external provider Saml2Provider
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Starting IdentityServer4 version 4.1.2+997a6cdd643e46cd5762b710c4ddc43574cbec2e
- Custom IssuerUri set to https://vmshqeat04.npr.nornick.ru
- Using the default authentication scheme Cookies for IdentityServer
- Using Cookies as default ASP.NET Core scheme for authentication
- Using Cookies as default ASP.NET Core scheme for sign-in
- Using Cookies as default ASP.NET Core scheme for sign-out
- Using OpenIdConnect as default ASP.NET Core scheme for challenge
- Using OpenIdConnect as default ASP.NET Core scheme for forbid
- Loading application settings from SQL database
- Declaring setting UasSettings
- Dispatch notification RELOAD_SETTINGS_CACHE locally
- Receive notification RELOAD_SETTINGS_CACHE from node local, module has.uas
- Loading application settings from SQL database
- Sending notification RELOAD_SETTINGS_CACHE from server local, module has.uas
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
- Dispatch notification RELOAD_SETTINGS locally
- Sending notification RELOAD_SETTINGS from server local, module has.uas
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Saml2 logging enabled.
- Login Url: /Account/Login
- Login Return Url Parameter: ReturnUrl
- Logout Url: /Account/Logout
- ConsentUrl Url: /consent
- Consent Return Url Parameter: returnUrl
- Error Url: /account/error
- Error Id Parameter: errorId
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification RELOAD_SETTINGS_CACHE locally
- Receive notification RELOAD_SETTINGS_CACHE from node local, module hopex.supervisor
- Loading application settings from SQL database
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification RELOAD_SETTINGS locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification MODULE_STARTED locally
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification ALL_MODULES_STARTED locally
- Receive notification ALL_MODULES_STARTED from node local, module <server>
- No endpoint entry found for request path: /api/registerclient
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification NODE_READY locally
- Receive notification NODE_READY from node local, module <server>
- No endpoint entry found for request path: /api/registerclient
- No endpoint entry found for request path: /api/registerclient
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Client hopex.supervisor registered by UAS with path supervisor
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Client has.console registered by UAS with path console
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
- No endpoint entry found for request path: /__exec/NOTIFY
- AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
- Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
- Client has.console registered by UAS with path console
- Start request GET https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration
- Request path /.well-known/openid-configuration matched to endpoint type Discovery
- Endpoint enabled: Discovery, successfully created handler: IdentityServer4.Endpoints.DiscoveryEndpoint
- Invoking IdentityServer endpoint: IdentityServer4.Endpoints.DiscoveryEndpoint for /.well-known/openid-configuration
- Processing discovery request.
- Start discovery request
- Calling into discovery response generator: IdentityServer4.ResponseHandling.DiscoveryResponseGenerator
- Found ["openid","profile","hopex","hopex_mapping","hopex_api"] as all scopes, and ["hopex","hopex_mapping"] as API resources
- Invoking result: IdentityServer4.Endpoints.Results.DiscoveryDocumentResult
- End request https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration, status code 200 in 194 ms
- Start request GET https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration/jwks
- Request path /.well-known/openid-configuration/jwks matched to endpoint type Discovery
- Endpoint enabled: Discovery, successfully created handler: IdentityServer4.Endpoints.DiscoveryKeyEndpoint
- Invoking IdentityServer endpoint: IdentityServer4.Endpoints.DiscoveryKeyEndpoint for /.well-known/openid-configuration/jwks
- Processing discovery request.
- Start key discovery request
- Calling into discovery response generator: IdentityServer4.ResponseHandling.DiscoveryResponseGenerator
- Invoking result: IdentityServer4.Endpoints.Results.JsonWebKeysResult
- End request https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration/jwks, status code 200 in 10 ms
- Start request GET https://vmshqeat04.npr.nornick.ru/uas/connect/authorize?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=JHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4&code_challenge_method=S256&response_mode=form_post&nonce=638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
- Request path /connect/authorize matched to endpoint type Authorize
- Endpoint enabled: Authorize, successfully created handler: IdentityServer4.Endpoints.AuthorizeEndpoint
- Invoking IdentityServer endpoint: IdentityServer4.Endpoints.AuthorizeEndpoint for /connect/authorize
- Start authorize request
- No user present in authorize request
- Start authorize request protocol validation
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- Checking for PKCE parameters
- Found ["openid","hopex"] identity scopes in database
- Found [] API resources in database
- Found [] scopes in database
- Calling into custom validator: IdentityServer4.Validation.DefaultCustomAuthorizeRequestValidator
- Authorize request protocol validation successful
- ValidatedAuthorizeRequest
-{"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","AllowedRedirectUris":[null],"SubjectId":"anonymous","ResponseType":"code","ResponseMode":"form_post","GrantType":"authorization_code","RequestedScopes":"openid hopex offline_access","State":"CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164","UiLocales":null,"Nonce":"638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4","AuthenticationContextReferenceClasses":null,"DisplayMode":null,"PromptMode":"","MaxAge":null,"LoginHint":null,"SessionId":"","Raw":{},"$type":"AuthorizeRequestValidationLog"}
- ProcessInteractionAsync
- Showing login: User is not authenticated
- End authorize request. result type: IdentityServer4.Endpoints.Results.LoginPageResult
- Invoking result: IdentityServer4.Endpoints.Results.LoginPageResult
- End request https://vmshqeat04.npr.nornick.ru/uas/connect/authorize?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=JHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4&code_challenge_method=S256&response_mode=form_post&nonce=638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0, status code 302 in 238 ms
- Start request GET https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DJHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
- No endpoint entry found for request path: /Account/Login
- Sending cluster request to http://vmshqeat05:2025/admin/modules
- returnUrl is valid
- Start authorize request protocol validation
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- Checking for PKCE parameters
- Found ["openid","hopex"] identity scopes in database
- Found [] API resources in database
- Found [] scopes in database
- Calling into custom validator: IdentityServer4.Validation.DefaultCustomAuthorizeRequestValidator
- Authorize request protocol validation successful
- AuthorizationRequest being returned
- AuthorizationRequest being returned
- HAS Client - No session token founded - User is authenticated=False
- Start request out /ssp/environments
- End request out /ssp/environments, status code 404
- End client for traceId b0f1eaa7494e871cffb238081c9b433d
- Unable to log environments
-Mega.Has.WebSite.HttpException: Exception of type 'Mega.Has.WebSite.HttpException' was thrown.
-   at async Task<T> Mega.Has.WebSite.HASClient.CallWebService<T>(string path, object data, IDictionary<string, string> headers, bool skipInstrumentation) in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/HASClient.cs:line 146
-   at async Task<IEnumerable<HopexEnvironmentInfo>> Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient.GetEnvironments() in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/LoginWorkflow/HopexSSPCLient.cs:line 61
-   at async Task<ValueTuple<string, LoginViewModel>> HAS.Modules.UAS.Services.Factories.ViewModelFactory.BuildLoginViewModelAsync(string returnUrl, string environmentId, bool hideModuleName) in C:/build-agents/agent1/_work/1/s/Modules/UAS/src/HAS.Modules.UAS/Services/Factories/ViewModelFactory.cs:line 193
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- End request https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DJHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0, status code 200 in 273 ms
- Start request POST https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DJHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
- CORS request made for path: /Account/Login from origin: null
- Origin null is allowed: false
- CorsPolicyService did not allow origin: null
- No endpoint entry found for request path: /Account/Login
- returnUrl is valid
- IsValidReturnUrl true
- Augmenting SignInContext
- Adding idp claim with value: local
- Adding amr claim with value: pwd
- Adding auth_time claim with value: 1764186240
- {"Username":null,"Provider":"InternalLogin","ProviderUserId":"InternalLogin","SubjectId":"Admin","DisplayName":"Admin","Endpoint":"UI","ClientId":"has.console","Category":"Authentication","Name":"User Login Success","EventType":"Success","Id":1000,"Message":null,"ActivityId":"80000005-0009-ff00-b63f-84710c7967bb","TimeStamp":"2025-11-26T19:44:00.0000000Z","ProcessId":13284,"LocalIpAddress":"::1:50561","RemoteIpAddress":"::ffff:10.2.50.200","$type":"UserLoginSuccessEvent"}
- Sending cluster request to http://vmshqeat05:2025/admin/supervision/hasevent
- Signing user Admin with claims ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role: HasAdmin","has.sessionGuid: ea17e5fa1c304dddb4ffd43d04182dea","name: Admin","sub: Admin","idp: local","amr: pwd","auth_time: 1764186240"]
- End request https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DJHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0, status code 302 in 194 ms
- Start request GET https://vmshqeat04.npr.nornick.ru/uas/connect/authorize/callback?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=JHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4&code_challenge_method=S256&response_mode=form_post&nonce=638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
- Request path /connect/authorize/callback matched to endpoint type Authorize
- Endpoint enabled: Authorize, successfully created handler: IdentityServer4.Endpoints.AuthorizeCallbackEndpoint
- Invoking IdentityServer endpoint: IdentityServer4.Endpoints.AuthorizeCallbackEndpoint for /connect/authorize/callback
- Start authorize callback request
- User in authorize request: Admin
- Start authorize request protocol validation
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- Checking for PKCE parameters
- Found ["openid","hopex"] identity scopes in database
- Found [] API resources in database
- Found [] scopes in database
- Calling into custom validator: IdentityServer4.Validation.DefaultCustomAuthorizeRequestValidator
- Authorize request protocol validation successful
- ValidatedAuthorizeRequest
-{"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","AllowedRedirectUris":[null],"SubjectId":"Admin","ResponseType":"code","ResponseMode":"form_post","GrantType":"authorization_code","RequestedScopes":"openid hopex offline_access","State":"CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164","UiLocales":null,"Nonce":"638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4","AuthenticationContextReferenceClasses":null,"DisplayMode":null,"PromptMode":"","MaxAge":null,"LoginHint":null,"SessionId":"4B9F2FFA6BAED897CE31E6EB2C58CE05","Raw":{},"$type":"AuthorizeRequestValidationLog"}
- ProcessInteractionAsync
- IsActive called from: AuthorizeEndpoint
- Client is configured to not require consent, no consent is required
- Creating Authorization Code Flow response.
- qhii4D2mgT2pqco3zRLL2llgaxyZPLWCLyDIQgwagkQ= not found in database
- Code issued for has.console (HAS Console) / Admin: 2873B2D05442D30FB1AAF0C65657438107D55DA3A442BD7A59E83090061F271D
- {"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","Endpoint":"Authorize","SubjectId":"Admin","Scopes":"openid hopex offline_access","GrantType":"authorization_code","Tokens":[null],"Category":"Token","Name":"Token Issued Success","EventType":"Success","Id":2000,"Message":null,"ActivityId":"8000000f-0000-fe00-b63f-84710c7967bb","TimeStamp":"2025-11-26T19:44:00.0000000Z","ProcessId":13284,"LocalIpAddress":"::1:50561","RemoteIpAddress":"::ffff:10.2.50.200","$type":"TokenIssuedSuccessEvent"}
- Authorize endpoint response
-{"SubjectId":"Admin","ClientId":"has.console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","State":"CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164","Scope":"openid hopex offline_access","Error":null,"ErrorDescription":null,"$type":"AuthorizeResponseLog"}
- End Authorize Request. Result type: IdentityServer4.Endpoints.Results.AuthorizeResult
- Invoking result: IdentityServer4.Endpoints.Results.AuthorizeResult
- Augmenting SignInContext
- End request https://vmshqeat04.npr.nornick.ru/uas/connect/authorize/callback?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=JHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4&code_challenge_method=S256&response_mode=form_post&nonce=638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0, status code 200 in 176 ms
- Start request POST https://vmshqeat04.npr.nornick.ru/uas/connect/token
- Request path /connect/token matched to endpoint type Token
- Endpoint enabled: Token, successfully created handler: IdentityServer4.Endpoints.TokenEndpoint
- Invoking IdentityServer endpoint: IdentityServer4.Endpoints.TokenEndpoint for /connect/token
- Processing token request.
- Start token request.
- Start client validation
- Start parsing Basic Authentication secret
- Start parsing for secret in post body
- client id without secret found
- Parser found secret: PostBodySecretParser
- Secret id found: has.console
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- Public Client - skipping secret validation success
- Client validation success
- {"ClientId":"has.console","AuthenticationMethod":"NoSecret","Category":"Authentication","Name":"Client Authentication Success","EventType":"Success","Id":1010,"Message":null,"ActivityId":"80000002-0000-fd00-b63f-84710c7967bb","TimeStamp":"2025-11-26T19:44:00.0000000Z","ProcessId":13284,"LocalIpAddress":"::1:50561","RemoteIpAddress":"::ffff:10.2.50.200","$type":"ClientAuthenticationSuccessEvent"}
- Calling into token request validator: IdentityServer4.Validation.TokenRequestValidator
- Start token request validation
- Start validation of authorization code token request
- qhii4D2mgT2pqco3zRLL2llgaxyZPLWCLyDIQgwagkQ= found in database: true
- removing qhii4D2mgT2pqco3zRLL2llgaxyZPLWCLyDIQgwagkQ= persisted grant from database
- Client required a proof key for code exchange. Starting PKCE validation
- IsActive called from: AuthorizationCodeValidation
- Validation of authorization code token request success
- Calling into custom request validator: IdentityServer4.Validation.DefaultCustomTokenRequestValidator
- Token request validation success, {"ClientId":"has.console","ClientName":"HAS Console","GrantType":"authorization_code","Scopes":null,"AuthorizationCode":"****271D","RefreshToken":"********","UserName":null,"AuthenticationContextReferenceClasses":null,"Tenant":null,"IdP":null,"Raw":{},"$type":"TokenRequestValidationLog"}
- Calling into token request response generator: IdentityServer4.ResponseHandling.TokenResponseGenerator
- Creating response for authorization code request
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- Found ["openid","hopex"] identity scopes in database
- Found [] API resources in database
- Found [] scopes in database
- Creating access token
- Getting claims for access token for client: has.console
- Getting claims for access token for subject: Admin
- Get profile called for subject Admin from client HAS Console with claim types [] via ClaimsProviderAccessToken
- Issued claims: ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role","has.sessionGuid","name","sub","idp","amr","auth_time"]
- Claim types from profile service that were filtered: ["sub","idp","amr","auth_time"]
- Creating JWT access token
- Creating refresh token
- Setting an absolute lifetime: 2592000
- oNd35gLbf0dbq6zQ7SwAnTyx6vGv0BkNH9zfq+Jq68k= not found in database
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- Found ["openid","hopex"] identity scopes in database
- Found [] API resources in database
- Found [] scopes in database
- Creating identity token
- Getting claims for identity token for subject: Admin and client: has.console
- Get profile called for subject Admin from client HAS Console with claim types ["has.guiLanguageId","has.environmentId","has.dataLanguageId","has.login","has.profileId","has.repositoryid","has.userId","has.sessionGuid","has.connectionMode","has.sessionMode","has.baseline"] via ClaimsProviderIdentityToken
- Issued claims: ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role","has.sessionGuid","name","sub","idp","amr","auth_time"]
- Claim types from profile service that were filtered: ["sub","idp","amr","auth_time"]
- Creating JWT identity token
- {"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":null,"Endpoint":"Token","SubjectId":"Admin","Scopes":"openid hopex offline_access","GrantType":"authorization_code","Tokens":[null,null,null],"Category":"Token","Name":"Token Issued Success","EventType":"Success","Id":2000,"Message":null,"ActivityId":"80000002-0000-fd00-b63f-84710c7967bb","TimeStamp":"2025-11-26T19:44:00.0000000Z","ProcessId":13284,"LocalIpAddress":"::1:50561","RemoteIpAddress":"::ffff:10.2.50.200","$type":"TokenIssuedSuccessEvent"}
- Identity token issued for has.console (HAS Console) / Admin: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NjQxODYyNDAsImV4cCI6MTc2NDE4NjU0MCwiaXNzIjoiaHR0cHM6Ly92bXNocWVhdDA0Lm5wci5ub3JuaWNrLnJ1IiwiYXVkIjoiaGFzLmNvbnNvbGUiLCJub25jZSI6IjYzODk5NzgzMDI4NDAyNjE2My5PV1ZtWVRaaU9XSXRNMlpqTXkwME5EQmtMVGsxTkRndFlUYzJaR1EwWW1ZNU9UazNaV1EzTURaak1XTXRNVFJoWmkwMFl6TmlMVGc0WW1NdFpUSmlORFExWmpBME1XUTQiLCJpYXQiOjE3NjQxODYyNDAsImF0X2hhc2giOiIyRlhRcTA0dlRZUzZ0d3otUmVwOXNRIiwic19oYXNoIjoieUU5Y0pGQUlUQVFaaV9FOThiS2VmQSIsInNpZCI6IjRCOUYyRkZBNkJBRUQ4OTdDRTMxRTZFQjJDNThDRTA1Iiwic3ViIjoiQWRtaW4iLCJhdXRoX3RpbWUiOjE3NjQxODYyNDAsImlkcCI6ImxvY2FsIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiSGFzQWRtaW4iLCJoYXMuc2Vzc2lvbkd1aWQiOiJlYTE3ZTVmYTFjMzA0ZGRkYjRmZmQ0M2QwNDE4MmRlYSIsIm5hbWUiOiJBZG1pbiIsImFtciI6WyJwd2QiXX0.qAQ507HkZqbfeW_xnX9qX8wXiX1VMbWfcfZLP54ysloWS6mTw56jZa74f7NS560_GPsZ2Ljnr0MJbeao4Y1EqX1HJUppgQjoaaJuESciOsiVbnkxi2PDBx9xhmOSjkgnhvMEItEFyByhLdHzqFywBBw8M05OF1aKmHmRJCoXJr8VvTiSrJ1IfdP_cBUSmESDYVI5MR9n2NB1JRYtmag8Lxlx1R8qeXlv8avmvg2Il6YNYD_q5Ifg6BZveTG6OsoTVe0t5G-WU0kuea2A-EJngTp1HHhV0XFs8NaHxHvQi-F-vgBTliYtShrqhkgeRlGg0tLon1d9VRgNRFfwFHmPQA
- Refresh token issued for has.console (HAS Console) / Admin: 0A79876E23E4FD5B5BE930977AAC2F3CCD41E9DC949942346E8C41ED4286BE05
- Access token issued for has.console (HAS Console) / Admin: eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJuYmYiOjE3NjQxODYyNDAsImV4cCI6MTc2NDE4OTg0MCwiaXNzIjoiaHR0cHM6Ly92bXNocWVhdDA0Lm5wci5ub3JuaWNrLnJ1IiwiY2xpZW50X2lkIjoiaGFzLmNvbnNvbGUiLCJzdWIiOiJBZG1pbiIsImF1dGhfdGltZSI6MTc2NDE4NjI0MCwiaWRwIjoibG9jYWwiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJIYXNBZG1pbiIsImhhcy5zZXNzaW9uR3VpZCI6ImVhMTdlNWZhMWMzMDRkZGRiNGZmZDQzZDA0MTgyZGVhIiwibmFtZSI6IkFkbWluIiwianRpIjoiMEVFNzMwN0Y4QjRCNTUyMkY3MTIzQTUxNzFGRDFEOUEiLCJzaWQiOiI0QjlGMkZGQTZCQUVEODk3Q0UzMUU2RUIyQzU4Q0UwNSIsImlhdCI6MTc2NDE4NjI0MCwic2NvcGUiOlsib3BlbmlkIiwiaG9wZXgiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.ouYYXii8A0AwrS1tD9ED74Oowgv1TtuwwEcC3jktBrX0s-OBMkBwNwzmyVi6sygJyuc4SmBlVkGF0PuFwm5QA6m2YaUeTtSPvzzZWiCyOteEKQFWtYFApn1lk7TBdrda0l1Cb4XCb02K6rdmINLlV5JAJnIXBRmFE6Wu2eQWsF91QPpL2Uby1us45TdPxrefee3domd-39n5R-f6E1pI_JKQUzgSWd3jv283uXtAtnsgegZl3TABN4FtZWBfTjPw172gZmmUzG9OY1JiSR4mEPlyxPijJWM8NxZ-XUlxj6b_QmrQ1F7xOn6KmfJKX78B20ZJYmmdjQbKFIiWeJ14uA
- Token request success.
- Invoking result: IdentityServer4.Endpoints.Results.TokenResult
- End request https://vmshqeat04.npr.nornick.ru/uas/connect/token, status code 200 in 252 ms
- Start request GET https://vmshqeat04.npr.nornick.ru/uas/connect/userinfo
- Request path /connect/userinfo matched to endpoint type Userinfo
- Endpoint enabled: Userinfo, successfully created handler: IdentityServer4.Endpoints.UserInfoEndpoint
- Invoking IdentityServer endpoint: IdentityServer4.Endpoints.UserInfoEndpoint for /connect/userinfo
- Start userinfo request
- Bearer token found in header
- Calling into userinfo request validator: IdentityServer4.Validation.UserInfoRequestValidator
- Start access token validation
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- has.console found in database: true
- Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
- client configuration validation for client has.console succeeded.
- IsActive called from: AccessTokenValidation
- Calling into custom token validator: IdentityServer4.Validation.DefaultCustomTokenValidator
- Token validation success
-{"ClientId":null,"ClientName":null,"ValidateLifetime":true,"AccessTokenType":"Jwt","ExpectedScope":"openid","TokenHandle":null,"JwtId":"0EE7307F8B4B5522F7123A5171FD1D9A","Claims":{},"$type":"TokenValidationLog"}
- IsActive called from: UserInfoRequestValidation
- Calling into userinfo response generator: IdentityServer4.ResponseHandling.UserInfoResponseGenerator
- Creating userinfo response
- Scopes in access token: openid hopex offline_access
- Found ["openid","hopex"] identity scopes in database
- Requested claim types: sub has.guiLanguageId has.environmentId has.dataLanguageId has.login has.profileId has.repositoryid has.userId has.sessionGuid has.connectionMode has.sessionMode has.baseline
- Get profile called for subject Admin from client HAS Console with claim types ["sub","has.guiLanguageId","has.environmentId","has.dataLanguageId","has.login","has.profileId","has.repositoryid","has.userId","has.sessionGuid","has.connectionMode","has.sessionMode","has.baseline"] via UserInfoEndpoint
- Issued claims: ["sub","auth_time","idp","http://schemas.microsoft.com/ws/2008/06/identity/claims/role","has.sessionGuid","name","amr"]
- Profile service returned the following claim types: sub auth_time idp http://schemas.microsoft.com/ws/2008/06/identity/claims/role has.sessionGuid name amr
- End userinfo request
- Invoking result: IdentityServer4.Endpoints.Results.UserInfoResult
- End request https://vmshqeat04.npr.nornick.ru/uas/connect/userinfo, status code 200 in 101 ms
+using HAS.Server.SiteModule.Razor;
+using Mega.Has.Modules.UAS.Models;
+using Mega.Has.Modules.UAS.ViewModels;
+using Microsoft.AspNetCore.Html;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.Mvc.Razor.Internal;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.TagHelpers;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.AspNetCore.Razor.Hosting;
+using Microsoft.AspNetCore.Razor.Runtime.TagHelpers;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using System;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text.Encodings.Web;
+using System.Threading.Tasks;
+
+namespace AspNetCoreGeneratedDocument
+{
+	// Token: 0x02000046 RID: 70
+	[RazorSourceChecksum("SHA256", "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c", "/Views/Account/Login.cshtml")]
+	[RazorSourceChecksum("SHA256", "c68eee8ac38defce2d4a072bcc9cf01bbc2882ac7d678ff69084a79c4d2ae0a8", "/Views/_ViewImports.cshtml")]
+	[RazorCompiledItemMetadata("Identifier", "/Views/Account/Login.cshtml")]
+	[CreateNewOnMetadataUpdate]
+	internal sealed class Views_Account_Login : BaseRazorPage<LoginViewModel>
+	{
+		// Token: 0x1700016C RID: 364
+		// (get) Token: 0x06000311 RID: 785 RVA: 0x0000C603 File Offset: 0x0000A803
+		private TagHelperScopeManager __tagHelperScopeManager
+		{
+			get
+			{
+				if (this.__backed__tagHelperScopeManager == null)
+				{
+					this.__backed__tagHelperScopeManager = new TagHelperScopeManager(new Action<HtmlEncoder>(base.StartTagHelperWritingScope), new Func<TagHelperContent>(base.EndTagHelperWritingScope));
+				}
+				return this.__backed__tagHelperScopeManager;
+			}
+		}
+
+		// Token: 0x06000312 RID: 786 RVA: 0x0000C638 File Offset: 0x0000A838
+		public override async Task ExecuteAsync()
+		{
+			this.WriteLiteral("\r\n");
+			if (base.Model.IsLoginDisabled)
+			{
+				this.WriteLiteral("    <div class=\"p-0 py-3 account-login border shadow rounded d-flex align-items-start flex-column justify-content-center\">\r\n        <div class=\"py-3 mx-auto\">\r\n            ");
+				this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("img", TagMode.SelfClosing, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c10026", async delegate
+				{
+				});
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper = base.CreateTagHelper<ImageTagHelper>();
+				this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper);
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper.Src = (string)Views_Account_Login.__tagHelperAttribute_0.Value;
+				this.__tagHelperExecutionContext.AddTagHelperAttribute(Views_Account_Login.__tagHelperAttribute_0);
+				this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_1);
+				this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_2);
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper.AppendVersion = true;
+				this.__tagHelperExecutionContext.AddTagHelperAttribute("asp-append-version", this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper.AppendVersion, 0);
+				await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+				if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+				{
+					await this.__tagHelperExecutionContext.SetOutputContentAsync();
+				}
+				this.Write(this.__tagHelperExecutionContext.Output);
+				this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+				this.WriteLiteral("\r\n        </div>\r\n        <div class=\"mx-auto py-1 module-name\">\r\n");
+				if (!base.Model.HideFriendlyName)
+				{
+					this.Write(base.Model.ModuleFriendlyName);
+				}
+				this.WriteLiteral("        </div>\r\n\r\n");
+				if (base.Model.Message != null)
+				{
+					this.WriteLiteral("            <div class=\"row alert alert-danger mx-auto error-login-page\">\r\n                <div class=\"col-1 show-v6\" style=\"display:none;\"><i class=\"fa fa-exclamation-circle\" aria-hidden=\"true\"></i></div>\r\n                <div class=\"col\">");
+					this.Write(base.Model.Message);
+					this.WriteLiteral("</div>\r\n            </div>\r\n");
+				}
+				this.WriteLiteral("    </div>\r\n");
+			}
+			else
+			{
+				this.WriteLiteral("    <div class=\"p-0 py-3 account-login border shadow rounded d-flex align-items-start flex-column justify-content-center\">\r\n        <div class=\"py-3 mx-auto\">\r\n            ");
+				this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("img", TagMode.SelfClosing, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c14038", async delegate
+				{
+				});
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper = base.CreateTagHelper<ImageTagHelper>();
+				this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper);
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper.Src = (string)Views_Account_Login.__tagHelperAttribute_0.Value;
+				this.__tagHelperExecutionContext.AddTagHelperAttribute(Views_Account_Login.__tagHelperAttribute_0);
+				this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_1);
+				this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_2);
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper.AppendVersion = true;
+				this.__tagHelperExecutionContext.AddTagHelperAttribute("asp-append-version", this.__Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper.AppendVersion, 0);
+				await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+				if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+				{
+					await this.__tagHelperExecutionContext.SetOutputContentAsync();
+				}
+				this.Write(this.__tagHelperExecutionContext.Output);
+				this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+				this.WriteLiteral("\r\n        </div>\r\n        <div class=\"mx-auto py-1 module-name\">\r\n");
+				if (!base.Model.HideFriendlyName)
+				{
+					this.Write(base.Model.ModuleFriendlyName);
+				}
+				this.WriteLiteral("        </div>\r\n\r\n");
+				if (base.Model.Message != null)
+				{
+					this.WriteLiteral("            <div class=\"row alert alert-danger mx-auto error-login-page\">\r\n                <div class=\"col-1 show-v6\" style=\"display:none;\"><i class=\"fa fa-exclamation-circle\" aria-hidden=\"true\"></i></div>\r\n                <div class=\"col\">");
+					this.Write(base.Model.Message);
+					this.WriteLiteral("</div>\r\n            </div>\r\n");
+				}
+				this.WriteLiteral("        <!-- warning-->\r\n");
+				if (!base.Model.ShowBasicSignin && !base.Model.VisibleExternalProviders.Any<ExternalProvider>())
+				{
+					this.WriteLiteral("            <div class=\"alert alert-warning mx-auto error-login-page\">\r\n                <strong>");
+					this.Write(base.T["Invalid login request"]);
+					this.WriteLiteral("</strong>\r\n                <br />\r\n                ");
+					this.Write(base.T["There are no login schemes configured for this client."]);
+					this.WriteLiteral("\r\n            </div>\r\n");
+				}
+				if (!this.ViewContext.ModelState.IsValid)
+				{
+					this.WriteLiteral("            <div class=\"row alert alert-danger mx-auto error-login-page\">\r\n                <div class=\"col-1 show-v6\" style=\"display:none;\"><i class=\"fa fa-exclamation-circle\" aria-hidden=\"true\"></i></div>\r\n                ");
+					this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("div", TagMode.StartTagAndEndTag, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c19369", async delegate
+					{
+					});
+					this.__Microsoft_AspNetCore_Mvc_TagHelpers_ValidationSummaryTagHelper = base.CreateTagHelper<ValidationSummaryTagHelper>();
+					this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_ValidationSummaryTagHelper);
+					this.__Microsoft_AspNetCore_Mvc_TagHelpers_ValidationSummaryTagHelper.ValidationSummary = ValidationSummary.All;
+					this.__tagHelperExecutionContext.AddTagHelperAttribute("asp-validation-summary", this.__Microsoft_AspNetCore_Mvc_TagHelpers_ValidationSummaryTagHelper.ValidationSummary, 0);
+					this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_3);
+					await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+					if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+					{
+						await this.__tagHelperExecutionContext.SetOutputContentAsync();
+					}
+					this.Write(this.__tagHelperExecutionContext.Output);
+					this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+					this.WriteLiteral("\r\n            </div>\r\n");
+				}
+				this.WriteLiteral("        <!-- form-->\r\n        ");
+				this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("form", 0, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c21276", async delegate
+				{
+					this.WriteLiteral("\r\n            <!-- Environment -->\r\n");
+					if (base.Model.Environments != null)
+					{
+						if (base.Model.Environments.Count<SelectListItem>() == 1)
+						{
+							this.WriteLiteral("                    ");
+							this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("input", TagMode.SelfClosing, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c21957", async delegate
+							{
+							});
+							this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper = base.CreateTagHelper<InputTagHelper>();
+							this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper);
+							this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.For = this.ModelExpressionProvider.CreateModelExpression<LoginViewModel, string>(base.ViewData, (LoginViewModel __model) => __model.EnvironmentId);
+							this.__tagHelperExecutionContext.AddTagHelperAttribute("asp-for", this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.For, 0);
+							this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.InputTypeName = (string)Views_Account_Login.__tagHelperAttribute_4.Value;
+							this.__tagHelperExecutionContext.AddTagHelperAttribute(Views_Account_Login.__tagHelperAttribute_4);
+							base.BeginWriteTagHelperAttribute();
+							this.WriteLiteral(base.Model.Environments.First<SelectListItem>().Value);
+							this.__tagHelperStringValueBuffer = base.EndWriteTagHelperAttribute();
+							this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.Value = this.__tagHelperStringValueBuffer;
+							this.__tagHelperExecutionContext.AddTagHelperAttribute("value", this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.Value, 0);
+							await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+							if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+							{
+								await this.__tagHelperExecutionContext.SetOutputContentAsync();
+							}
+							this.Write(this.__tagHelperExecutionContext.Output);
+							this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+							this.WriteLiteral("\r\n");
+						}
+						else
+						{
+							this.WriteLiteral("                    <div class=\"form-group my-4 mx-5\">\r\n                        ");
+							this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("select", 0, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c24749", async delegate
+							{
+								this.WriteLiteral("\r\n                            ");
+								this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("option", 0, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c25070", async delegate
+								{
+									this.Write(base.T["Select your environment"]);
+									this.WriteLiteral("...");
+								});
+								this.__Microsoft_AspNetCore_Mvc_TagHelpers_OptionTagHelper = base.CreateTagHelper<OptionTagHelper>();
+								this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_OptionTagHelper);
+								base.BeginWriteTagHelperAttribute();
+								this.__tagHelperStringValueBuffer = base.EndWriteTagHelperAttribute();
+								this.__tagHelperExecutionContext.AddHtmlAttribute("disabled", this.Html.Raw(this.__tagHelperStringValueBuffer),HtmlAttributeValueStyle.Minimized);
+								this.__Microsoft_AspNetCore_Mvc_TagHelpers_OptionTagHelper.Value = (string)Views_Account_Login.__tagHelperAttribute_5.Value;
+								this.__tagHelperExecutionContext.AddTagHelperAttribute(Views_Account_Login.__tagHelperAttribute_5);
+								await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+								if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+								{
+									await this.__tagHelperExecutionContext.SetOutputContentAsync();
+								}
+								this.Write(this.__tagHelperExecutionContext.Output);
+								this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+								this.WriteLiteral("\r\n                        ");
+							});
+							this.__Microsoft_AspNetCore_Mvc_TagHelpers_SelectTagHelper = base.CreateTagHelper<SelectTagHelper>();
+							this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_SelectTagHelper);
+							this.__Microsoft_AspNetCore_Mvc_TagHelpers_SelectTagHelper.For = this.ModelExpressionProvider.CreateModelExpression<LoginViewModel, string>(base.ViewData, (LoginViewModel __model) => __model.EnvironmentId);
+							this.__tagHelperExecutionContext.AddTagHelperAttribute("asp-for", this.__Microsoft_AspNetCore_Mvc_TagHelpers_SelectTagHelper.For, 0);
+							this.__Microsoft_AspNetCore_Mvc_TagHelpers_SelectTagHelper.Items = base.Model.Environments;
+							this.__tagHelperExecutionContext.AddTagHelperAttribute("asp-items", this.__Microsoft_AspNetCore_Mvc_TagHelpers_SelectTagHelper.Items, 0);
+							this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_6);
+							await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+							if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+							{
+								await this.__tagHelperExecutionContext.SetOutputContentAsync();
+							}
+							this.Write(this.__tagHelperExecutionContext.Output);
+							this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+							this.WriteLiteral("\r\n                    </div>\r\n");
+						}
+					}
+					this.WriteLiteral("\r\n");
+					if (base.Model.VisibleExternalProviders.Any<ExternalProvider>())
+					{
+						this.WriteLiteral("                <h6>");
+						this.Write(base.T["Login with"]);
+						this.WriteLiteral(" </h6>\r\n                <div class=\"row mx-1 my-3\">\r\n");
+						foreach (ExternalProvider externalProvider in base.Model.VisibleExternalProviders)
+						{
+							this.WriteLiteral("                        <div class=\"col mb-3\">\r\n                            <a class=\"btn btn-secondary text-white btn-sso-login\"");
+							this.BeginWriteAttribute("onclick", " onclick=\"", 3671, "\"", 3739, 6);
+							base.WriteAttributeValue("", 3681, "ExternalLogin('", 3681, 15, true);
+							base.WriteAttributeValue("", 3696, externalProvider.DisplayName, 3696, 21, false);
+							base.WriteAttributeValue("", 3717, "',", 3717, 2, true);
+							base.WriteAttributeValue(" ", 3719, "'", 3720, 2, true);
+							base.WriteAttributeValue("", 3721, base.Model.ReturnUrl, 3721, 16, false);
+							base.WriteAttributeValue("", 3737, "')", 3737, 2, true);
+							this.EndWriteAttribute();
+							this.WriteLiteral(">\r\n                                <span class=\"fa fa-share-alt\"></span>\r\n                                ");
+							this.Write(externalProvider.DisplayName);
+							this.WriteLiteral("\r\n                            </a>\r\n                        </div>\r\n");
+						}
+						this.WriteLiteral("                </div>\r\n");
+						if (base.Model.ShowBasicSignin)
+						{
+							this.WriteLiteral("                    <!-- OR -->\r\n                    <div class=\"login-or\">\r\n                        <hr class=\"hr-or\">\r\n                        <span class=\"span-or\">");
+							this.Write(base.T["or"]);
+							this.WriteLiteral("</span>\r\n                    </div>\r\n");
+						}
+					}
+					this.WriteLiteral("\r\n");
+					if (base.Model.ShowBasicSignin)
+					{
+						this.WriteLiteral("                <!-- Basic -->\r\n                <div class=\"form-group my-4 mx-5\">\r\n                    <div class=\"show-v6\" style=\"display:none;\"><div class=\"text-start\"><label class=\"mx-2 my-1\">");
+						this.Write(base.T["login"]);
+						this.WriteLiteral("</label></div></div>\r\n                    <input class=\"form-control bg-light\" autofocus autocomplete=\"off\"");
+						this.BeginWriteAttribute("placeholder", " placeholder=\"", 4664, "\"", 4689, 1);
+						base.WriteAttributeValue("", 4678, base.T["login"], 4678, 11, false);
+						this.EndWriteAttribute();
+						this.BeginWriteAttribute("value", " value=\"", 4690, "\"", 4713, 1);
+						base.WriteAttributeValue("", 4698, base.Model.UserName, 4698, 15, false);
+						this.EndWriteAttribute();
+						this.WriteLiteral(" name=\"UserName\" id=\"UserName\" />\r\n                </div>\r\n");
+						this.WriteLiteral("                <div class=\"form-group my-4 mx-5\">\r\n                    <div class=\"show-v6\" style=\"display:none;\"><div class=\"text-start\"><label class=\"mx-2 my-1\">");
+						this.Write(base.T["password"]);
+						this.WriteLiteral("</label></div></div>\r\n                    <div class=\"input-group\" id=\"show_hide_password\">\r\n                        ");
+						this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("input", TagMode.SelfClosing, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c35275", async delegate
+						{
+						});
+						this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper = base.CreateTagHelper<InputTagHelper>();
+						this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper);
+						this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.InputTypeName = (string)Views_Account_Login.__tagHelperAttribute_7.Value;
+						this.__tagHelperExecutionContext.AddTagHelperAttribute(Views_Account_Login.__tagHelperAttribute_7);
+						this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_8);
+						this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_9);
+						this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.For = this.ModelExpressionProvider.CreateModelExpression<LoginViewModel, string>(base.ViewData, (LoginViewModel __model) => __model.Password);
+						this.__tagHelperExecutionContext.AddTagHelperAttribute("asp-for", this.__Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.For, 0);
+						base.BeginAddHtmlAttributeValues(this.__tagHelperExecutionContext, "placeholder", 1, 0);
+						base.AddHtmlAttributeValue("", 5174, base.T["password"], 5174, 14, false);
+						base.EndAddHtmlAttributeValues(this.__tagHelperExecutionContext);
+						await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+						if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+						{
+							await this.__tagHelperExecutionContext.SetOutputContentAsync();
+						}
+						this.Write(this.__tagHelperExecutionContext.Output);
+						this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+						this.WriteLiteral("\r\n                        <a class=\"input-group-text eye\"");
+						this.BeginWriteAttribute("href", " href=\"", 5249, "\"", 5256, 0);
+						this.EndWriteAttribute();
+						this.WriteLiteral(" >\r\n                            <i id=\"show_hide_password_icon\" class=\"fa fa-eye-slash\" aria-hidden=\"true\"></i>\r\n                        </a>\r\n                    </div>\r\n                </div>\r\n");
+					}
+					this.WriteLiteral("            <div class=\"mt-auto swapcontainer\">\r\n\r\n                <!-- Button -->\r\n");
+					if (base.Model.ShowBasicSignin)
+					{
+						this.WriteLiteral("                    <button class=\"btn btn-hopex btn-success mx-50 my-20 first_div\" type=\"submit\" id=\"btnSubmit\">");
+						this.Write(base.T["Sign in"]);
+						this.WriteLiteral("</button>\r\n");
+					}
+					this.WriteLiteral("\r\n");
+					if (base.Model.ShowBasicSignin && !base.Model.IsSetupMode)
+					{
+						this.WriteLiteral("                        <div class=\"mx-5 text-center mb-2 second_div forgot-password\">\r\n                            <i class=\"mx-2 fa fa-key show-v6\" style=\"display:none\"></i>\r\n\r\n                            <a href=\"/uas/password/lostpassword\" class=\"text-dark\">\r\n                                <h6 class=\"d-inline\">");
+						this.Write(base.T["Forgot password"]);
+						this.WriteLiteral("</h6>\r\n                            </a>\r\n                        </div>\r\n");
+					}
+					this.WriteLiteral("\r\n");
+					if (!base.Model.IsInitialized)
+					{
+						this.WriteLiteral("                    <div class=\"text-center mb-2\">\r\n                        <h6>");
+						this.Write(base.T["SETUP MODE - Use default login"]);
+						this.WriteLiteral("</h6>\r\n                    </div>\r\n");
+					}
+					this.WriteLiteral("\r\n\r\n            </div>\r\n        ");
+				});
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_FormTagHelper = base.CreateTagHelper<FormTagHelper>();
+				this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_FormTagHelper);
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_RenderAtEndOfFormTagHelper = base.CreateTagHelper<RenderAtEndOfFormTagHelper>();
+				this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_RenderAtEndOfFormTagHelper);
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_FormTagHelper.Route = (string)Views_Account_Login.__tagHelperAttribute_10.Value;
+				this.__tagHelperExecutionContext.AddTagHelperAttribute(Views_Account_Login.__tagHelperAttribute_10);
+				this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_11);
+				this.__Microsoft_AspNetCore_Mvc_TagHelpers_FormTagHelper.Method = (string)Views_Account_Login.__tagHelperAttribute_12.Value;
+				this.__tagHelperExecutionContext.AddTagHelperAttribute(Views_Account_Login.__tagHelperAttribute_12);
+				this.__tagHelperExecutionContext.AddHtmlAttribute(Views_Account_Login.__tagHelperAttribute_13);
+				await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+				if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+				{
+					await this.__tagHelperExecutionContext.SetOutputContentAsync();
+				}
+				this.Write(this.__tagHelperExecutionContext.Output);
+				this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+				this.WriteLiteral("\r\n        <!-- Timeout message -->\r\n        <div id=\"timeout\" style=\"display: none;\" class=\"mx-auto\">\r\n            <p class=\"alert alert-dark text-center p-3 m-3\">");
+				this.Write(base.T["You took too long to login, please try again now."]);
+				this.WriteLiteral("</p>\r\n            <button class=\"btn btn-hopex btn-success mx-50 my-20\"");
+				this.BeginWriteAttribute("onclick", " onclick=\"", 7039, "\"", 7085, 3);
+				base.WriteAttributeValue("", 7049, "GoToRedirectUri('", 7049, 17, true);
+				base.WriteAttributeValue("", 7066, base.Model.ReturnUrl, 7066, 16, false);
+				base.WriteAttributeValue("", 7082, "');", 7082, 3, true);
+				this.EndWriteAttribute();
+				this.WriteLiteral(">");
+				this.Write(base.T["OK"]);
+				this.WriteLiteral("</button>\r\n        </div>\r\n\r\n");
+				this.WriteLiteral("        <div class=\"mt-5 mb-3 footer w-100 show-v6 text-dark\" style=\"display:none;\">\r\n            <label>\r\n                ");
+				LoginViewModel model = base.Model;
+				this.Write((model != null) ? model.MegaInfo : null);
+				this.WriteLiteral(" <br>\r\n                <a class=\"text-white privacy-link\" href=\"#\" data-bs-toggle=\"modal\" data-bs-target=\"#privacyModal\">");
+				this.Write(base.T["Privacy and Cookie Policy"]);
+				this.WriteLiteral("</a>\r\n            </label>\r\n        </div>\r\n\r\n    </div>\r\n");
+			}
+			this.WriteLiteral("\r\n");
+            this.DefineSection("Scripts", (RenderAsyncDelegate)(async () =>
+            {
+                this.WriteLiteral("\r\n    ");
+                this.__tagHelperExecutionContext = this.__tagHelperScopeManager.Begin("script", TagMode.StartTagAndEndTag, "50a3f9c75b93355adf19d44d3e2adb6e43a8996cfc62047338baed40053a600c45613", (Func<Task>)(async () =>
+                {
+                }));
+                this.__Microsoft_AspNetCore_Mvc_TagHelpers_ScriptTagHelper = base.CreateTagHelper<ScriptTagHelper>();
+                this.__tagHelperExecutionContext.Add(this.__Microsoft_AspNetCore_Mvc_TagHelpers_ScriptTagHelper);
+                this.__Microsoft_AspNetCore_Mvc_TagHelpers_ScriptTagHelper.Src = (string)Views_Account_Login.__tagHelperAttribute_14.Value;
+                this.__tagHelperExecutionContext.AddTagHelperAttribute(Views_Account_Login.__tagHelperAttribute_14);
+                this.__Microsoft_AspNetCore_Mvc_TagHelpers_ScriptTagHelper.AppendVersion = new bool?(true);
+                this.__tagHelperExecutionContext.AddTagHelperAttribute("asp-append-version", this.__Microsoft_AspNetCore_Mvc_TagHelpers_ScriptTagHelper.AppendVersion, HtmlAttributeValueStyle.DoubleQuotes);
+                await this.__tagHelperRunner.RunAsync(this.__tagHelperExecutionContext);
+                if (!this.__tagHelperExecutionContext.Output.IsContentModified)
+                {
+                    await this.__tagHelperExecutionContext.SetOutputContentAsync();
+                }
+                this.Write(this.__tagHelperExecutionContext.Output);
+                this.__tagHelperExecutionContext = this.__tagHelperScopeManager.End();
+                this.WriteLiteral("\r\n    <script>\r\n        function GoToRedirectUri(returnUrl) {\r\n            var urlParams = new URLSearchParams(returnUrl);\r\n            var redirectUri = urlParams.get('redirect_uri');\r\n            redirectUri = redirectUri.replace('/signin-oidc', '');\r\n            window.location.href = redirectUri;\r\n        }\r\n    </script>\r\n");
+            }));
+        }
+
+		// Token: 0x1700016D RID: 365
+		// (get) Token: 0x06000313 RID: 787 RVA: 0x0000C67B File Offset: 0x0000A87B
+		// (set) Token: 0x06000314 RID: 788 RVA: 0x0000C683 File Offset: 0x0000A883
+		[RazorInject]
+		public IModelExpressionProvider ModelExpressionProvider { get; private set; }
+
+		// Token: 0x1700016E RID: 366
+		// (get) Token: 0x06000315 RID: 789 RVA: 0x0000C68C File Offset: 0x0000A88C
+		// (set) Token: 0x06000316 RID: 790 RVA: 0x0000C694 File Offset: 0x0000A894
+		[RazorInject]
+		public IUrlHelper Url { get; private set; }
+
+		// Token: 0x1700016F RID: 367
+		// (get) Token: 0x06000317 RID: 791 RVA: 0x0000C69D File Offset: 0x0000A89D
+		// (set) Token: 0x06000318 RID: 792 RVA: 0x0000C6A5 File Offset: 0x0000A8A5
+		[RazorInject]
+		public IViewComponentHelper Component { get; private set; }
+
+		// Token: 0x17000170 RID: 368
+		// (get) Token: 0x06000319 RID: 793 RVA: 0x0000C6AE File Offset: 0x0000A8AE
+		// (set) Token: 0x0600031A RID: 794 RVA: 0x0000C6B6 File Offset: 0x0000A8B6
+		[RazorInject]
+		public IJsonHelper Json { get; private set; }
+
+		// Token: 0x17000171 RID: 369
+		// (get) Token: 0x0600031B RID: 795 RVA: 0x0000C6BF File Offset: 0x0000A8BF
+		// (set) Token: 0x0600031C RID: 796 RVA: 0x0000C6C7 File Offset: 0x0000A8C7
+		[RazorInject]
+		public IHtmlHelper<LoginViewModel> Html { get; private set; }
+
+		// Token: 0x040002D4 RID: 724
+		private static readonly TagHelperAttribute __tagHelperAttribute_0 = new TagHelperAttribute("src", "/_customs/has.uas/images/logo-H.png", 0);
+
+		// Token: 0x040002D5 RID: 725
+		private static readonly TagHelperAttribute __tagHelperAttribute_1 = new TagHelperAttribute("class", new HtmlString("titleimg"), 0);
+
+		// Token: 0x040002D6 RID: 726
+		private static readonly TagHelperAttribute __tagHelperAttribute_2 = new TagHelperAttribute("alt", new HtmlString("HOPEX"), 0);
+
+		// Token: 0x040002D7 RID: 727
+		private static readonly TagHelperAttribute __tagHelperAttribute_3 = new TagHelperAttribute("class", new HtmlString("col"), 0);
+
+		// Token: 0x040002D8 RID: 728
+		private static readonly TagHelperAttribute __tagHelperAttribute_4 = new TagHelperAttribute("type", "hidden", 0);
+
+		// Token: 0x040002D9 RID: 729
+		private static readonly TagHelperAttribute __tagHelperAttribute_5 = new TagHelperAttribute("value", "", 0);
+
+		// Token: 0x040002DA RID: 730
+		private static readonly TagHelperAttribute __tagHelperAttribute_6 = new TagHelperAttribute("class", new HtmlString("form-select bg-light"), 0);
+
+		// Token: 0x040002DB RID: 731
+		private static readonly TagHelperAttribute __tagHelperAttribute_7 = new TagHelperAttribute("type", "password", 0);
+
+		// Token: 0x040002DC RID: 732
+		private static readonly TagHelperAttribute __tagHelperAttribute_8 = new TagHelperAttribute("class", new HtmlString("form-control bg-light"), 0);
+
+		// Token: 0x040002DD RID: 733
+		private static readonly TagHelperAttribute __tagHelperAttribute_9 = new TagHelperAttribute("autocomplete", new HtmlString("off"), 0);
+
+		// Token: 0x040002DE RID: 734
+		private static readonly TagHelperAttribute __tagHelperAttribute_10 = new TagHelperAttribute("asp-route", "Login", 0);
+
+		// Token: 0x040002DF RID: 735
+		private static readonly TagHelperAttribute __tagHelperAttribute_11 = new TagHelperAttribute("class", new HtmlString("form-signin mx-auto"), 0);
+
+		// Token: 0x040002E0 RID: 736
+		private static readonly TagHelperAttribute __tagHelperAttribute_12 = new TagHelperAttribute("method", "post", 0);
+
+		// Token: 0x040002E1 RID: 737
+		private static readonly TagHelperAttribute __tagHelperAttribute_13 = new TagHelperAttribute("id", new HtmlString("loginForm"), 0);
+
+		// Token: 0x040002E2 RID: 738
+		private static readonly TagHelperAttribute __tagHelperAttribute_14 = new TagHelperAttribute("src", "/uas/js/login.js", 0);
+
+		// Token: 0x040002E3 RID: 739
+		private TagHelperExecutionContext __tagHelperExecutionContext;
+
+		// Token: 0x040002E4 RID: 740
+		private TagHelperRunner __tagHelperRunner = new TagHelperRunner();
+
+		// Token: 0x040002E5 RID: 741
+		private string __tagHelperStringValueBuffer;
+
+		// Token: 0x040002E6 RID: 742
+		private TagHelperScopeManager __backed__tagHelperScopeManager;
+
+		// Token: 0x040002E7 RID: 743
+		private ImageTagHelper __Microsoft_AspNetCore_Mvc_TagHelpers_ImageTagHelper;
+
+		// Token: 0x040002E8 RID: 744
+		private ValidationSummaryTagHelper __Microsoft_AspNetCore_Mvc_TagHelpers_ValidationSummaryTagHelper;
+
+		// Token: 0x040002E9 RID: 745
+		private FormTagHelper __Microsoft_AspNetCore_Mvc_TagHelpers_FormTagHelper;
+
+		// Token: 0x040002EA RID: 746
+		private RenderAtEndOfFormTagHelper __Microsoft_AspNetCore_Mvc_TagHelpers_RenderAtEndOfFormTagHelper;
+
+		// Token: 0x040002EB RID: 747
+		private InputTagHelper __Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper;
+
+		// Token: 0x040002EC RID: 748
+		private SelectTagHelper __Microsoft_AspNetCore_Mvc_TagHelpers_SelectTagHelper;
+
+		// Token: 0x040002ED RID: 749
+		private OptionTagHelper __Microsoft_AspNetCore_Mvc_TagHelpers_OptionTagHelper;
+
+		// Token: 0x040002EE RID: 750
+		private ScriptTagHelper __Microsoft_AspNetCore_Mvc_TagHelpers_ScriptTagHelper;
+	}
+}

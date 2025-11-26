@@ -1,7 +1,4 @@
-В реестре:
-```
-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing
-```
-Параметр `State` — установи значение `0x23e00` (отключает проверку отзыва).
+Windows Registry Editor Version 5.00
 
-Или через групповые политики: отключи "Проверка отзыва сертификатов".
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing]
+"State"=dword:00023e00

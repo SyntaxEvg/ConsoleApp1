@@ -1,454 +1,405 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using System.Web;
-using HAS.Modules.UAS.Exceptions;
-using HAS.Modules.UAS.Extensions;
-using HAS.Modules.UAS.Helpers;
-using HAS.Modules.UAS.ViewModels;
-using HAS.Server.Hopex.Module.Adapter.SSP.Models;
-using IdentityServer4.Extensions;
-using IdentityServer4.Models;
-using IdentityServer4.Services;
-using IdentityServer4.Stores;
-using Mega.Has.Commons;
-using Mega.Has.Modules.UAS.Models;
-using Mega.Has.Modules.UAS.Providers.Hopex;
-using Mega.Has.Modules.UAS.Providers.Windows;
-using Mega.Has.Modules.UAS.Services;
-using Mega.Has.Modules.UAS.ViewModels;
-using Mega.Has.WebSite;
-using Mega.Has.WebSite.LoginWorkflow;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Logging;
-using Serilog;
-
-namespace HAS.Modules.UAS.Services.Factories
-{
-    internal class ViewModelFactory : IViewModelFactory
-    {
-        private readonly IClientStore _clientStore;
-        private readonly IClusterAdminClient _clusterAdminClient;
-        private readonly IClusterConfiguration _clusterConfiguration;
-        private readonly IExternalProviderService _externalProviderService;
-        private readonly IHopexSSPClient _hopexSSPClient;
-        private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly IIdentityServerInteractionService _interactionService;
-        private readonly ILogger<ViewModelFactory> _logger;
-        private readonly IStringLocalizer S;
-
-        public ViewModelFactory(
-            IHopexSSPClient hopexSSPClient,
-            IIdentityServerInteractionService interactionService,
-            IExternalProviderService externalProviderService,
-            IClusterConfiguration clusterConfiguration,
-            IHttpContextAccessor httpContextAccessor,
-            ILogger<ViewModelFactory> logger,
-            IClusterAdminClient clusterAdminClient,
-            IClientStore clientStore,
-            IStringLocalizer<ViewModelFactory> s)
-        {
-            _hopexSSPClient = hopexSSPClient;
-            _interactionService = interactionService;
-            _externalProviderService = externalProviderService;
-            _clusterConfiguration = clusterConfiguration;
-            _httpContextAccessor = httpContextAccessor;
-            _logger = logger;
-            _clusterAdminClient = clusterAdminClient;
-            _clientStore = clientStore;
-            S = s;
-
-            Log.Information("### ViewModelFactory CONSTRUCTOR - FIXED VERSION ###");
-        }
-
-        public async Task<LoggedOutViewModel> BuildLoggedOutViewModelAsync(string logoutId)
-        {
-            Log.Information("### BuildLoggedOutViewModelAsync START ###");
-            
-            var logout = await _interactionService.GetLogoutContextAsync(logoutId);
-
-            if (logout == null)
-            {
-                throw new Exception("Logout context cannot be null.");
-            }
-
-            var automaticRedirectAfterSignOut = AccountOptions.AutomaticRedirectAfterSignOut;
-
-            // Защита от null
-            var providers = _externalProviderService.GetExternalProviders()?.ToList() 
-                ?? new List<ExternalProvider>();
-
-            if (automaticRedirectAfterSignOut)
-            {
-                var hopexProvider = providers.FirstOrDefault(x => x.AuthenticationScheme == "Hopex");
-                var hopexProviderEnabled = hopexProvider == null || hopexProvider.Enabled;
-                var hopexProviderVisible = hopexProviderEnabled &&
-                    (hopexProvider == null || hopexProvider.GetConfiguration<HopexConfig>()?.Hidden != true);
-
-                var otherProviders = providers.Where(x => x.Enabled && x.AuthenticationScheme != "Hopex").ToList();
-
-                var noOtherEnabledProviders = !hopexProviderEnabled || !otherProviders.Any(ep => ep.Enabled);
-
-                if (otherProviders.Count == 1 && (!noOtherEnabledProviders || !hopexProviderVisible))
-                {
-                    automaticRedirectAfterSignOut = false;
-                }
-            }
-
-            var client = await _clientStore.FindEnabledClientByIdAsync(logout.ClientId);
-
-            if (client == null)
-            {
-                throw new Exception($"No client {logout.ClientId} found.");
-            }
-
-            var vm = new LoggedOutViewModel
-            {
-                AutomaticRedirectAfterSignOut = automaticRedirectAfterSignOut,
-                PostLogoutRedirectUri = logout.PostLogoutRedirectUri ?? _clusterConfiguration.RuntimeClusterSettings.PublicAddress,
-                ClientName = client.Description ?? (string.IsNullOrEmpty(logout.ClientName) ? logout.ClientId : logout.ClientName),
-                SignOutIframeUrl = logout.SignOutIFrameUrl,
-                LogoutId = logoutId
-            };
-
-            var user = _httpContextAccessor.HttpContext?.User;
-
-            if (user?.Identity?.IsAuthenticated == true)
-            {
-                var idp = user.FindFirst("idp")?.Value;
-
-                if (idp != null && idp != "local" && await _httpContextAccessor.HttpContext.GetSchemeSupportsSignOutAsync(idp))
-                {
-                    if (vm.LogoutId == null)
-                    {
-                        vm.LogoutId = await _interactionService.CreateLogoutContextAsync();
-                    }
-
-                    vm.ExternalAuthenticationScheme = idp;
-                }
-            }
-
-            Log.Information("### BuildLoggedOutViewModelAsync END ###");
-            return vm;
-        }
-
-        public async Task<(string error, LoginViewModel viewModel)> BuildLoginViewModelAsync(
-            string returnUrl,
-            string environmentId,
-            bool hideModuleName = false)
-        {
-            Log.Information("========================================");
-            Log.Information("### BuildLoginViewModelAsync START ###");
-            Log.Information($"returnUrl = {returnUrl}");
-            Log.Information($"environmentId = {environmentId}");
-            Log.Information("========================================");
-
-            string error = string.Empty;
-
-            // ============================================================
-            // ЗАЩИТА ОТ NULL #1: providers
-            // ============================================================
-            var providers = _externalProviderService.GetExternalProviders()?.ToList()
-                ?? new List<ExternalProvider>();
-            
-            Log.Information($"[1] Providers loaded, count = {providers.Count}");
-
-            var hopexProvider = providers.FirstOrDefault(x => x.AuthenticationScheme == "Hopex");
-            var hopexProviderEnabled = hopexProvider == null || hopexProvider.Enabled;
-            var hopexConfig = hopexProvider?.GetConfiguration<HopexConfig>();
-            var hopexProviderVisible = hopexProviderEnabled && (hopexProvider == null || hopexConfig?.Hidden != true);
-
-            Log.Information($"[2] hopexProviderEnabled = {hopexProviderEnabled}, hopexProviderVisible = {hopexProviderVisible}");
-
-            // Проверка no_sso параметра
-            bool hasNoSsoParam = false;
-            try
-            {
-                var queryParams = HttpUtility.ParseQueryString(HttpUtility.UrlDecode(returnUrl ?? ""));
-                var noSsoValue = queryParams["no_sso"];
-                hasNoSsoParam = noSsoValue == "1" ||
-                    (noSsoValue?.Equals(bool.TrueString, StringComparison.OrdinalIgnoreCase) == true) ||
-                    queryParams.GetValues(null)?.Contains("no_sso") == true;
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"[!] Error parsing no_sso: {ex.Message}");
-            }
-
-            var vm = new LoginViewModel
-            {
-                HopexProviderEnabled = hopexProviderEnabled,
-                ShowBasicSignin = false
-            };
-
-            var allowLocal = true;
-            var isEnvironmentsRequired = false;
-            IEnumerable<HopexEnvironmentInfo> environments = null;
-
-            Log.Information("[3] Getting authorization context...");
-            var context = await _interactionService.GetAuthorizationContextAsync(returnUrl);
-            Log.Information($"[4] context = {(context != null ? "OK" : "NULL")}");
-
-            if (context != null)
-            {
-                if (!string.IsNullOrEmpty(context.IdP) && !context.IdP.Equals("local"))
-                {
-                    allowLocal = false;
-                    providers = providers.Where(p => p.AuthenticationScheme == context.IdP).ToList();
-                    Log.Information($"[5] Filtered providers by IdP={context.IdP}, count = {providers.Count}");
-                }
-
-                if (!hideModuleName)
-                {
-                    vm.ModuleFriendlyName = await ModuleHelper.GetModuleFriendlyName(_clusterAdminClient, returnUrl);
-                    Log.Information($"[6] ModuleFriendlyName = {vm.ModuleFriendlyName}");
-                }
-
-                // ============================================================
-                // ЗАЩИТА ОТ NULL #2: GetEnvironments с try-catch
-                // ============================================================
-                if (hopexProviderEnabled)
-                {
-                    Log.Information("[7] >>> Calling GetEnvironments()...");
-                    try
-                    {
-                        environments = await _hopexSSPClient.GetEnvironments();
-                        Log.Information($"[8] <<< GetEnvironments() OK, count = {environments?.Count() ?? 0}");
-                    }
-                    catch (Exception ex)
-                    {
-                        // КРИТИЧНО: Логируем но НЕ падаем!
-                        Log.Warning($"[8] <<< GetEnvironments() FAILED: {ex.Message}");
-                        _logger.LogError(ex, "Unable to retrieve environments");
-                        error = "Unable to retrieve environments.";
-                        environments = null; // Явно null - это OK
-                    }
-                }
-
-                if (context.Client?.ClientId != null)
-                {
-                    var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
-
-                    if (client != null)
-                    {
-                        allowLocal = client.EnableLocalLogin;
-
-                        if (client.IdentityProviderRestrictions?.Any() == true)
-                        {
-                            providers = providers.Where(p =>
-                                client.IdentityProviderRestrictions.Contains(p.AuthenticationScheme)).ToList();
-                        }
-                    }
-                }
-
-                var windowsProvider = providers.FirstOrDefault(c => c.AuthenticationScheme == "Windows");
-
-                if (windowsProvider != null)
-                {
-                    var windowsConfig = windowsProvider.GetConfiguration<WindowsConfig>();
-                    if (windowsConfig != null)
-                    {
-                        AccountOptions.IncludeWindowsGroups = true;
-                        AccountOptions.WindowsGroupsAuthorized = windowsConfig.WindowsRole;
-                        AccountOptions.WindowsSourceIdentifier = windowsConfig.WindowsSourceIdentifier;
-                        AccountOptions.ClaimForRoles = windowsConfig.ClaimForRoles;
-                    }
-                }
-            }
-
-            // Заполняем ViewModel
-            vm.IsEnvironmentsRequired = isEnvironmentsRequired;
-            vm.EnvironmentId = environmentId;
-            vm.AllowRememberLogin = AccountOptions.AllowRememberLogin;
-            vm.IsSetupMode = !_clusterConfiguration.IsInitialized;
-            vm.ReturnUrl = returnUrl;
-
-            // ============================================================
-            // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Environments может быть null - это OK!
-            // View должен проверять на null перед использованием
-            // ============================================================
-            vm.Environments = environments?.Select(e => new SelectListItem(e.Name, e.Id));
-            
-            Log.Information($"[9] vm.Environments = {(vm.Environments != null ? $"SET ({vm.Environments.Count()} items)" : "NULL")}");
-
-            vm.UserName = context?.LoginHint;
-
-            // ============================================================
-            // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: ExternalProviders никогда не null
-            // ============================================================
-            vm.ExternalProviders = providers?.ToArray() ?? Array.Empty<ExternalProvider>();
-            
-            // ============================================================
-            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: VisibleExternalProviders тоже нужно!
-            // View вызывает .Any() на этом свойстве - если null, падает!
-            // ============================================================
-            vm.VisibleExternalProviders = vm.ExternalProviders
-                .Where(x => !string.IsNullOrWhiteSpace(x.DisplayName))
-                .ToArray();
-            
-            // Вычисляем IsExternalLoginOnly и ExternalLoginScheme
-            vm.IsExternalLoginOnly = !allowLocal && vm.VisibleExternalProviders.Count() == 1;
-            vm.ExternalLoginScheme = vm.IsExternalLoginOnly 
-                ? vm.VisibleExternalProviders.FirstOrDefault()?.AuthenticationScheme 
-                : null;
-            
-            Log.Information($"[10] vm.ExternalProviders count = {vm.ExternalProviders.Count()}");
-            Log.Information($"[10a] vm.VisibleExternalProviders count = {vm.VisibleExternalProviders.Count()}");
-            Log.Information($"[10b] vm.IsExternalLoginOnly = {vm.IsExternalLoginOnly}");
-
-            vm.ShowBasicSignin |= allowLocal && AccountOptions.AllowLocalLogin &&
-                vm.HopexProviderEnabled && (hopexProviderVisible || hasNoSsoParam);
-
-            Log.Information($"[11] vm.ShowBasicSignin = {vm.ShowBasicSignin}");
-            Log.Information($"[12] error = '{error}'");
-            Log.Information("========================================");
-            Log.Information("### BuildLoginViewModelAsync END ###");
-            Log.Information("========================================");
-
-            return (error, vm);
-        }
-
-        public async Task<LostPasswordViewModel> BuildLostPasswordViewModel()
-        {
-            Log.Information("### BuildLostPasswordViewModel START ###");
-            
-            var vm = new LostPasswordViewModel();
-
-            try
-            {
-                var environments = await _hopexSSPClient.GetEnvironments();
-
-                // ============================================================
-                // ЗАЩИТА ОТ NULL
-                // ============================================================
-                if (environments == null || !environments.Any())
-                {
-                    vm.Environments = null;
-                    Log.Information("LostPassword: Environments = NULL (empty or null from SSP)");
-                }
-                else
-                {
-                    vm.Environments = environments.Select(e => new SelectListItem(e.Name, e.Id));
-                    Log.Information($"LostPassword: Environments count = {environments.Count()}");
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"BuildLostPasswordViewModel: GetEnvironments failed: {ex.Message}");
-                vm.Environments = null;
-            }
-
-            Log.Information("### BuildLostPasswordViewModel END ###");
-            return vm;
-        }
-
-        public async Task<MappingViewModel> BuildMappingViewModelAsync(
-            string environmentId,
-            string userName,
-            string returnUrl,
-            string provider,
-            string claimForRoles,
-            IEnumerable<Claim> claims)
-        {
-            Log.Information("### BuildMappingViewModelAsync START ###");
-            Log.Information($"environmentId={environmentId}, userName={userName}, provider={provider}");
-
-            GetPersonGroupsResult personGroupsResult = null;
-
-            var queryParams = HttpUtility.ParseQueryString(HttpUtility.UrlDecode(returnUrl ?? ""));
-
-            // Защита claims от null
-            claims = claims ?? Enumerable.Empty<Claim>();
-
-            var vm = new MappingViewModel
-            {
-                PersonGroups = personGroupsResult,
-                EnvironmentId = environmentId,
-                ReturnUrl = returnUrl,
-                UserName = userName,
-                RepositoryId = queryParams.Get("Db") ?? claims.FirstOrDefault(c => c.Type == "has.repositoryid")?.Value,
-                ProfileId = queryParams.Get("Profile") ?? claims.FirstOrDefault(c => c.Type == "has.profileId")?.Value,
-                UserId = claims.FirstOrDefault(c => c.Type == "has.userId")?.Value,
-                AssignableElementId = claims.FirstOrDefault(c => c.Type == "has.assignableElementId")?.Value,
-                DataLanguageId = claims.FirstOrDefault(c => c.Type == "has.dataLanguageId")?.Value,
-                GuiLanguageId = claims.FirstOrDefault(c => c.Type == "has.guiLanguageId")?.Value,
-                Login = claims.FirstOrDefault(c => c.Type == "has.login")?.Value,
-                Provider = provider,
-                ClaimForRoles = claimForRoles
-            };
-
-            // ============================================================
-            // ЗАЩИТА ОТ NULL: GetEnvironments
-            // ============================================================
-            try
-            {
-                Log.Information("Mapping: Calling GetEnvironments()...");
-                var environments = await _hopexSSPClient.GetEnvironments();
-                
-                // ВАЖНО: Защита от null - возвращаем пустую коллекцию
-                vm.Environments = environments?.Select(e => new SelectListItem(e.Name, e.Id))
-                    ?? Enumerable.Empty<SelectListItem>();
-                    
-                Log.Information($"Mapping: Environments count = {vm.Environments.Count()}");
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"BuildMappingViewModelAsync: GetEnvironments failed: {ex.Message}");
-                // ВАЖНО: Пустая коллекция, НЕ null!
-                vm.Environments = Enumerable.Empty<SelectListItem>();
-            }
-
-            vm.ModuleFriendlyName = await ModuleHelper.GetModuleFriendlyName(_clusterAdminClient, returnUrl);
-
-            // ============================================================
-            // ЗАЩИТА ОТ NULL при проверке Count
-            // ============================================================
-            if (vm.EnvironmentId == null && vm.Environments != null && vm.Environments.Count() == 1)
-            {
-                vm.EnvironmentId = vm.Environments.First().Value;
-                Log.Information($"Mapping: Auto-selected single environment: {vm.EnvironmentId}");
-            }
-
-            // GetPersonGroups
-            try
-            {
-                Log.Information("Mapping: Calling GetPersonGroups()...");
-                personGroupsResult = await _hopexSSPClient.GetPersonGroups(new GetPersonGroupsArgs
-                {
-                    EnvironmentId = vm.EnvironmentId,
-                    UserName = userName,
-                    Provider = provider,
-                    Db = vm.RepositoryId,
-                    Profile = vm.ProfileId,
-                    ClaimForRoles = claimForRoles
-                }, claims);
-                Log.Information("Mapping: GetPersonGroups() OK");
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"BuildMappingViewModelAsync: GetPersonGroups failed: {ex.Message}");
-                vm.ErrorMessage = "Login is not possible.<br/>Please contact your HOPEX administrator to check logs.";
-            }
-
-            vm.PersonGroups = personGroupsResult;
-
-            _logger.LogInformation($"Claims and Roles From Provider [ {claims.SerializeToString()} ]");
-
-            if (_httpContextAccessor.HttpContext?.Request.Path.HasValue == true &&
-                _httpContextAccessor.HttpContext.Request.Path.Value.Contains("MappingSubmit"))
-            {
-                throw new NoProfileException(string.Format(
-                    S["No profile is configured for the user {0}. Please contact your administrator."],
-                    vm.UserName));
-            }
-
-            Log.Information("### BuildMappingViewModelAsync END ###");
-            return vm;
-        }
-    }
-}
+ ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
+ Starting module 2025-HAS Identity Provider - Mode : "Production"
+ Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
+ ##################################################
+ !!! НОВАЯ ВЕРСИЯ КОДА v6 - С ПРОВЕРКОЙ ТАБЛИЦ !!!
+ ##################################################
+ === EnsureSeedData: НАЧАЛО ===
+ Шаг 1: BuildServiceProvider...
+ Шаг 1: BuildServiceProvider - OK
+ Шаг 2: Получение ApplicationDbContext...
+ Шаг 2: ApplicationDbContext = OK
+ Шаг 3: Получение ConfigurationDbContext...
+ Шаг 3: ConfigurationDbContext = OK
+ Шаг 4: Получение ILogger...
+ Шаг 4: ILogger = OK
+ Шаг 5: Проверка IsInMemory...
+ Шаг 5.1: context.Database = OK
+ Шаг 5: IsInMemory = False
+ === Режим SQL Server (не InMemory) ===
+ Шаг 6: Получение ICryptoService...
+ Шаг 6: ICryptoService = OK
+ Шаг 7: Вызов MigrateDatabase...
+ ##################################################
+ !!! MigrateDatabase НАЧАЛО v6 - С ПРОВЕРКОЙ !!!
+ ##################################################
+ === MigrateDatabase: НАЧАЛО ===
+ Проверка Standalone режима...
+ Standalone = False
+ isStandalone = False
+ === SQL Server миграция ===
+ Миграция 1: Получение ApplicationDbContext...
+ Миграция 1: Проверка нужна ли миграция...
+ ShouldSkipMigration: Pending=5, Applied=0
+ ShouldSkipMigration: Таблица 'AccessTokens' существует = True
+ ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
+ ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
+ Миграция 1: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
+ Миграция 1: Помечаем миграции как применённые...
+ MarkMigrationsAsApplied: Добавлена запись для '20200512145632_InitialApplicationDbMigration'
+ MarkMigrationsAsApplied: Добавлена запись для '20211102091321_MultipleProviders'
+ MarkMigrationsAsApplied: Добавлена запись для '20230427065610_PasswordExpirationDate'
+ MarkMigrationsAsApplied: Добавлена запись для '20230906133336_OldPassword'
+ MarkMigrationsAsApplied: Добавлена запись для '20240311145607_RemoveSecrets'
+ Миграция 2: Получение ConfigurationDbContext...
+ Миграция 2: Проверка нужна ли миграция...
+ ShouldSkipMigration: Pending=2, Applied=0
+ ShouldSkipMigration: Таблица 'Clients' существует = True
+ ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
+ ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
+ Миграция 2: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
+ Миграция 2: Помечаем миграции как применённые...
+ MarkMigrationsAsApplied: Добавлена запись для '20200512145618_InitialIdentityServerConfigurationDbMigration'
+ MarkMigrationsAsApplied: Добавлена запись для '20211018165011_Migrate_3.1.4_to_4.1.2'
+ Миграция 3: Получение PersistedGrantDbContext...
+ Миграция 3: Проверка нужна ли миграция...
+ ShouldSkipMigration: Pending=2, Applied=0
+ ShouldSkipMigration: Таблица 'PersistedGrants' существует = True
+ ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
+ ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
+ Миграция 3: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
+ Миграция 3: Помечаем миграции как применённые...
+ MarkMigrationsAsApplied: Добавлена запись для '20200512145607_InitialIdentityServerPersistedGrantDbMigration'
+ MarkMigrationsAsApplied: Добавлена запись для '20211018201457_Migtaiondefrom3.1.4To4.1.2'
+ Шаг 4: Получение DatabaseConnectionString...
+ Шаг 4: DatabaseConnectionString = OK (длина: 111)
+ DatabaseConnectionString (masked): Data Source=vmshqeatdb03;User ID=MS-HQ-Srvhopexusr_p;Password=***;encrypt=false;Database=HAS_2025;
+ Шаг 5: Migrate_HAS_5_0To5_0_1...
+ Migrate_HAS_5_0To5_0_1: НАЧАЛО
+ Migrate_HAS_5_0To5_0_1: Соединение создано
+ Migrate_HAS_5_0To5_0_1: Соединение открыто, State = Open
+ Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<WindowsConfig>...
+ MigrateOldConfigTable<WindowsConfig>: НАЧАЛО
+ MigrateOldConfigTable<WindowsConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.WindowsConfig'.
+ Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<HopexConfig>...
+ MigrateOldConfigTable<HopexConfig>: НАЧАЛО
+ MigrateOldConfigTable<HopexConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.HopexConfig'.
+ Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<Saml2Config>...
+ MigrateOldConfigTable<Saml2Config>: НАЧАЛО
+ MigrateOldConfigTable<Saml2Config>: Таблица не найдена (это OK) - Invalid object name 'dbo.Saml2Config'.
+ Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<OpenIdConfig>...
+ MigrateOldConfigTable<OpenIdConfig>: НАЧАЛО
+ MigrateOldConfigTable<OpenIdConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.OpenIdConfig'.
+ Migrate_HAS_5_0To5_0_1: Обработка ApiResources...
+ Migrate_HAS_5_0To5_0_1: ApiResources - OK
+ Migrate_HAS_5_0To5_0_1: КОНЕЦ
+ Шаг 5: Migrate_HAS_5_0To5_0_1 - OK
+ Шаг 6: Migrate_HAS_5_0_xTo5_0_5...
+ Migrate_HAS_5_0_xTo5_0_5: НАЧАЛО
+ Migrate_HAS_5_0_xTo5_0_5: Соединение открыто
+ Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<OpenIdConfig>...
+ updateClaimForSub<OpenIdConfig>: НАЧАЛО
+ updateClaimForSub<OpenIdConfig>: КОНЕЦ
+ Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<Saml2Config>...
+ updateClaimForSub<Saml2Config>: НАЧАЛО
+ updateClaimForSub<Saml2Config>: КОНЕЦ
+ Migrate_HAS_5_0_xTo5_0_5: КОНЕЦ
+ Шаг 6: Migrate_HAS_5_0_xTo5_0_5 - OK
+ Шаг 7: SQLCacheTableCreator...
+ Шаг 7: SQLCacheTableCreator result = 0
+ === MigrateDatabase: КОНЕЦ ===
+ Шаг 7: MigrateDatabase - OK
+ Шаг 8: EnsureSeedData (с cryptoService)...
+ EnsureSeedData (with crypto): НАЧАЛО
+ Seeding database...
+ EnsureSeedData: Updating AccessTokens...
+ EnsureSeedData: Добавлено AccessTokens: 0
+ EnsureSeedData: Updating Clients...
+ EnsureSeedData: Добавлено Clients: 0
+ EnsureSeedData: Updating Scope...
+ EnsureSeedData: Добавлено ApiScopes: 0
+ EnsureSeedData: Updating IdentityResources...
+ EnsureSeedData: Добавлено IdentityResources: 0
+ EnsureSeedData: Updating ApiResources...
+ EnsureSeedData: Добавлено ApiResources: 0
+ EnsureSeedData: SaveChanges...
+ EnsureSeedData: SaveChanges - OK
+ EnsureSeedData (with crypto): КОНЕЦ
+ Шаг 8: EnsureSeedData - OK
+ Шаг 9: EnsureSeedData (uasContext)...
+ EnsureSeedData (uasContext): НАЧАЛО
+ Updating External Providers...
+ EnsureSeedData (uasContext): Добавлено ExternalProviders: 0
+ EnsureSeedData (uasContext): SaveChanges...
+ EnsureSeedData (uasContext): SaveChanges - OK
+ EnsureSeedData (uasContext): КОНЕЦ
+ Шаг 9: EnsureSeedData - OK
+ Шаг 10: EnsurePublicAddress...
+ Шаг 10: publicAddress = https://vmshqeat04.npr.nornick.ru, isDevelopment = False
+ EnsurePublicAddress: НАЧАЛО
+ EnsurePublicAddress: publicAddress = https://vmshqeat04.npr.nornick.ru, isDevelopmentMode = False
+ URLS Redirections are updating to public address https://vmshqeat04.npr.nornick.ru...
+ EnsurePublicAddress: publicUri = https://vmshqeat04.npr.nornick.ru:443/
+ EnsurePublicAddress: Обработано клиентов: 6
+ EnsurePublicAddress: SaveChanges...
+ EnsurePublicAddress: SaveChanges - OK
+ EnsurePublicAddress: КОНЕЦ
+ Шаг 10: EnsurePublicAddress - OK
+ Закрытие соединения с БД...
+ === EnsureSeedData: КОНЕЦ ===
+ Using external provider OpenIdProvider
+ Using external provider Saml2Provider
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Starting IdentityServer4 version 4.1.2+997a6cdd643e46cd5762b710c4ddc43574cbec2e
+ Custom IssuerUri set to https://vmshqeat04.npr.nornick.ru
+ Using the default authentication scheme Cookies for IdentityServer
+ Using Cookies as default ASP.NET Core scheme for authentication
+ Using Cookies as default ASP.NET Core scheme for sign-in
+ Using Cookies as default ASP.NET Core scheme for sign-out
+ Using OpenIdConnect as default ASP.NET Core scheme for challenge
+ Using OpenIdConnect as default ASP.NET Core scheme for forbid
+ Loading application settings from SQL database
+ Declaring setting UasSettings
+ Dispatch notification RELOAD_SETTINGS_CACHE locally
+ Receive notification RELOAD_SETTINGS_CACHE from node local, module has.uas
+ Loading application settings from SQL database
+ Sending notification RELOAD_SETTINGS_CACHE from server local, module has.uas
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
+ Dispatch notification RELOAD_SETTINGS locally
+ Sending notification RELOAD_SETTINGS from server local, module has.uas
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Saml2 logging enabled.
+ Login Url: /Account/Login
+ Login Return Url Parameter: ReturnUrl
+ Logout Url: /Account/Logout
+ ConsentUrl Url: /consent
+ Consent Return Url Parameter: returnUrl
+ Error Url: /account/error
+ Error Id Parameter: errorId
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification RELOAD_SETTINGS_CACHE locally
+ Receive notification RELOAD_SETTINGS_CACHE from node local, module hopex.supervisor
+ Loading application settings from SQL database
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification RELOAD_SETTINGS locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification ALL_MODULES_STARTED locally
+ Receive notification ALL_MODULES_STARTED from node local, module <server>
+ No endpoint entry found for request path: /api/registerclient
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification NODE_READY locally
+ Receive notification NODE_READY from node local, module <server>
+ No endpoint entry found for request path: /api/registerclient
+ No endpoint entry found for request path: /api/registerclient
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Client has.console registered by UAS with path console
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Client has.console registered by UAS with path console
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Client hopex.supervisor registered by UAS with path supervisor
+ Start request GET https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration
+ Request path /.well-known/openid-configuration matched to endpoint type Discovery
+ Endpoint enabled: Discovery, successfully created handler: IdentityServer4.Endpoints.DiscoveryEndpoint
+ Invoking IdentityServer endpoint: IdentityServer4.Endpoints.DiscoveryEndpoint for /.well-known/openid-configuration
+ Processing discovery request.
+ Start discovery request
+ Calling into discovery response generator: IdentityServer4.ResponseHandling.DiscoveryResponseGenerator
+ Found ["openid","profile","hopex","hopex_mapping","hopex_api"] as all scopes, and ["hopex","hopex_mapping"] as API resources
+ Invoking result: IdentityServer4.Endpoints.Results.DiscoveryDocumentResult
+ End request https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration, status code 200 in 199 ms
+ Start request GET https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration/jwks
+ Request path /.well-known/openid-configuration/jwks matched to endpoint type Discovery
+ Endpoint enabled: Discovery, successfully created handler: IdentityServer4.Endpoints.DiscoveryKeyEndpoint
+ Invoking IdentityServer endpoint: IdentityServer4.Endpoints.DiscoveryKeyEndpoint for /.well-known/openid-configuration/jwks
+ Processing discovery request.
+ Start key discovery request
+ Calling into discovery response generator: IdentityServer4.ResponseHandling.DiscoveryResponseGenerator
+ Invoking result: IdentityServer4.Endpoints.Results.JsonWebKeysResult
+ End request https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration/jwks, status code 200 in 11 ms
+ Start request GET https://vmshqeat04.npr.nornick.ru/uas/connect/authorize?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=pPzx_KSByASCeomgwd7IY-WdE8WT7r-X8JwaYBoh3TM&code_challenge_method=S256&response_mode=form_post&nonce=638997853512867881.ZmE3YWMwOTItZDJjMS00YjZmLTk5YzctMzM2ZDY5ZGQ0N2IxY2Q3N2Q5MWQtNTVhMS00NGRlLWIzNDEtYjk4NzAxYTdkMmFk&state=CfDJ8G1kiFPUyC1JpPIKzqwHDki0TcccBfg08HSl6kkZdOMToFCUKrnXTebpHcAZgO8zJ9J7BqmdNmSQzTmEFMMaKQmXpgnqQ_xeI69iShy_S4KiKT01yveSivC_M_-Q26q0JarJN_22wcP2kwMpEqHxxtGmWpBPi_by2AgzdrjIhSzsbEXq5Tevf_HxFfuKRZ5LnvEYatRIxdFbt-AKD2e5RUp3rE12xJ6UodjRpcR587F3zViIZbqumn3jyBAD6BXvch_bbzy2Ktc_-MNd3b10w7JVSTjbKcvpy17UvnLZDfTlESeD93NmycObtQtpZuiZD_kFE0RFgNBBe_HxEFd_YgZTxFVY-STsk8JE_FYwkr_kyjXchXunEOmHZmOuXvM0jcX3MyikwIGT6Td0Tif4iJA&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
+ Request path /connect/authorize matched to endpoint type Authorize
+ Endpoint enabled: Authorize, successfully created handler: IdentityServer4.Endpoints.AuthorizeEndpoint
+ Invoking IdentityServer endpoint: IdentityServer4.Endpoints.AuthorizeEndpoint for /connect/authorize
+ Start authorize request
+ No user present in authorize request
+ Start authorize request protocol validation
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ Checking for PKCE parameters
+ Found ["openid","hopex"] identity scopes in database
+ Found [] API resources in database
+ Found [] scopes in database
+ Calling into custom validator: IdentityServer4.Validation.DefaultCustomAuthorizeRequestValidator
+ Authorize request protocol validation successful
+ ValidatedAuthorizeRequest
+{"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","AllowedRedirectUris":[null],"SubjectId":"anonymous","ResponseType":"code","ResponseMode":"form_post","GrantType":"authorization_code","RequestedScopes":"openid hopex offline_access","State":"CfDJ8G1kiFPUyC1JpPIKzqwHDki0TcccBfg08HSl6kkZdOMToFCUKrnXTebpHcAZgO8zJ9J7BqmdNmSQzTmEFMMaKQmXpgnqQ_xeI69iShy_S4KiKT01yveSivC_M_-Q26q0JarJN_22wcP2kwMpEqHxxtGmWpBPi_by2AgzdrjIhSzsbEXq5Tevf_HxFfuKRZ5LnvEYatRIxdFbt-AKD2e5RUp3rE12xJ6UodjRpcR587F3zViIZbqumn3jyBAD6BXvch_bbzy2Ktc_-MNd3b10w7JVSTjbKcvpy17UvnLZDfTlESeD93NmycObtQtpZuiZD_kFE0RFgNBBe_HxEFd_YgZTxFVY-STsk8JE_FYwkr_kyjXchXunEOmHZmOuXvM0jcX3MyikwIGT6Td0Tif4iJA","UiLocales":null,"Nonce":"638997853512867881.ZmE3YWMwOTItZDJjMS00YjZmLTk5YzctMzM2ZDY5ZGQ0N2IxY2Q3N2Q5MWQtNTVhMS00NGRlLWIzNDEtYjk4NzAxYTdkMmFk","AuthenticationContextReferenceClasses":null,"DisplayMode":null,"PromptMode":"","MaxAge":null,"LoginHint":null,"SessionId":"","Raw":{},"$type":"AuthorizeRequestValidationLog"}
+ ProcessInteractionAsync
+ Showing login: User is not authenticated
+ End authorize request. result type: IdentityServer4.Endpoints.Results.LoginPageResult
+ Invoking result: IdentityServer4.Endpoints.Results.LoginPageResult
+ End request https://vmshqeat04.npr.nornick.ru/uas/connect/authorize?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=pPzx_KSByASCeomgwd7IY-WdE8WT7r-X8JwaYBoh3TM&code_challenge_method=S256&response_mode=form_post&nonce=638997853512867881.ZmE3YWMwOTItZDJjMS00YjZmLTk5YzctMzM2ZDY5ZGQ0N2IxY2Q3N2Q5MWQtNTVhMS00NGRlLWIzNDEtYjk4NzAxYTdkMmFk&state=CfDJ8G1kiFPUyC1JpPIKzqwHDki0TcccBfg08HSl6kkZdOMToFCUKrnXTebpHcAZgO8zJ9J7BqmdNmSQzTmEFMMaKQmXpgnqQ_xeI69iShy_S4KiKT01yveSivC_M_-Q26q0JarJN_22wcP2kwMpEqHxxtGmWpBPi_by2AgzdrjIhSzsbEXq5Tevf_HxFfuKRZ5LnvEYatRIxdFbt-AKD2e5RUp3rE12xJ6UodjRpcR587F3zViIZbqumn3jyBAD6BXvch_bbzy2Ktc_-MNd3b10w7JVSTjbKcvpy17UvnLZDfTlESeD93NmycObtQtpZuiZD_kFE0RFgNBBe_HxEFd_YgZTxFVY-STsk8JE_FYwkr_kyjXchXunEOmHZmOuXvM0jcX3MyikwIGT6Td0Tif4iJA&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0, status code 302 in 255 ms
+ Start request GET https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DpPzx_KSByASCeomgwd7IY-WdE8WT7r-X8JwaYBoh3TM%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997853512867881.ZmE3YWMwOTItZDJjMS00YjZmLTk5YzctMzM2ZDY5ZGQ0N2IxY2Q3N2Q5MWQtNTVhMS00NGRlLWIzNDEtYjk4NzAxYTdkMmFk%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDki0TcccBfg08HSl6kkZdOMToFCUKrnXTebpHcAZgO8zJ9J7BqmdNmSQzTmEFMMaKQmXpgnqQ_xeI69iShy_S4KiKT01yveSivC_M_-Q26q0JarJN_22wcP2kwMpEqHxxtGmWpBPi_by2AgzdrjIhSzsbEXq5Tevf_HxFfuKRZ5LnvEYatRIxdFbt-AKD2e5RUp3rE12xJ6UodjRpcR587F3zViIZbqumn3jyBAD6BXvch_bbzy2Ktc_-MNd3b10w7JVSTjbKcvpy17UvnLZDfTlESeD93NmycObtQtpZuiZD_kFE0RFgNBBe_HxEFd_YgZTxFVY-STsk8JE_FYwkr_kyjXchXunEOmHZmOuXvM0jcX3MyikwIGT6Td0Tif4iJA%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
+ No endpoint entry found for request path: /Account/Login
+ ### ViewModelFactory CONSTRUCTOR - FIXED VERSION ###
+ ##################################################
+ ### AccountController СОЗДАН - DEBUG VERSION v1 ###
+ ##################################################
+ _hopex (IHopexSSPClient) = Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient
+ _viewModelFactory = HAS.Modules.UAS.Services.Factories.ViewModelFactory
+ _clusterConfiguration = OK
+ _clusterAdminClient = Mega.Has.Commons.ClusterAdminClient
+ _hopex Assembly: HAS.Server.SiteModule
+ _hopex Assembly Version: 16.0.2.35
+   _hopex._client = Mega.Has.WebSite.HASClient
+   _hopex._clusterAdminClient = Mega.Has.Commons.ClusterAdminClient
+   _hopex._logger = Microsoft.Extensions.Logging.Logger`1[Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient]
+ RuntimeClusterSettings.PublicAddress: https://vmshqeat04.npr.nornick.ru
+ RuntimeClusterSettings.Mode: Production
+ UasSettings.LoginLang: 
+ UasSettings.HideModuleName: False
+ UasSettings.DefaultDb: 
+ UasSettings.DefaultProfile: 
+ ##################################################
+ ### AccountController.Login: НАЧАЛО DEBUG v1 ###
+ ##################################################
+ returnUrl = /uas/connect/authorize/callback?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=pPzx_KSByASCeomgwd7IY-WdE8WT7r-X8JwaYBoh3TM&code_challenge_method=S256&response_mode=form_post&nonce=638997853512867881.ZmE3YWMwOTItZDJjMS00YjZmLTk5YzctMzM2ZDY5ZGQ0N2IxY2Q3N2Q5MWQtNTVhMS00NGRlLWIzNDEtYjk4NzAxYTdkMmFk&state=CfDJ8G1kiFPUyC1JpPIKzqwHDki0TcccBfg08HSl6kkZdOMToFCUKrnXTebpHcAZgO8zJ9J7BqmdNmSQzTmEFMMaKQmXpgnqQ_xeI69iShy_S4KiKT01yveSivC_M_-Q26q0JarJN_22wcP2kwMpEqHxxtGmWpBPi_by2AgzdrjIhSzsbEXq5Tevf_HxFfuKRZ5LnvEYatRIxdFbt-AKD2e5RUp3rE12xJ6UodjRpcR587F3zViIZbqumn3jyBAD6BXvch_bbzy2Ktc_-MNd3b10w7JVSTjbKcvpy17UvnLZDfTlESeD93NmycObtQtpZuiZD_kFE0RFgNBBe_HxEFd_YgZTxFVY-STsk8JE_FYwkr_kyjXchXunEOmHZmOuXvM0jcX3MyikwIGT6Td0Tif4iJA&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
+ Request.Path = /Account/Login
+ Request.Host = vmshqeat04.npr.nornick.ru
+ Request.Scheme = https
+ Request Headers:
+   Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+   Accept-Encoding: gzip, deflate, br
+   Accept-Language: en,ru;q=0.9
+   Connection: keep-alive
+   Host: vmshqeat04.npr.nornick.ru
+   Max-Forwards: 10
+   User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36
+   X-B3-TraceId: 61b8f07a9dd337a8c6b67c039418ba33
+   X-B3-ParentSpanId: c6b67c039418ba33
+   X-B3-SpanId: 6f9672053190cc9c
+   X-B3-Sampled: 1
+   Upgrade-Insecure-Requests: 1
+   sec-fetch-site: same-origin
+   sec-fetch-mode: navigate
+   sec-fetch-user: ?1
+   sec-fetch-dest: document
+   sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
+   sec-ch-ua-mobile: ?0
+   sec-ch-ua-platform: "Windows"
+   X-Original-URL: /uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DpPzx_KSByASCeomgwd7IY-WdE8WT7r-X8JwaYBoh3TM%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997853512867881.ZmE3YWMwOTItZDJjMS00YjZmLTk5YzctMzM2ZDY5ZGQ0N2IxY2Q3N2Q5MWQtNTVhMS00NGRlLWIzNDEtYjk4NzAxYTdkMmFk%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDki0TcccBfg08HSl6kkZdOMToFCUKrnXTebpHcAZgO8zJ9J7BqmdNmSQzTmEFMMaKQmXpgnqQ_xeI69iShy_S4KiKT01yveSivC_M_-Q26q0JarJN_22wcP2kwMpEqHxxtGmWpBPi_by2AgzdrjIhSzsbEXq5Tevf_HxFfuKRZ5LnvEYatRIxdFbt-AKD2e5RUp3rE12xJ6UodjRpcR587F3zViIZbqumn3jyBAD6BXvch_bbzy2Ktc_-MNd3b10w7JVSTjbKcvpy17UvnLZDfTlESeD93NmycObtQtpZuiZD_kFE0RFgNBBe_HxEFd_YgZTxFVY-STsk8JE_FYwkr_kyjXchXunEOmHZmOuXvM0jcX3MyikwIGT6Td0Tif4iJA%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
+   X-ARR-SSL: 2048|256|DC=ru, DC=nornick, DC=npr, CN=NN-HQ-CA|C=RU, S=Moscow, L=Moscow, O=PJSC Mining and Metallurgical Company NORILSK NICKEL, OU=IT, CN=vmshqeat04.npr.nornick.ru
+   X-ARR-LOG-ID: dfaf30a7-6b54-4227-b262-49d3082c9a0d
+   X-Original-For: [::1]:52319
+   X-Original-Host: localhost:52265
+   traceparent: 00-04eed7f2fb1697049a42a96426683e55-a5c789236339d8bb-00
+   X-Original-Proto: http
+ currentModuleId = has.console
+ _clusterConfiguration.IsInitialized = True
+ environmentId из URL = 
+ >>> Вызываем _viewModelFactory.BuildLoginViewModelAsync...
+ ========================================
+ ### BuildLoginViewModelAsync START ###
+ returnUrl = /uas/connect/authorize/callback?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=pPzx_KSByASCeomgwd7IY-WdE8WT7r-X8JwaYBoh3TM&code_challenge_method=S256&response_mode=form_post&nonce=638997853512867881.ZmE3YWMwOTItZDJjMS00YjZmLTk5YzctMzM2ZDY5ZGQ0N2IxY2Q3N2Q5MWQtNTVhMS00NGRlLWIzNDEtYjk4NzAxYTdkMmFk&state=CfDJ8G1kiFPUyC1JpPIKzqwHDki0TcccBfg08HSl6kkZdOMToFCUKrnXTebpHcAZgO8zJ9J7BqmdNmSQzTmEFMMaKQmXpgnqQ_xeI69iShy_S4KiKT01yveSivC_M_-Q26q0JarJN_22wcP2kwMpEqHxxtGmWpBPi_by2AgzdrjIhSzsbEXq5Tevf_HxFfuKRZ5LnvEYatRIxdFbt-AKD2e5RUp3rE12xJ6UodjRpcR587F3zViIZbqumn3jyBAD6BXvch_bbzy2Ktc_-MNd3b10w7JVSTjbKcvpy17UvnLZDfTlESeD93NmycObtQtpZuiZD_kFE0RFgNBBe_HxEFd_YgZTxFVY-STsk8JE_FYwkr_kyjXchXunEOmHZmOuXvM0jcX3MyikwIGT6Td0Tif4iJA&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
+ environmentId = 
+ ========================================
+ [1] Providers loaded, count = 3
+ [2] hopexProviderEnabled = True, hopexProviderVisible = True
+ [3] Getting authorization context...
+ returnUrl is valid
+ Start authorize request protocol validation
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ Checking for PKCE parameters
+ Found ["openid","hopex"] identity scopes in database
+ Found [] API resources in database
+ Found [] scopes in database
+ Calling into custom validator: IdentityServer4.Validation.DefaultCustomAuthorizeRequestValidator
+ Authorize request protocol validation successful
+ AuthorizationRequest being returned
+ AuthorizationRequest being returned
+ [4] context = OK
+ Sending cluster request to http://vmshqeat05:2025/admin/modules
+ [6] ModuleFriendlyName = HAS Console
+ [7] >>> Calling GetEnvironments()...
+ HAS Client - No session token founded - User is authenticated=False
+ Start request out /ssp/environments
+ End request out /ssp/environments, status code 404
+ End client for traceId 61b8f07a9dd337a8c6b67c039418ba33
+ [8] <<< GetEnvironments() FAILED: Exception of type 'Mega.Has.WebSite.HttpException' was thrown.
+ Unable to retrieve environments
+Mega.Has.WebSite.HttpException: Exception of type 'Mega.Has.WebSite.HttpException' was thrown.
+   at async Task<T> Mega.Has.WebSite.HASClient.CallWebService<T>(string path, object data, IDictionary<string, string> headers, bool skipInstrumentation) in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/HASClient.cs:line 146
+   at async Task<IEnumerable<HopexEnvironmentInfo>> Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient.GetEnvironments() in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/LoginWorkflow/HopexSSPCLient.cs:line 61
+   at async Task<(string error, LoginViewModel viewModel)> HAS.Modules.UAS.Services.Factories.ViewModelFactory.BuildLoginViewModelAsync(string returnUrl, string environmentId, bool hideModuleName) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Services/Factories/ViewModelFactory.cs:line 220
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ [9] vm.Environments = NULL
+ [10] vm.ExternalProviders count = 3
+ [10a] vm.VisibleExternalProviders count = 3
+ [10b] vm.IsExternalLoginOnly = False
+ [11] vm.ShowBasicSignin = True
+ [12] error = 'Unable to retrieve environments.'
+ ========================================
+ ### BuildLoginViewModelAsync END ###
+ ========================================
+ <<< BuildLoginViewModelAsync завершён за 169 мс
+ error = 'Unable to retrieve environments.'
+ viewModel.Environments = NULL
+ Добавляем ModelState ошибку: Unable to retrieve environments
+ ### AccountController.Login: Возвращаем View('Login') ###
+ Module request failed /uas/Account/Login - The following sections have been defined but have not been rendered by the page at '/Views/Shared/_Layout.cshtml': 'Scripts'. To ignore an unrendered section call IgnoreSection("sectionName").
+ Error request /uas/Account/Login
+System.InvalidOperationException: The following sections have been defined but have not been rendered by the page at '/Views/Shared/_Layout.cshtml': 'Scripts'. To ignore an unrendered section call IgnoreSection("sectionName").
+   at void Microsoft.AspNetCore.Mvc.Razor.RazorPage.EnsureRenderedBodyOrSections()
+   at async Task Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderLayoutAsync(ViewContext context, ViewBufferTextWriter bodyWriter)
+   at async Task Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderAsync(ViewContext context)
+   at async Task Microsoft.AspNetCore.Mvc.ViewFeatures.ViewExecutor.ExecuteAsync(ViewContext viewContext, string contentType, int? statusCode) x 3
+   at async Task Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor.ExecuteAsync(ActionContext context, ViewResult result)
+   at async Task Microsoft.AspNetCore.Mvc.ViewResult.ExecuteResultAsync(ActionContext context)
+   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeNextResultFilterAsync<TFilter, TFilterAsync>()+Awaited(?)
+   at void Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResultExecutedContextSealed context)
+   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.ResultNext<TFilter, TFilterAsync>(ref State next, ref Scope scope, ref object state, ref bool isCompleted)
+   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeResultFilters()
+   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeNextResourceFilter()+Awaited(?)
+   at void Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(ref State next, ref Scope scope, ref object state, ref bool isCompleted)
+   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()+Awaited(?)
+   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeAsync()+Awaited(?) x 2
+   at async Task Microsoft.AspNetCore.Routing.EndpointMiddleware.Invoke(HttpContext httpContext)+AwaitRequestTask(?)
+   at async Task Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at async Task IdentityServer4.Hosting.IdentityServerMiddleware.Invoke(HttpContext context, IEndpointRouter router, IUserSession session, IEventService events, IBackChannelLogoutService backChannelLogoutService)
+   at async Task IdentityServer4.Hosting.MutualTlsEndpointMiddleware.Invoke(HttpContext context, IAuthenticationSchemeProvider schemes)
+   at async Task Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at async Task IdentityServer4.Hosting.BaseUrlMiddleware.Invoke(HttpContext context)
+   at async Task Microsoft.AspNetCore.Builder.Extensions.UsePathBaseMiddleware.InvokeCore(HttpContext context, PathString matchedPath, PathString remainingPath)
+   at async Task Microsoft.AspNetCore.Builder.ApplicationBuilderExtension.ModuleMiddleware(ITraceInstrumentation traceInstrumentation, IModuleConfiguration moduleConfiguration, HttpContext context, Func<Task> next) in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/Extensions/ApplicationBuilderExtension.cs:line 150

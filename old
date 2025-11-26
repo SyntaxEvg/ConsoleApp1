@@ -1,26 +1,8 @@
-0.0.0.0 crl.microsoft.com
-0.0.0.0 crl3.digicert.com
-0.0.0.0 crl4.digicert.com
-0.0.0.0 ocsp.digicert.com
-0.0.0.0 ocsp.msocsp.com
-0.0.0.0 mscrl.microsoft.com
-0.0.0.0 www.microsoft.com
-0.0.0.0 dc.services.visualstudio.com
-0.0.0.0 vortex.data.microsoft.com
-
-<configuration>
-  <config>
-    <add key="signatureValidationMode" value="accept" />
-  </config>
-</configuration>
-```
-
-**2. Отключи проверку отзыва сертификатов (главный тормоз!)**
-
-Это часто основная причина — Windows пытается проверить CRL/OCSP.
-
-В реестре:
-```
-HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing
-```
-Параметр `State` — установи значение `0x23e00` (отключает проверку отзыва).
+Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyTitleAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	19	
+Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyCompanyAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	14	
+Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyConfigurationAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	15	
+Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyFileVersionAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	16	
+Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyInformationalVersionAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	17	
+Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyProductAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	18	
+Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyVersionAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	20	

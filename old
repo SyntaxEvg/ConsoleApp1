@@ -1,14 +1,16 @@
 <ItemGroup>
-  <!-- Основной пакет -->
-  <PackageReference Include="Microsoft.Data.SqlClient" Version="5.0.0" />
-  
-  <!-- Все его зависимости -->
+  <!-- Microsoft.Data.SqlClient и ВСЕ его зависимости -->
+  <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
   <PackageReference Include="Microsoft.Identity.Client" Version="4.56.0" />
-  <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="6.35.0" />
-  <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="6.35.0" />
-  <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+  <PackageReference Include="Microsoft.Identity.Client.Extensions.Msal" Version="4.56.0" />
+  <PackageReference Include="Azure.Identity" Version="1.10.3" />
+  <PackageReference Include="Azure.Core" Version="1.35.0" />
+  <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="5.1.1" />
+  <PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.1" />
   <PackageReference Include="System.Runtime.Caching" Version="6.0.0" />
-  <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="6.0.0" />
-  <PackageReference Include="Azure.Identity" Version="1.6.0" />
-  <PackageReference Include="Microsoft.Data.SqlClient.SNI.runtime" Version="5.0.1" />
+  <PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
+  <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
+  <PackageReference Include="System.Text.Encoding.CodePages" Version="6.0.0" />
+  <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
+  <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="6.0.1" />
 </ItemGroup>

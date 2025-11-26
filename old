@@ -1,7 +1,4 @@
 
- ##################################################
- !!! НОВАЯ ВЕРСИЯ КОДА v5 !!!
- ##################################################
  === EnsureSeedData: НАЧАЛО ===
  Шаг 1: BuildServiceProvider...
  Шаг 1: BuildServiceProvider - OK
@@ -36,7 +33,7 @@
  Миграция 1: ConnectionString = OK (длина: 111)
  ConnectionString (masked): Data Source=vmshqeatdb03;User ID=MS-HQ-Srvhopexusr_p;Password=***;encrypt=false;Database=HAS_2025;
  Microsoft.Data.SqlClient Version: 5.0.0.0
- Microsoft.Data.SqlClient Location: C:\MEGA\Hopex Application Server\2025\.shadowFiles\has.uas\16.0.2+55\Microsoft.Data.SqlClient.dll
+ Microsoft.Data.SqlClient Location: C:\MEGA\Hopex Application Server\2025\.shadowFiles\has.uas\16.0.2+56\Microsoft.Data.SqlClient.dll
  >>> Проверка ConnectionString через SqlConnectionStringBuilder...
    Server: vmshqeatdb03
    Database: HAS_2025
@@ -56,12 +53,14 @@
  ОШИБКА в: Тест соединения SqlConnection
  Message: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
  Type: System.TypeInitializationException
- InnerException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
+ InnerException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
  InnerException Type: System.IO.FileNotFoundException
  --- FULL EXCEPTION ---
  System.TypeInitializationException: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
- ---> System.IO.FileNotFoundException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
-File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+ ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
+File name: 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'
+   at Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider..ctor(String applicationClientId)
+   at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
    at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor()
    --- End of inner exception stack trace ---
    at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool)
@@ -84,12 +83,14 @@ File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=
  ОШИБКА в: MigrateDatabase -> ApplicationDbContext.Migrate()
  Message: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
  Type: System.TypeInitializationException
- InnerException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
+ InnerException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
  InnerException Type: System.IO.FileNotFoundException
  --- FULL EXCEPTION ---
  System.TypeInitializationException: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
- ---> System.IO.FileNotFoundException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
-File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+ ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
+File name: 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'
+   at Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider..ctor(String applicationClientId)
+   at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
    at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor()
    --- End of inner exception stack trace ---
    at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool)
@@ -112,12 +113,14 @@ File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=
  ОШИБКА в: MigrateDatabase -> Главный блок
  Message: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
  Type: System.TypeInitializationException
- InnerException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
+ InnerException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
  InnerException Type: System.IO.FileNotFoundException
  --- FULL EXCEPTION ---
  System.TypeInitializationException: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
- ---> System.IO.FileNotFoundException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
-File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+ ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
+File name: 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'
+   at Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider..ctor(String applicationClientId)
+   at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
    at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor()
    --- End of inner exception stack trace ---
    at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool)
@@ -140,12 +143,14 @@ File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=
  ОШИБКА в: EnsureSeedData -> Блок SQL Server
  Message: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
  Type: System.TypeInitializationException
- InnerException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
+ InnerException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
  InnerException Type: System.IO.FileNotFoundException
  --- FULL EXCEPTION ---
  System.TypeInitializationException: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
- ---> System.IO.FileNotFoundException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
-File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+ ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
+File name: 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'
+   at Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider..ctor(String applicationClientId)
+   at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
    at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor()
    --- End of inner exception stack trace ---
    at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool)
@@ -170,12 +175,14 @@ File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=
  ОШИБКА в: EnsureSeedData -> Главный блок
  Message: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
  Type: System.TypeInitializationException
- InnerException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
+ InnerException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
  InnerException Type: System.IO.FileNotFoundException
  --- FULL EXCEPTION ---
  System.TypeInitializationException: The type initializer for 'Microsoft.Data.SqlClient.SqlAuthenticationProviderManager' threw an exception.
- ---> System.IO.FileNotFoundException: Could not load file or assembly 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
-File name: 'System.Configuration.ConfigurationManager, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'
+ ---> System.IO.FileNotFoundException: Could not load file or assembly 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'. The system cannot find the file specified.
+File name: 'Microsoft.Identity.Client, Version=4.56.0.0, Culture=neutral, PublicKeyToken=0a613f4dd989e8ae'
+   at Microsoft.Data.SqlClient.ActiveDirectoryAuthenticationProvider..ctor(String applicationClientId)
+   at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager.SetDefaultAuthProviders(SqlAuthenticationProviderManager instance)
    at Microsoft.Data.SqlClient.SqlAuthenticationProviderManager..cctor()
    --- End of inner exception stack trace ---
    at Microsoft.Data.SqlClient.SqlInternalConnectionTds..ctor(DbConnectionPoolIdentity identity, SqlConnectionString connectionOptions, SqlCredential credential, Object providerInfo, String newPassword, SecureString newSecurePassword, Boolean redirectedUserInstance, SqlConnectionString userConnectionOptions, SessionData reconnectSessionData, Boolean applyTransientFaultHandling, String accessToken, DbConnectionPool pool)

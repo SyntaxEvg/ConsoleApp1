@@ -1,27 +1,454 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using System.Web;
+using HAS.Modules.UAS.Exceptions;
+using HAS.Modules.UAS.Extensions;
+using HAS.Modules.UAS.Helpers;
+using HAS.Modules.UAS.ViewModels;
+using HAS.Server.Hopex.Module.Adapter.SSP.Models;
+using IdentityServer4.Extensions;
+using IdentityServer4.Models;
+using IdentityServer4.Services;
+using IdentityServer4.Stores;
+using Mega.Has.Commons;
 using Mega.Has.Modules.UAS.Models;
+using Mega.Has.Modules.UAS.Providers.Hopex;
+using Mega.Has.Modules.UAS.Providers.Windows;
+using Mega.Has.Modules.UAS.Services;
+using Mega.Has.Modules.UAS.ViewModels;
+using Mega.Has.WebSite;
+using Mega.Has.WebSite.LoginWorkflow;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
+using Serilog;
 
-namespace Mega.Has.Modules.UAS.ViewModels
+namespace HAS.Modules.UAS.Services.Factories
 {
-	// Token: 0x0200005A RID: 90
-	public class LoginViewModel : LoginInputModel
-	{
-		public IEnumerable<SelectListItem> Environments { get; set; }
-		public bool IsSetupMode { get; set; }
-		public bool AllowRememberLogin { get; set; }
-		public bool ShowBasicSignin { get; set; }
-		public IEnumerable<ExternalProvider> ExternalProviders { get; set; }
-		public bool HopexProviderEnabled { get; set; }
-		public IEnumerable<ExternalProvider> VisibleExternalProviders { get; set; }
-		public bool IsExternalLoginOnly { get; set; }
-		public string ExternalLoginScheme { get; set; }
-		public bool IsEnvironmentsRequired { get; set; }
-		public string Message { get; internal set; }
-		public bool HideFriendlyName { get; internal set; }
-		public string ModuleFriendlyName { get; internal set; }
-		public bool IsInitialized { get; internal set; }
-		public bool IsLoginDisabled { get; internal set; }
-	}
+    internal class ViewModelFactory : IViewModelFactory
+    {
+        private readonly IClientStore _clientStore;
+        private readonly IClusterAdminClient _clusterAdminClient;
+        private readonly IClusterConfiguration _clusterConfiguration;
+        private readonly IExternalProviderService _externalProviderService;
+        private readonly IHopexSSPClient _hopexSSPClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IIdentityServerInteractionService _interactionService;
+        private readonly ILogger<ViewModelFactory> _logger;
+        private readonly IStringLocalizer S;
+
+        public ViewModelFactory(
+            IHopexSSPClient hopexSSPClient,
+            IIdentityServerInteractionService interactionService,
+            IExternalProviderService externalProviderService,
+            IClusterConfiguration clusterConfiguration,
+            IHttpContextAccessor httpContextAccessor,
+            ILogger<ViewModelFactory> logger,
+            IClusterAdminClient clusterAdminClient,
+            IClientStore clientStore,
+            IStringLocalizer<ViewModelFactory> s)
+        {
+            _hopexSSPClient = hopexSSPClient;
+            _interactionService = interactionService;
+            _externalProviderService = externalProviderService;
+            _clusterConfiguration = clusterConfiguration;
+            _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
+            _clusterAdminClient = clusterAdminClient;
+            _clientStore = clientStore;
+            S = s;
+
+            Log.Information("### ViewModelFactory CONSTRUCTOR - FIXED VERSION ###");
+        }
+
+        public async Task<LoggedOutViewModel> BuildLoggedOutViewModelAsync(string logoutId)
+        {
+            Log.Information("### BuildLoggedOutViewModelAsync START ###");
+            
+            var logout = await _interactionService.GetLogoutContextAsync(logoutId);
+
+            if (logout == null)
+            {
+                throw new Exception("Logout context cannot be null.");
+            }
+
+            var automaticRedirectAfterSignOut = AccountOptions.AutomaticRedirectAfterSignOut;
+
+            // Защита от null
+            var providers = _externalProviderService.GetExternalProviders()?.ToList() 
+                ?? new List<ExternalProvider>();
+
+            if (automaticRedirectAfterSignOut)
+            {
+                var hopexProvider = providers.FirstOrDefault(x => x.AuthenticationScheme == "Hopex");
+                var hopexProviderEnabled = hopexProvider == null || hopexProvider.Enabled;
+                var hopexProviderVisible = hopexProviderEnabled &&
+                    (hopexProvider == null || hopexProvider.GetConfiguration<HopexConfig>()?.Hidden != true);
+
+                var otherProviders = providers.Where(x => x.Enabled && x.AuthenticationScheme != "Hopex").ToList();
+
+                var noOtherEnabledProviders = !hopexProviderEnabled || !otherProviders.Any(ep => ep.Enabled);
+
+                if (otherProviders.Count == 1 && (!noOtherEnabledProviders || !hopexProviderVisible))
+                {
+                    automaticRedirectAfterSignOut = false;
+                }
+            }
+
+            var client = await _clientStore.FindEnabledClientByIdAsync(logout.ClientId);
+
+            if (client == null)
+            {
+                throw new Exception($"No client {logout.ClientId} found.");
+            }
+
+            var vm = new LoggedOutViewModel
+            {
+                AutomaticRedirectAfterSignOut = automaticRedirectAfterSignOut,
+                PostLogoutRedirectUri = logout.PostLogoutRedirectUri ?? _clusterConfiguration.RuntimeClusterSettings.PublicAddress,
+                ClientName = client.Description ?? (string.IsNullOrEmpty(logout.ClientName) ? logout.ClientId : logout.ClientName),
+                SignOutIframeUrl = logout.SignOutIFrameUrl,
+                LogoutId = logoutId
+            };
+
+            var user = _httpContextAccessor.HttpContext?.User;
+
+            if (user?.Identity?.IsAuthenticated == true)
+            {
+                var idp = user.FindFirst("idp")?.Value;
+
+                if (idp != null && idp != "local" && await _httpContextAccessor.HttpContext.GetSchemeSupportsSignOutAsync(idp))
+                {
+                    if (vm.LogoutId == null)
+                    {
+                        vm.LogoutId = await _interactionService.CreateLogoutContextAsync();
+                    }
+
+                    vm.ExternalAuthenticationScheme = idp;
+                }
+            }
+
+            Log.Information("### BuildLoggedOutViewModelAsync END ###");
+            return vm;
+        }
+
+        public async Task<(string error, LoginViewModel viewModel)> BuildLoginViewModelAsync(
+            string returnUrl,
+            string environmentId,
+            bool hideModuleName = false)
+        {
+            Log.Information("========================================");
+            Log.Information("### BuildLoginViewModelAsync START ###");
+            Log.Information($"returnUrl = {returnUrl}");
+            Log.Information($"environmentId = {environmentId}");
+            Log.Information("========================================");
+
+            string error = string.Empty;
+
+            // ============================================================
+            // ЗАЩИТА ОТ NULL #1: providers
+            // ============================================================
+            var providers = _externalProviderService.GetExternalProviders()?.ToList()
+                ?? new List<ExternalProvider>();
+            
+            Log.Information($"[1] Providers loaded, count = {providers.Count}");
+
+            var hopexProvider = providers.FirstOrDefault(x => x.AuthenticationScheme == "Hopex");
+            var hopexProviderEnabled = hopexProvider == null || hopexProvider.Enabled;
+            var hopexConfig = hopexProvider?.GetConfiguration<HopexConfig>();
+            var hopexProviderVisible = hopexProviderEnabled && (hopexProvider == null || hopexConfig?.Hidden != true);
+
+            Log.Information($"[2] hopexProviderEnabled = {hopexProviderEnabled}, hopexProviderVisible = {hopexProviderVisible}");
+
+            // Проверка no_sso параметра
+            bool hasNoSsoParam = false;
+            try
+            {
+                var queryParams = HttpUtility.ParseQueryString(HttpUtility.UrlDecode(returnUrl ?? ""));
+                var noSsoValue = queryParams["no_sso"];
+                hasNoSsoParam = noSsoValue == "1" ||
+                    (noSsoValue?.Equals(bool.TrueString, StringComparison.OrdinalIgnoreCase) == true) ||
+                    queryParams.GetValues(null)?.Contains("no_sso") == true;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"[!] Error parsing no_sso: {ex.Message}");
+            }
+
+            var vm = new LoginViewModel
+            {
+                HopexProviderEnabled = hopexProviderEnabled,
+                ShowBasicSignin = false
+            };
+
+            var allowLocal = true;
+            var isEnvironmentsRequired = false;
+            IEnumerable<HopexEnvironmentInfo> environments = null;
+
+            Log.Information("[3] Getting authorization context...");
+            var context = await _interactionService.GetAuthorizationContextAsync(returnUrl);
+            Log.Information($"[4] context = {(context != null ? "OK" : "NULL")}");
+
+            if (context != null)
+            {
+                if (!string.IsNullOrEmpty(context.IdP) && !context.IdP.Equals("local"))
+                {
+                    allowLocal = false;
+                    providers = providers.Where(p => p.AuthenticationScheme == context.IdP).ToList();
+                    Log.Information($"[5] Filtered providers by IdP={context.IdP}, count = {providers.Count}");
+                }
+
+                if (!hideModuleName)
+                {
+                    vm.ModuleFriendlyName = await ModuleHelper.GetModuleFriendlyName(_clusterAdminClient, returnUrl);
+                    Log.Information($"[6] ModuleFriendlyName = {vm.ModuleFriendlyName}");
+                }
+
+                // ============================================================
+                // ЗАЩИТА ОТ NULL #2: GetEnvironments с try-catch
+                // ============================================================
+                if (hopexProviderEnabled)
+                {
+                    Log.Information("[7] >>> Calling GetEnvironments()...");
+                    try
+                    {
+                        environments = await _hopexSSPClient.GetEnvironments();
+                        Log.Information($"[8] <<< GetEnvironments() OK, count = {environments?.Count() ?? 0}");
+                    }
+                    catch (Exception ex)
+                    {
+                        // КРИТИЧНО: Логируем но НЕ падаем!
+                        Log.Warning($"[8] <<< GetEnvironments() FAILED: {ex.Message}");
+                        _logger.LogError(ex, "Unable to retrieve environments");
+                        error = "Unable to retrieve environments.";
+                        environments = null; // Явно null - это OK
+                    }
+                }
+
+                if (context.Client?.ClientId != null)
+                {
+                    var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
+
+                    if (client != null)
+                    {
+                        allowLocal = client.EnableLocalLogin;
+
+                        if (client.IdentityProviderRestrictions?.Any() == true)
+                        {
+                            providers = providers.Where(p =>
+                                client.IdentityProviderRestrictions.Contains(p.AuthenticationScheme)).ToList();
+                        }
+                    }
+                }
+
+                var windowsProvider = providers.FirstOrDefault(c => c.AuthenticationScheme == "Windows");
+
+                if (windowsProvider != null)
+                {
+                    var windowsConfig = windowsProvider.GetConfiguration<WindowsConfig>();
+                    if (windowsConfig != null)
+                    {
+                        AccountOptions.IncludeWindowsGroups = true;
+                        AccountOptions.WindowsGroupsAuthorized = windowsConfig.WindowsRole;
+                        AccountOptions.WindowsSourceIdentifier = windowsConfig.WindowsSourceIdentifier;
+                        AccountOptions.ClaimForRoles = windowsConfig.ClaimForRoles;
+                    }
+                }
+            }
+
+            // Заполняем ViewModel
+            vm.IsEnvironmentsRequired = isEnvironmentsRequired;
+            vm.EnvironmentId = environmentId;
+            vm.AllowRememberLogin = AccountOptions.AllowRememberLogin;
+            vm.IsSetupMode = !_clusterConfiguration.IsInitialized;
+            vm.ReturnUrl = returnUrl;
+
+            // ============================================================
+            // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Environments может быть null - это OK!
+            // View должен проверять на null перед использованием
+            // ============================================================
+            vm.Environments = environments?.Select(e => new SelectListItem(e.Name, e.Id));
+            
+            Log.Information($"[9] vm.Environments = {(vm.Environments != null ? $"SET ({vm.Environments.Count()} items)" : "NULL")}");
+
+            vm.UserName = context?.LoginHint;
+
+            // ============================================================
+            // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: ExternalProviders никогда не null
+            // ============================================================
+            vm.ExternalProviders = providers?.ToArray() ?? Array.Empty<ExternalProvider>();
+            
+            // ============================================================
+            // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: VisibleExternalProviders тоже нужно!
+            // View вызывает .Any() на этом свойстве - если null, падает!
+            // ============================================================
+            vm.VisibleExternalProviders = vm.ExternalProviders
+                .Where(x => !string.IsNullOrWhiteSpace(x.DisplayName))
+                .ToArray();
+            
+            // Вычисляем IsExternalLoginOnly и ExternalLoginScheme
+            vm.IsExternalLoginOnly = !allowLocal && vm.VisibleExternalProviders.Count() == 1;
+            vm.ExternalLoginScheme = vm.IsExternalLoginOnly 
+                ? vm.VisibleExternalProviders.FirstOrDefault()?.AuthenticationScheme 
+                : null;
+            
+            Log.Information($"[10] vm.ExternalProviders count = {vm.ExternalProviders.Count()}");
+            Log.Information($"[10a] vm.VisibleExternalProviders count = {vm.VisibleExternalProviders.Count()}");
+            Log.Information($"[10b] vm.IsExternalLoginOnly = {vm.IsExternalLoginOnly}");
+
+            vm.ShowBasicSignin |= allowLocal && AccountOptions.AllowLocalLogin &&
+                vm.HopexProviderEnabled && (hopexProviderVisible || hasNoSsoParam);
+
+            Log.Information($"[11] vm.ShowBasicSignin = {vm.ShowBasicSignin}");
+            Log.Information($"[12] error = '{error}'");
+            Log.Information("========================================");
+            Log.Information("### BuildLoginViewModelAsync END ###");
+            Log.Information("========================================");
+
+            return (error, vm);
+        }
+
+        public async Task<LostPasswordViewModel> BuildLostPasswordViewModel()
+        {
+            Log.Information("### BuildLostPasswordViewModel START ###");
+            
+            var vm = new LostPasswordViewModel();
+
+            try
+            {
+                var environments = await _hopexSSPClient.GetEnvironments();
+
+                // ============================================================
+                // ЗАЩИТА ОТ NULL
+                // ============================================================
+                if (environments == null || !environments.Any())
+                {
+                    vm.Environments = null;
+                    Log.Information("LostPassword: Environments = NULL (empty or null from SSP)");
+                }
+                else
+                {
+                    vm.Environments = environments.Select(e => new SelectListItem(e.Name, e.Id));
+                    Log.Information($"LostPassword: Environments count = {environments.Count()}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"BuildLostPasswordViewModel: GetEnvironments failed: {ex.Message}");
+                vm.Environments = null;
+            }
+
+            Log.Information("### BuildLostPasswordViewModel END ###");
+            return vm;
+        }
+
+        public async Task<MappingViewModel> BuildMappingViewModelAsync(
+            string environmentId,
+            string userName,
+            string returnUrl,
+            string provider,
+            string claimForRoles,
+            IEnumerable<Claim> claims)
+        {
+            Log.Information("### BuildMappingViewModelAsync START ###");
+            Log.Information($"environmentId={environmentId}, userName={userName}, provider={provider}");
+
+            GetPersonGroupsResult personGroupsResult = null;
+
+            var queryParams = HttpUtility.ParseQueryString(HttpUtility.UrlDecode(returnUrl ?? ""));
+
+            // Защита claims от null
+            claims = claims ?? Enumerable.Empty<Claim>();
+
+            var vm = new MappingViewModel
+            {
+                PersonGroups = personGroupsResult,
+                EnvironmentId = environmentId,
+                ReturnUrl = returnUrl,
+                UserName = userName,
+                RepositoryId = queryParams.Get("Db") ?? claims.FirstOrDefault(c => c.Type == "has.repositoryid")?.Value,
+                ProfileId = queryParams.Get("Profile") ?? claims.FirstOrDefault(c => c.Type == "has.profileId")?.Value,
+                UserId = claims.FirstOrDefault(c => c.Type == "has.userId")?.Value,
+                AssignableElementId = claims.FirstOrDefault(c => c.Type == "has.assignableElementId")?.Value,
+                DataLanguageId = claims.FirstOrDefault(c => c.Type == "has.dataLanguageId")?.Value,
+                GuiLanguageId = claims.FirstOrDefault(c => c.Type == "has.guiLanguageId")?.Value,
+                Login = claims.FirstOrDefault(c => c.Type == "has.login")?.Value,
+                Provider = provider,
+                ClaimForRoles = claimForRoles
+            };
+
+            // ============================================================
+            // ЗАЩИТА ОТ NULL: GetEnvironments
+            // ============================================================
+            try
+            {
+                Log.Information("Mapping: Calling GetEnvironments()...");
+                var environments = await _hopexSSPClient.GetEnvironments();
+                
+                // ВАЖНО: Защита от null - возвращаем пустую коллекцию
+                vm.Environments = environments?.Select(e => new SelectListItem(e.Name, e.Id))
+                    ?? Enumerable.Empty<SelectListItem>();
+                    
+                Log.Information($"Mapping: Environments count = {vm.Environments.Count()}");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"BuildMappingViewModelAsync: GetEnvironments failed: {ex.Message}");
+                // ВАЖНО: Пустая коллекция, НЕ null!
+                vm.Environments = Enumerable.Empty<SelectListItem>();
+            }
+
+            vm.ModuleFriendlyName = await ModuleHelper.GetModuleFriendlyName(_clusterAdminClient, returnUrl);
+
+            // ============================================================
+            // ЗАЩИТА ОТ NULL при проверке Count
+            // ============================================================
+            if (vm.EnvironmentId == null && vm.Environments != null && vm.Environments.Count() == 1)
+            {
+                vm.EnvironmentId = vm.Environments.First().Value;
+                Log.Information($"Mapping: Auto-selected single environment: {vm.EnvironmentId}");
+            }
+
+            // GetPersonGroups
+            try
+            {
+                Log.Information("Mapping: Calling GetPersonGroups()...");
+                personGroupsResult = await _hopexSSPClient.GetPersonGroups(new GetPersonGroupsArgs
+                {
+                    EnvironmentId = vm.EnvironmentId,
+                    UserName = userName,
+                    Provider = provider,
+                    Db = vm.RepositoryId,
+                    Profile = vm.ProfileId,
+                    ClaimForRoles = claimForRoles
+                }, claims);
+                Log.Information("Mapping: GetPersonGroups() OK");
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"BuildMappingViewModelAsync: GetPersonGroups failed: {ex.Message}");
+                vm.ErrorMessage = "Login is not possible.<br/>Please contact your HOPEX administrator to check logs.";
+            }
+
+            vm.PersonGroups = personGroupsResult;
+
+            _logger.LogInformation($"Claims and Roles From Provider [ {claims.SerializeToString()} ]");
+
+            if (_httpContextAccessor.HttpContext?.Request.Path.HasValue == true &&
+                _httpContextAccessor.HttpContext.Request.Path.Value.Contains("MappingSubmit"))
+            {
+                throw new NoProfileException(string.Format(
+                    S["No profile is configured for the user {0}. Please contact your administrator."],
+                    vm.UserName));
+            }
+
+            Log.Information("### BuildMappingViewModelAsync END ###");
+            return vm;
+        }
+    }
 }

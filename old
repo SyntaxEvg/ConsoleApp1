@@ -1,3 +1,14 @@
+# Блокировка NuGet
+0.0.0.0 nuget.org
+0.0.0.0 www.nuget.org
+0.0.0.0 api.nuget.org
+0.0.0.0 globalcdn.nuget.org
+0.0.0.0 azuresearch-usnc.nuget.org
+0.0.0.0 azuresearch-ussc.nuget.org
+0.0.0.0 az320820.vo.msecnd.net
+
+ipconfig /flushdns
+
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>

@@ -1,23 +1,3 @@
-<PropertyGroup>
-  <TargetFramework>net6.0</TargetFramework>
-  <Nullable>disable</Nullable>
-  <ImplicitUsings>enable</ImplicitUsings>
-  <OutputType>Exe</OutputType>
-  <RootNamespace>HAS.Modules.UAS</RootNamespace>
-  <AssemblyName>HAS.Modules.UAS</AssemblyName>
-  <Version>16.0.2.35</Version>
-  <LangVersion>latest</LangVersion>
-  
-  <!-- КРИТИЧНО: Отключаем автогенерацию AssemblyInfo -->
-  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  
-  <!-- Отключаем автоматическое включение wwwroot -->
-  <EnableDefaultContentItems>false</EnableDefaultContentItems>
-  
-  <!-- Отключаем ошибки при downgrade версий -->
-  <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-  <NoWarn>$(NoWarn);NU1605;NU1608;NU1701;NU1603</NoWarn>
-  
-  <!-- Копируем все зависимости -->
-  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-</PropertyGroup>
+Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	CS1705	Assembly 'HAS.Server.SiteModule' with identity 'HAS.Server.SiteModule, Version=16.0.2.35, Culture=neutral, PublicKeyToken=null' uses 'Microsoft.Extensions.DependencyInjection.Abstractions, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60' which has a higher version than referenced assembly 'Microsoft.Extensions.DependencyInjection.Abstractions' with identity 'Microsoft.Extensions.DependencyInjection.Abstractions, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\CSC	1	
+Error (active)	CS1705	Assembly 'Microsoft.Extensions.Hosting.Abstractions' with identity 'Microsoft.Extensions.Hosting.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60' uses 'Microsoft.Extensions.DependencyInjection.Abstractions, Version=7.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60' which has a higher version than referenced assembly 'Microsoft.Extensions.DependencyInjection.Abstractions' with identity 'Microsoft.Extensions.DependencyInjection.Abstractions, Version=6.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60'	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\CSC	1	

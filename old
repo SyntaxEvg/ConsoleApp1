@@ -63,23 +63,113 @@ namespace HAS.Modules.UAS.Services.Factories
             _clientStore = clientStore;
             S = s;
 
-            // Логируем при создании фабрики
-            Log.Information("=== ViewModelFactory СОЗДАН ===");
-            Log.Information($"ViewModelFactory: _hopexSSPClient = {(_hopexSSPClient != null ? _hopexSSPClient.GetType().FullName : "NULL")}");
-            Log.Information($"ViewModelFactory: _clusterConfiguration = {(_clusterConfiguration != null ? "OK" : "NULL")}");
+            // ========== ЛОГИРОВАНИЕ ПРИ СОЗДАНИИ ==========
+            Log.Information("##################################################");
+            Log.Information("### ViewModelFactory СОЗДАН - DEBUG VERSION v1 ###");
+            Log.Information("##################################################");
             
-            if (_clusterConfiguration != null)
+            try
             {
-                try
+                Log.Information($"_hopexSSPClient = {(_hopexSSPClient != null ? _hopexSSPClient.GetType().FullName : "NULL")}");
+                
+                if (_hopexSSPClient != null)
                 {
-                    var publicAddress = _clusterConfiguration.RuntimeClusterSettings?.PublicAddress;
-                    Log.Information($"ViewModelFactory: PublicAddress = {publicAddress}");
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning($"ViewModelFactory: Не удалось получить PublicAddress: {ex.Message}");
+                    // Пробуем получить информацию о клиенте через reflection
+                    var clientType = _hopexSSPClient.GetType();
+                    Log.Information($"HopexSSPClient Assembly: {clientType.Assembly.FullName}");
+                    Log.Information($"HopexSSPClient Assembly Location: {clientType.Assembly.Location}");
+                    
+                    // Пробуем получить приватные поля
+                    foreach (var field in clientType.GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+                    {
+                        try
+                        {
+                            var value = field.GetValue(_hopexSSPClient);
+                            if (value != null)
+                            {
+                                var valueStr = value.ToString();
+                                // Маскируем пароли
+                                if (field.Name.ToLower().Contains("password") || field.Name.ToLower().Contains("secret"))
+                                {
+                                    valueStr = "***MASKED***";
+                                }
+                                Log.Information($"  Field '{field.Name}' ({field.FieldType.Name}): {valueStr}");
+                            }
+                        }
+                        catch { }
+                    }
+                    
+                    // Пробуем получить приватные свойства
+                    foreach (var prop in clientType.GetProperties(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public))
+                    {
+                        try
+                        {
+                            if (prop.CanRead)
+                            {
+                                var value = prop.GetValue(_hopexSSPClient);
+                                if (value != null)
+                                {
+                                    var valueStr = value.ToString();
+                                    if (prop.Name.ToLower().Contains("password") || prop.Name.ToLower().Contains("secret"))
+                                    {
+                                        valueStr = "***MASKED***";
+                                    }
+                                    Log.Information($"  Property '{prop.Name}' ({prop.PropertyType.Name}): {valueStr}");
+                                }
+                            }
+                        }
+                        catch { }
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                Log.Warning($"Ошибка при логировании _hopexSSPClient: {ex.Message}");
+            }
+            
+            try
+            {
+                Log.Information($"_clusterConfiguration = {(_clusterConfiguration != null ? "OK" : "NULL")}");
+                
+                if (_clusterConfiguration != null)
+                {
+                    var runtime = _clusterConfiguration.RuntimeClusterSettings;
+                    if (runtime != null)
+                    {
+                        Log.Information($"RuntimeClusterSettings.PublicAddress: {runtime.PublicAddress}");
+                        Log.Information($"RuntimeClusterSettings.Mode: {runtime.Mode}");
+                        
+                        // Пробуем получить другие настройки через reflection
+                        var runtimeType = runtime.GetType();
+                        foreach (var prop in runtimeType.GetProperties())
+                        {
+                            try
+                            {
+                                if (prop.CanRead && prop.Name != "PublicAddress" && prop.Name != "Mode")
+                                {
+                                    var value = prop.GetValue(runtime);
+                                    if (value != null)
+                                    {
+                                        var valueStr = value.ToString();
+                                        if (prop.Name.ToLower().Contains("password") || prop.Name.ToLower().Contains("secret") || prop.Name.ToLower().Contains("connection"))
+                                        {
+                                            valueStr = "***MASKED***";
+                                        }
+                                        Log.Information($"  RuntimeSettings.{prop.Name}: {valueStr}");
+                                    }
+                                }
+                            }
+                            catch { }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"Ошибка при логировании _clusterConfiguration: {ex.Message}");
+            }
+            
+            Log.Information("### Конец инициализации ViewModelFactory ###");
         }
 
         public async Task<LoggedOutViewModel> BuildLoggedOutViewModelAsync(string logoutId)
@@ -161,23 +251,30 @@ namespace HAS.Modules.UAS.Services.Factories
             string environmentId,
             bool hideModuleName = false)
         {
-            Log.Information("=== BuildLoginViewModelAsync: НАЧАЛО ===");
-            Log.Information($"BuildLoginViewModelAsync: returnUrl = {returnUrl}");
-            Log.Information($"BuildLoginViewModelAsync: environmentId = {environmentId}");
-            Log.Information($"BuildLoginViewModelAsync: hideModuleName = {hideModuleName}");
+            Log.Information("##################################################");
+            Log.Information("### BuildLoginViewModelAsync: НАЧАЛО DEBUG v1 ###");
+            Log.Information("##################################################");
+            Log.Information($"returnUrl = {returnUrl}");
+            Log.Information($"environmentId = {environmentId}");
+            Log.Information($"hideModuleName = {hideModuleName}");
 
             string error = string.Empty;
 
             var providers = _externalProviderService.GetExternalProviders().ToList();
-            Log.Information($"BuildLoginViewModelAsync: Найдено providers = {providers.Count}");
+            Log.Information($"Providers count = {providers.Count}");
+            foreach (var p in providers)
+            {
+                Log.Information($"  Provider: {p.AuthenticationScheme}, DisplayName: {p.DisplayName}, Enabled: {p.Enabled}");
+            }
 
             var hopexProvider = providers.FirstOrDefault(x => x.AuthenticationScheme == "Hopex");
             var hopexProviderEnabled = hopexProvider == null || hopexProvider.Enabled;
             var hopexProviderVisible = hopexProviderEnabled &&
                 (hopexProvider == null || !hopexProvider.GetConfiguration<HopexConfig>()?.Hidden == true);
 
-            Log.Information($"BuildLoginViewModelAsync: hopexProviderEnabled = {hopexProviderEnabled}");
-            Log.Information($"BuildLoginViewModelAsync: hopexProviderVisible = {hopexProviderVisible}");
+            Log.Information($"hopexProvider = {(hopexProvider != null ? "found" : "NULL")}");
+            Log.Information($"hopexProviderEnabled = {hopexProviderEnabled}");
+            Log.Information($"hopexProviderVisible = {hopexProviderVisible}");
 
             bool hasNoSsoParam = false;
             try
@@ -204,10 +301,13 @@ namespace HAS.Modules.UAS.Services.Factories
             IEnumerable<HopexEnvironmentInfo> environments = null;
 
             var context = await _interactionService.GetAuthorizationContextAsync(returnUrl);
-            Log.Information($"BuildLoginViewModelAsync: context = {(context != null ? "OK" : "NULL")}");
+            Log.Information($"AuthorizationContext = {(context != null ? "OK" : "NULL")}");
 
             if (context != null)
             {
+                Log.Information($"context.Client.ClientId = {context.Client?.ClientId}");
+                Log.Information($"context.IdP = {context.IdP}");
+                
                 if (!string.IsNullOrEmpty(context.IdP) && !context.IdP.Equals("local"))
                 {
                     allowLocal = false;
@@ -221,119 +321,64 @@ namespace HAS.Modules.UAS.Services.Factories
 
                 if (hopexProviderEnabled)
                 {
-                    Log.Information("=== ВЫЗОВ _hopexSSPClient.GetEnvironments() ===");
-                    Log.Information($"_hopexSSPClient тип: {_hopexSSPClient?.GetType().FullName}");
+                    Log.Information("##################################################");
+                    Log.Information("### ВЫЗОВ _hopexSSPClient.GetEnvironments() ###");
+                    Log.Information("##################################################");
                     
+                    // Логируем информацию о HTTP контексте
                     try
                     {
-                        // Логируем информацию о конфигурации перед вызовом
-                        try
+                        var httpContext = _httpContextAccessor.HttpContext;
+                        if (httpContext != null)
                         {
-                            var runtimeSettings = _clusterConfiguration?.RuntimeClusterSettings;
-                            if (runtimeSettings != null)
+                            Log.Information($"HttpContext.Request.Scheme: {httpContext.Request.Scheme}");
+                            Log.Information($"HttpContext.Request.Host: {httpContext.Request.Host}");
+                            Log.Information($"HttpContext.Request.Path: {httpContext.Request.Path}");
+                            Log.Information($"HttpContext.Request.PathBase: {httpContext.Request.PathBase}");
+                            
+                            // Логируем заголовки запроса
+                            Log.Information("Request Headers:");
+                            foreach (var header in httpContext.Request.Headers)
                             {
-                                Log.Information($"RuntimeClusterSettings.PublicAddress: {runtimeSettings.PublicAddress}");
-                                Log.Information($"RuntimeClusterSettings.Mode: {runtimeSettings.Mode}");
-                                
-                                // Попробуем получить connection string (для диагностики)
-                                try
+                                if (!header.Key.ToLower().Contains("cookie") && !header.Key.ToLower().Contains("auth"))
                                 {
-                                    var dbConnStr = runtimeSettings.GetDatabaseConnectionString(false);
-                                    Log.Information($"DatabaseConnectionString exists: {!string.IsNullOrEmpty(dbConnStr)}");
-                                }
-                                catch (Exception dbEx)
-                                {
-                                    Log.Warning($"Не удалось получить DatabaseConnectionString: {dbEx.Message}");
+                                    Log.Information($"  {header.Key}: {header.Value}");
                                 }
                             }
                         }
-                        catch (Exception cfgEx)
-                        {
-                            Log.Warning($"Ошибка при получении конфигурации: {cfgEx.Message}");
-                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"Ошибка при логировании HttpContext: {ex.Message}");
+                    }
 
+                    try
+                    {
                         Log.Information(">>> Вызываем GetEnvironments()...");
                         var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                         
                         environments = await _hopexSSPClient.GetEnvironments();
                         
                         stopwatch.Stop();
-                        Log.Information($"<<< GetEnvironments() завершён за {stopwatch.ElapsedMilliseconds} мс");
-                        Log.Information($"environments = {(environments != null ? $"OK, count = {environments.Count()}" : "NULL")}");
-                    }
-                    catch (Mega.Has.WebSite.HttpException httpEx)
-                    {
-                        Log.Error("=== HttpException при GetEnvironments() ===");
-                        Log.Error($"HttpException.Message: {httpEx.Message}");
-                        Log.Error($"HttpException.Source: {httpEx.Source}");
+                        Log.Information($"<<< GetEnvironments() УСПЕХ за {stopwatch.ElapsedMilliseconds} мс");
+                        Log.Information($"environments count = {environments?.Count() ?? 0}");
                         
-                        // Пытаемся получить больше информации через reflection
-                        try
+                        if (environments != null)
                         {
-                            var exType = httpEx.GetType();
-                            foreach (var prop in exType.GetProperties())
+                            foreach (var env in environments)
                             {
-                                try
-                                {
-                                    var value = prop.GetValue(httpEx);
-                                    if (value != null && prop.Name != "TargetSite" && prop.Name != "Data")
-                                    {
-                                        Log.Error($"HttpException.{prop.Name}: {value}");
-                                    }
-                                }
-                                catch { }
+                                Log.Information($"  Environment: Id={env.Id}, Name={env.Name}");
                             }
                         }
-                        catch { }
-                        
-                        Log.Error($"HttpException.StackTrace: {httpEx.StackTrace}");
-                        
-                        if (httpEx.InnerException != null)
-                        {
-                            Log.Error($"InnerException.Type: {httpEx.InnerException.GetType().FullName}");
-                            Log.Error($"InnerException.Message: {httpEx.InnerException.Message}");
-                            Log.Error($"InnerException.StackTrace: {httpEx.InnerException.StackTrace}");
-                        }
-                        
-                        _logger.LogError(httpEx, "Unable to retrieve environments (HttpException)");
-                        error = "Unable to retrieve environments.";
-                    }
-                    catch (System.Net.Http.HttpRequestException reqEx)
-                    {
-                        Log.Error("=== HttpRequestException при GetEnvironments() ===");
-                        Log.Error($"HttpRequestException.Message: {reqEx.Message}");
-                        Log.Error($"HttpRequestException.StatusCode: {reqEx.StatusCode}");
-                        Log.Error($"HttpRequestException.StackTrace: {reqEx.StackTrace}");
-                        
-                        if (reqEx.InnerException != null)
-                        {
-                            Log.Error($"InnerException.Type: {reqEx.InnerException.GetType().FullName}");
-                            Log.Error($"InnerException.Message: {reqEx.InnerException.Message}");
-                        }
-                        
-                        _logger.LogError(reqEx, "Unable to retrieve environments (HttpRequestException)");
-                        error = "Unable to retrieve environments.";
                     }
                     catch (Exception ex)
                     {
-                        Log.Error("=== EXCEPTION при GetEnvironments() ===");
-                        Log.Error($"Exception.Type: {ex.GetType().FullName}");
-                        Log.Error($"Exception.Message: {ex.Message}");
-                        Log.Error($"Exception.Source: {ex.Source}");
-                        Log.Error($"Exception.StackTrace: {ex.StackTrace}");
+                        Log.Error("##################################################");
+                        Log.Error("### EXCEPTION при GetEnvironments() ###");
+                        Log.Error("##################################################");
                         
-                        if (ex.InnerException != null)
-                        {
-                            Log.Error($"InnerException.Type: {ex.InnerException.GetType().FullName}");
-                            Log.Error($"InnerException.Message: {ex.InnerException.Message}");
-                            Log.Error($"InnerException.StackTrace: {ex.InnerException.StackTrace}");
-                            
-                            if (ex.InnerException.InnerException != null)
-                            {
-                                Log.Error($"Inner.Inner.Type: {ex.InnerException.InnerException.GetType().FullName}");
-                                Log.Error($"Inner.Inner.Message: {ex.InnerException.InnerException.Message}");
-                            }
-                        }
+                        // Полная информация об исключении
+                        LogExceptionDetails(ex, 0);
                         
                         _logger.LogError(ex, "Unable to retrieve environments");
                         error = "Unable to retrieve environments.";
@@ -379,26 +424,148 @@ namespace HAS.Modules.UAS.Services.Factories
             vm.ShowBasicSignin |= allowLocal && AccountOptions.AllowLocalLogin &&
                 vm.HopexProviderEnabled && (hopexProviderVisible || hasNoSsoParam);
 
-            Log.Information($"BuildLoginViewModelAsync: vm.Environments = {(vm.Environments != null ? $"OK, count = {vm.Environments.Count()}" : "NULL")}");
-            Log.Information($"BuildLoginViewModelAsync: error = '{error}'");
-            Log.Information("=== BuildLoginViewModelAsync: КОНЕЦ ===");
+            Log.Information($"РЕЗУЛЬТАТ: vm.Environments = {(vm.Environments != null ? $"OK ({vm.Environments.Count()} items)" : "NULL")}");
+            Log.Information($"РЕЗУЛЬТАТ: error = '{error}'");
+            Log.Information("### BuildLoginViewModelAsync: КОНЕЦ ###");
 
             return (error, vm);
+        }
+
+        /// <summary>
+        /// Рекурсивное логирование всех деталей исключения
+        /// </summary>
+        private void LogExceptionDetails(Exception ex, int level)
+        {
+            var prefix = new string(' ', level * 2);
+            var levelName = level == 0 ? "EXCEPTION" : $"INNER[{level}]";
+            
+            Log.Error($"{prefix}=== {levelName} ===");
+            Log.Error($"{prefix}Type: {ex.GetType().FullName}");
+            Log.Error($"{prefix}Message: {ex.Message}");
+            Log.Error($"{prefix}Source: {ex.Source}");
+            
+            // Логируем все публичные свойства исключения
+            try
+            {
+                var exType = ex.GetType();
+                foreach (var prop in exType.GetProperties())
+                {
+                    try
+                    {
+                        // Пропускаем стандартные свойства которые уже залогировали
+                        if (prop.Name == "Message" || prop.Name == "Source" || prop.Name == "StackTrace" || 
+                            prop.Name == "InnerException" || prop.Name == "TargetSite" || prop.Name == "Data" ||
+                            prop.Name == "HelpLink" || prop.Name == "HResult")
+                            continue;
+                            
+                        var value = prop.GetValue(ex);
+                        if (value != null)
+                        {
+                            Log.Error($"{prefix}{prop.Name}: {value}");
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            
+            // Для HttpException и похожих - пробуем получить StatusCode
+            try
+            {
+                var statusCodeProp = ex.GetType().GetProperty("StatusCode");
+                if (statusCodeProp != null)
+                {
+                    var statusCode = statusCodeProp.GetValue(ex);
+                    Log.Error($"{prefix}StatusCode: {statusCode}");
+                }
+            }
+            catch { }
+            
+            // Для WebException - пробуем получить Response
+            if (ex is System.Net.WebException webEx)
+            {
+                try
+                {
+                    Log.Error($"{prefix}WebException.Status: {webEx.Status}");
+                    if (webEx.Response != null)
+                    {
+                        var response = webEx.Response as System.Net.HttpWebResponse;
+                        if (response != null)
+                        {
+                            Log.Error($"{prefix}Response.StatusCode: {response.StatusCode}");
+                            Log.Error($"{prefix}Response.StatusDescription: {response.StatusDescription}");
+                            Log.Error($"{prefix}Response.ResponseUri: {response.ResponseUri}");
+                        }
+                    }
+                }
+                catch { }
+            }
+            
+            // Для HttpRequestException
+            if (ex is System.Net.Http.HttpRequestException httpReqEx)
+            {
+                Log.Error($"{prefix}HttpRequestException.StatusCode: {httpReqEx.StatusCode}");
+            }
+            
+            // Логируем Data dictionary
+            if (ex.Data != null && ex.Data.Count > 0)
+            {
+                Log.Error($"{prefix}Data:");
+                foreach (var key in ex.Data.Keys)
+                {
+                    Log.Error($"{prefix}  [{key}]: {ex.Data[key]}");
+                }
+            }
+            
+            Log.Error($"{prefix}StackTrace:");
+            if (!string.IsNullOrEmpty(ex.StackTrace))
+            {
+                foreach (var line in ex.StackTrace.Split('\n').Take(15))
+                {
+                    Log.Error($"{prefix}  {line.Trim()}");
+                }
+            }
+            
+            // Рекурсивно логируем внутренние исключения
+            if (ex.InnerException != null)
+            {
+                LogExceptionDetails(ex.InnerException, level + 1);
+            }
+            
+            // Для AggregateException логируем все внутренние исключения
+            if (ex is AggregateException aggEx)
+            {
+                int i = 0;
+                foreach (var inner in aggEx.InnerExceptions)
+                {
+                    Log.Error($"{prefix}=== AggregateException.InnerExceptions[{i}] ===");
+                    LogExceptionDetails(inner, level + 1);
+                    i++;
+                }
+            }
         }
 
         public async Task<LostPasswordViewModel> BuildLostPasswordViewModel()
         {
             var vm = new LostPasswordViewModel();
 
-            var environments = await _hopexSSPClient.GetEnvironments();
+            try
+            {
+                var environments = await _hopexSSPClient.GetEnvironments();
 
-            if (environments == null || !environments.Any())
-            {
-                vm.Environments = null;
+                if (environments == null || !environments.Any())
+                {
+                    vm.Environments = null;
+                }
+                else
+                {
+                    vm.Environments = environments.Select(e => new SelectListItem(e.Name, e.Id));
+                }
             }
-            else
+            catch (Exception ex)
             {
-                vm.Environments = environments.Select(e => new SelectListItem(e.Name, e.Id));
+                Log.Error($"BuildLostPasswordViewModel: Ошибка GetEnvironments: {ex.Message}");
+                vm.Environments = null;
             }
 
             return vm;

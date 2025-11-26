@@ -1,0 +1,1237 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "HAS.Modules.UAS/1.0.0": {
+        "dependencies": {
+          "System.Configuration.ConfigurationManager": "6.0.0",
+          "System.Reactive": "6.0.0",
+          "CSharpFunctionalExtensions": "2.36.1.0",
+          "CSharpFunctionalExtensions.FluentAssertions": "1.1.0.0",
+          "Dapper": "2.0.0.0",
+          "Easy-Password-Validator": "1.1.8.0",
+          "HAS.Extensions.Forms": "16.0.2.35",
+          "HAS.Extensions.Package": "16.0.2.35",
+          "HAS.Server.Commons": "16.0.2.35",
+          "HAS.Server.SiteModule": "16.0.2.35",
+          "Hopex.ApplicationServer.WebServices": "16.0.2.35",
+          "IdentityModel.AspNetCore": "4.0.0.0",
+          "IdentityModel.AspNetCore.OAuth2Introspection": "4.0.0.0",
+          "IdentityModel": "6.1.0.0",
+          "IdentityServer4.AccessTokenValidation": "3.0.0.0",
+          "IdentityServer4": "4.1.2.0",
+          "IdentityServer4.EntityFramework": "4.1.2.0",
+          "IdentityServer4.EntityFramework.Storage": "4.1.2.0",
+          "IdentityServer4.Storage": "4.1.2.0",
+          "Jaeger.Communication.Thrift": "1.0.3.0",
+          "Jaeger.Core": "1.0.3.0",
+          "Jaeger.Senders.Thrift": "1.0.3.0",
+          "Microsoft.AspNetCore.Authentication.JwtBearer": "6.0.27.0",
+          "Microsoft.AspNetCore.Authentication.OpenIdConnect": "6.0.27.0",
+          "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore": "6.0.27.0",
+          "Microsoft.AspNetCore.Mvc.Razor.Extensions": "6.0.27.0",
+          "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation": "6.0.27.0",
+          "Microsoft.AspNetCore.Razor.Language": "6.0.27.0",
+          "Microsoft.Data.SqlClient": "5.0.0.0",
+          "Microsoft.Data.Sqlite": "6.0.27.0",
+          "Microsoft.EntityFrameworkCore.Abstractions": "6.0.27.0",
+          "Microsoft.EntityFrameworkCore": "6.0.27.0",
+          "Microsoft.EntityFrameworkCore.InMemory": "6.0.27.0",
+          "Microsoft.EntityFrameworkCore.Relational": "6.0.27.0",
+          "Microsoft.EntityFrameworkCore.Sqlite": "6.0.27.0",
+          "Microsoft.EntityFrameworkCore.SqlServer": "6.0.27.0",
+          "Microsoft.Extensions.Caching.SqlServer": "6.0.27.0",
+          "Microsoft.IdentityModel.Abstractions": "6.35.0.0",
+          "Microsoft.IdentityModel.JsonWebTokens": "6.35.0.0",
+          "Microsoft.IdentityModel.Logging": "6.35.0.0",
+          "Microsoft.IdentityModel.Protocols": "6.35.0.0",
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect": "6.35.0.0",
+          "Microsoft.IdentityModel.Tokens": "6.35.0.0",
+          "Microsoft.IdentityModel.Tokens.Saml": "5.2.4.0",
+          "Microsoft.IdentityModel.Xml": "5.2.4.0",
+          "Microsoft.SqlServer.Server": "1.0.0.0",
+          "Newtonsoft.Json": "12.0.0.0",
+          "NuGet.Versioning": "6.6.1.2",
+          "Serilog.AspNetCore": "7.0.0.0",
+          "Serilog": "2.0.0.0",
+          "Serilog.Enrichers.AssemblyName": "0.0.0.0",
+          "Serilog.Extensions.Hosting": "7.0.0.0",
+          "Serilog.Extensions.Logging": "7.0.0.0",
+          "Serilog.Formatting.Compact": "1.1.0.0",
+          "Serilog.Settings.Configuration": "7.0.0.0",
+          "Serilog.Sinks.Async": "1.5.0.0",
+          "Serilog.Sinks.Console": "4.1.0.0",
+          "Serilog.Sinks.Debug": "2.0.0.0",
+          "Serilog.Sinks.File": "5.0.0.0",
+          "Serilog.Sinks.PeriodicBatching": "3.0.0.0",
+          "Serilog.Sinks.Seq": "5.2.2.0",
+          "SQLitePCLRaw.batteries_v2": "2.1.2.1721",
+          "SQLitePCLRaw.core": "2.1.2.1721",
+          "SQLitePCLRaw.provider.e_sqlite3": "2.1.2.1721",
+          "Sustainsys.Saml2.AspNetCore2": "0.0.0.0",
+          "Sustainsys.Saml2": "2.9.2.0",
+          "System.DirectoryServices.AccountManagement": "4.0.0.0",
+          "System.DirectoryServices": "4.0.0.0",
+          "System.DirectoryServices.Protocols": "4.0.0.0",
+          "System.IdentityModel.Tokens.Jwt": "6.35.0.0",
+          "TestableIO.System.IO.Abstractions": "19.0.0.0",
+          "TestableIO.System.IO.Abstractions.Wrappers": "19.0.0.0"
+        },
+        "runtime": {
+          "HAS.Modules.UAS.dll": {}
+        }
+      },
+      "Microsoft.Win32.SystemEvents/6.0.0": {
+        "runtime": {
+          "lib/net6.0/Microsoft.Win32.SystemEvents.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net6.0/Microsoft.Win32.SystemEvents.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "System.Configuration.ConfigurationManager/6.0.0": {
+        "dependencies": {
+          "System.Security.Cryptography.ProtectedData": "6.0.0",
+          "System.Security.Permissions": "6.0.0"
+        },
+        "runtime": {
+          "lib/net6.0/System.Configuration.ConfigurationManager.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "System.Drawing.Common/6.0.0": {
+        "dependencies": {
+          "Microsoft.Win32.SystemEvents": "6.0.0"
+        },
+        "runtime": {
+          "lib/net6.0/System.Drawing.Common.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/unix/lib/net6.0/System.Drawing.Common.dll": {
+            "rid": "unix",
+            "assetType": "runtime",
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          },
+          "runtimes/win/lib/net6.0/System.Drawing.Common.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "System.Reactive/6.0.0": {
+        "runtime": {
+          "lib/net6.0/System.Reactive.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.0.1"
+          }
+        }
+      },
+      "System.Security.AccessControl/6.0.0": {},
+      "System.Security.Cryptography.ProtectedData/6.0.0": {
+        "runtime": {
+          "lib/net6.0/System.Security.Cryptography.ProtectedData.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net6.0/System.Security.Cryptography.ProtectedData.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "System.Security.Permissions/6.0.0": {
+        "dependencies": {
+          "System.Security.AccessControl": "6.0.0",
+          "System.Windows.Extensions": "6.0.0"
+        },
+        "runtime": {
+          "lib/net6.0/System.Security.Permissions.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "System.Windows.Extensions/6.0.0": {
+        "dependencies": {
+          "System.Drawing.Common": "6.0.0"
+        },
+        "runtime": {
+          "lib/net6.0/System.Windows.Extensions.dll": {
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        },
+        "runtimeTargets": {
+          "runtimes/win/lib/net6.0/System.Windows.Extensions.dll": {
+            "rid": "win",
+            "assetType": "runtime",
+            "assemblyVersion": "6.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "CSharpFunctionalExtensions/2.36.1.0": {
+        "runtime": {
+          "CSharpFunctionalExtensions.dll": {
+            "assemblyVersion": "2.36.1.0",
+            "fileVersion": "2.36.1.0"
+          }
+        }
+      },
+      "CSharpFunctionalExtensions.FluentAssertions/1.1.0.0": {
+        "runtime": {
+          "CSharpFunctionalExtensions.FluentAssertions.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "Dapper/2.0.0.0": {
+        "runtime": {
+          "Dapper.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.0.138.25557"
+          }
+        }
+      },
+      "Easy-Password-Validator/1.1.8.0": {
+        "runtime": {
+          "Easy-Password-Validator.dll": {
+            "assemblyVersion": "1.1.8.0",
+            "fileVersion": "1.1.8.0"
+          }
+        }
+      },
+      "HAS.Extensions.Forms/16.0.2.35": {
+        "runtime": {
+          "HAS.Extensions.Forms.dll": {
+            "assemblyVersion": "16.0.2.35",
+            "fileVersion": "16.0.2.35"
+          }
+        }
+      },
+      "HAS.Extensions.Package/16.0.2.35": {
+        "runtime": {
+          "HAS.Extensions.Package.dll": {
+            "assemblyVersion": "16.0.2.35",
+            "fileVersion": "16.0.2.35"
+          }
+        }
+      },
+      "HAS.Server.Commons/16.0.2.35": {
+        "runtime": {
+          "HAS.Server.Commons.dll": {
+            "assemblyVersion": "16.0.2.35",
+            "fileVersion": "16.0.2.35"
+          }
+        }
+      },
+      "HAS.Server.SiteModule/16.0.2.35": {
+        "runtime": {
+          "HAS.Server.SiteModule.dll": {
+            "assemblyVersion": "16.0.2.35",
+            "fileVersion": "16.0.2.35"
+          }
+        }
+      },
+      "Hopex.ApplicationServer.WebServices/16.0.2.35": {
+        "runtime": {
+          "Hopex.ApplicationServer.WebServices.dll": {
+            "assemblyVersion": "16.0.2.35",
+            "fileVersion": "16.0.2.35"
+          }
+        }
+      },
+      "IdentityModel.AspNetCore/4.0.0.0": {
+        "runtime": {
+          "IdentityModel.AspNetCore.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.3.0.0"
+          }
+        }
+      },
+      "IdentityModel.AspNetCore.OAuth2Introspection/4.0.0.0": {
+        "runtime": {
+          "IdentityModel.AspNetCore.OAuth2Introspection.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "4.0.1.0"
+          }
+        }
+      },
+      "IdentityModel/6.1.0.0": {
+        "runtime": {
+          "IdentityModel.dll": {
+            "assemblyVersion": "6.1.0.0",
+            "fileVersion": "6.1.0.0"
+          }
+        }
+      },
+      "IdentityServer4.AccessTokenValidation/3.0.0.0": {
+        "runtime": {
+          "IdentityServer4.AccessTokenValidation.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.0.1.0"
+          }
+        }
+      },
+      "IdentityServer4/4.1.2.0": {
+        "runtime": {
+          "IdentityServer4.dll": {
+            "assemblyVersion": "4.1.2.0",
+            "fileVersion": "4.1.2.0"
+          }
+        }
+      },
+      "IdentityServer4.EntityFramework/4.1.2.0": {
+        "runtime": {
+          "IdentityServer4.EntityFramework.dll": {
+            "assemblyVersion": "4.1.2.0",
+            "fileVersion": "4.1.2.0"
+          }
+        }
+      },
+      "IdentityServer4.EntityFramework.Storage/4.1.2.0": {
+        "runtime": {
+          "IdentityServer4.EntityFramework.Storage.dll": {
+            "assemblyVersion": "4.1.2.0",
+            "fileVersion": "4.1.2.0"
+          }
+        }
+      },
+      "IdentityServer4.Storage/4.1.2.0": {
+        "runtime": {
+          "IdentityServer4.Storage.dll": {
+            "assemblyVersion": "4.1.2.0",
+            "fileVersion": "4.1.2.0"
+          }
+        }
+      },
+      "Jaeger.Communication.Thrift/1.0.3.0": {
+        "runtime": {
+          "Jaeger.Communication.Thrift.dll": {
+            "assemblyVersion": "1.0.3.0",
+            "fileVersion": "1.0.3.0"
+          }
+        }
+      },
+      "Jaeger.Core/1.0.3.0": {
+        "runtime": {
+          "Jaeger.Core.dll": {
+            "assemblyVersion": "1.0.3.0",
+            "fileVersion": "1.0.3.0"
+          }
+        }
+      },
+      "Jaeger.Senders.Thrift/1.0.3.0": {
+        "runtime": {
+          "Jaeger.Senders.Thrift.dll": {
+            "assemblyVersion": "1.0.3.0",
+            "fileVersion": "1.0.3.0"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Authentication.JwtBearer/6.0.27.0": {
+        "runtime": {
+          "Microsoft.AspNetCore.Authentication.JwtBearer.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.7002"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Authentication.OpenIdConnect/6.0.27.0": {
+        "runtime": {
+          "Microsoft.AspNetCore.Authentication.OpenIdConnect.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.7002"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore/6.0.27.0": {
+        "runtime": {
+          "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.7002"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Mvc.Razor.Extensions/6.0.27.0": {
+        "runtime": {
+          "Microsoft.AspNetCore.Mvc.Razor.Extensions.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.7002"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/6.0.27.0": {
+        "runtime": {
+          "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.7002"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.Razor.Language/6.0.27.0": {
+        "runtime": {
+          "Microsoft.AspNetCore.Razor.Language.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.7002"
+          }
+        }
+      },
+      "Microsoft.Data.SqlClient/5.0.0.0": {
+        "runtime": {
+          "Microsoft.Data.SqlClient.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.15.24027.2"
+          }
+        }
+      },
+      "Microsoft.Data.Sqlite/6.0.27.0": {
+        "runtime": {
+          "Microsoft.Data.Sqlite.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.6609"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore.Abstractions/6.0.27.0": {
+        "runtime": {
+          "Microsoft.EntityFrameworkCore.Abstractions.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.6609"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore/6.0.27.0": {
+        "runtime": {
+          "Microsoft.EntityFrameworkCore.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.6609"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore.InMemory/6.0.27.0": {
+        "runtime": {
+          "Microsoft.EntityFrameworkCore.InMemory.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.6609"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore.Relational/6.0.27.0": {
+        "runtime": {
+          "Microsoft.EntityFrameworkCore.Relational.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.6609"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore.Sqlite/6.0.27.0": {
+        "runtime": {
+          "Microsoft.EntityFrameworkCore.Sqlite.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.6609"
+          }
+        }
+      },
+      "Microsoft.EntityFrameworkCore.SqlServer/6.0.27.0": {
+        "runtime": {
+          "Microsoft.EntityFrameworkCore.SqlServer.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.6609"
+          }
+        }
+      },
+      "Microsoft.Extensions.Caching.SqlServer/6.0.27.0": {
+        "runtime": {
+          "Microsoft.Extensions.Caching.SqlServer.dll": {
+            "assemblyVersion": "6.0.27.0",
+            "fileVersion": "6.0.2724.7002"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Abstractions/6.35.0.0": {
+        "runtime": {
+          "Microsoft.IdentityModel.Abstractions.dll": {
+            "assemblyVersion": "6.35.0.0",
+            "fileVersion": "6.35.0.41201"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.JsonWebTokens/6.35.0.0": {
+        "runtime": {
+          "Microsoft.IdentityModel.JsonWebTokens.dll": {
+            "assemblyVersion": "6.35.0.0",
+            "fileVersion": "6.35.0.41201"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Logging/6.35.0.0": {
+        "runtime": {
+          "Microsoft.IdentityModel.Logging.dll": {
+            "assemblyVersion": "6.35.0.0",
+            "fileVersion": "6.35.0.41201"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Protocols/6.35.0.0": {
+        "runtime": {
+          "Microsoft.IdentityModel.Protocols.dll": {
+            "assemblyVersion": "6.35.0.0",
+            "fileVersion": "6.35.0.41201"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Protocols.OpenIdConnect/6.35.0.0": {
+        "runtime": {
+          "Microsoft.IdentityModel.Protocols.OpenIdConnect.dll": {
+            "assemblyVersion": "6.35.0.0",
+            "fileVersion": "6.35.0.41201"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Tokens/6.35.0.0": {
+        "runtime": {
+          "Microsoft.IdentityModel.Tokens.dll": {
+            "assemblyVersion": "6.35.0.0",
+            "fileVersion": "6.35.0.41201"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Tokens.Saml/5.2.4.0": {
+        "runtime": {
+          "Microsoft.IdentityModel.Tokens.Saml.dll": {
+            "assemblyVersion": "5.2.4.0",
+            "fileVersion": "5.2.4.50619"
+          }
+        }
+      },
+      "Microsoft.IdentityModel.Xml/5.2.4.0": {
+        "runtime": {
+          "Microsoft.IdentityModel.Xml.dll": {
+            "assemblyVersion": "5.2.4.0",
+            "fileVersion": "5.2.4.50619"
+          }
+        }
+      },
+      "Microsoft.SqlServer.Server/1.0.0.0": {
+        "runtime": {
+          "Microsoft.SqlServer.Server.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Newtonsoft.Json/12.0.0.0": {
+        "runtime": {
+          "Newtonsoft.Json.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.2.23222"
+          }
+        }
+      },
+      "NuGet.Versioning/6.6.1.2": {
+        "runtime": {
+          "NuGet.Versioning.dll": {
+            "assemblyVersion": "6.6.1.2",
+            "fileVersion": "6.6.1.2"
+          }
+        }
+      },
+      "Serilog.AspNetCore/7.0.0.0": {
+        "runtime": {
+          "Serilog.AspNetCore.dll": {
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.0.0.0"
+          }
+        }
+      },
+      "Serilog/2.0.0.0": {
+        "runtime": {
+          "Serilog.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.12.0.0"
+          }
+        }
+      },
+      "Serilog.Enrichers.AssemblyName/0.0.0.0": {
+        "runtime": {
+          "Serilog.Enrichers.AssemblyName.dll": {
+            "assemblyVersion": "0.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "Serilog.Extensions.Hosting/7.0.0.0": {
+        "runtime": {
+          "Serilog.Extensions.Hosting.dll": {
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.0.0.0"
+          }
+        }
+      },
+      "Serilog.Extensions.Logging/7.0.0.0": {
+        "runtime": {
+          "Serilog.Extensions.Logging.dll": {
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.0.0.0"
+          }
+        }
+      },
+      "Serilog.Formatting.Compact/1.1.0.0": {
+        "runtime": {
+          "Serilog.Formatting.Compact.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "Serilog.Settings.Configuration/7.0.0.0": {
+        "runtime": {
+          "Serilog.Settings.Configuration.dll": {
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.0.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Async/1.5.0.0": {
+        "runtime": {
+          "Serilog.Sinks.Async.dll": {
+            "assemblyVersion": "1.5.0.0",
+            "fileVersion": "1.5.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Console/4.1.0.0": {
+        "runtime": {
+          "Serilog.Sinks.Console.dll": {
+            "assemblyVersion": "4.1.0.0",
+            "fileVersion": "4.1.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Debug/2.0.0.0": {
+        "runtime": {
+          "Serilog.Sinks.Debug.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.0.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.File/5.0.0.0": {
+        "runtime": {
+          "Serilog.Sinks.File.dll": {
+            "assemblyVersion": "5.0.0.0",
+            "fileVersion": "5.0.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.PeriodicBatching/3.0.0.0": {
+        "runtime": {
+          "Serilog.Sinks.PeriodicBatching.dll": {
+            "assemblyVersion": "3.0.0.0",
+            "fileVersion": "3.1.0.0"
+          }
+        }
+      },
+      "Serilog.Sinks.Seq/5.2.2.0": {
+        "runtime": {
+          "Serilog.Sinks.Seq.dll": {
+            "assemblyVersion": "5.2.2.0",
+            "fileVersion": "5.2.2.0"
+          }
+        }
+      },
+      "SQLitePCLRaw.batteries_v2/2.1.2.1721": {
+        "runtime": {
+          "SQLitePCLRaw.batteries_v2.dll": {
+            "assemblyVersion": "2.1.2.1721",
+            "fileVersion": "2.1.2.1721"
+          }
+        }
+      },
+      "SQLitePCLRaw.core/2.1.2.1721": {
+        "runtime": {
+          "SQLitePCLRaw.core.dll": {
+            "assemblyVersion": "2.1.2.1721",
+            "fileVersion": "2.1.2.1721"
+          }
+        }
+      },
+      "SQLitePCLRaw.provider.e_sqlite3/2.1.2.1721": {
+        "runtime": {
+          "SQLitePCLRaw.provider.e_sqlite3.dll": {
+            "assemblyVersion": "2.1.2.1721",
+            "fileVersion": "2.1.2.1721"
+          }
+        }
+      },
+      "Sustainsys.Saml2.AspNetCore2/0.0.0.0": {
+        "runtime": {
+          "Sustainsys.Saml2.AspNetCore2.dll": {
+            "assemblyVersion": "0.0.0.0",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Sustainsys.Saml2/2.9.2.0": {
+        "runtime": {
+          "Sustainsys.Saml2.dll": {
+            "assemblyVersion": "2.9.2.0",
+            "fileVersion": "2.9.2.0"
+          }
+        }
+      },
+      "System.DirectoryServices.AccountManagement/4.0.0.0": {
+        "runtime": {
+          "System.DirectoryServices.AccountManagement.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "System.DirectoryServices/4.0.0.0": {
+        "runtime": {
+          "System.DirectoryServices.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "System.DirectoryServices.Protocols/4.0.0.0": {
+        "runtime": {
+          "System.DirectoryServices.Protocols.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      },
+      "System.IdentityModel.Tokens.Jwt/6.35.0.0": {
+        "runtime": {
+          "System.IdentityModel.Tokens.Jwt.dll": {
+            "assemblyVersion": "6.35.0.0",
+            "fileVersion": "6.35.0.41201"
+          }
+        }
+      },
+      "TestableIO.System.IO.Abstractions/19.0.0.0": {
+        "runtime": {
+          "TestableIO.System.IO.Abstractions.dll": {
+            "assemblyVersion": "19.0.0.0",
+            "fileVersion": "19.2.29.16839"
+          }
+        }
+      },
+      "TestableIO.System.IO.Abstractions.Wrappers/19.0.0.0": {
+        "runtime": {
+          "TestableIO.System.IO.Abstractions.Wrappers.dll": {
+            "assemblyVersion": "19.0.0.0",
+            "fileVersion": "19.2.29.16839"
+          }
+        }
+      },
+      "FluentAssertions/6.8.0.0": {
+        "runtime": {
+          "FluentAssertions.dll": {
+            "assemblyVersion": "6.8.0.0",
+            "fileVersion": "6.8.0.0"
+          }
+        }
+      },
+      "OpenTracing/0.12.1.0": {
+        "runtime": {
+          "OpenTracing.dll": {
+            "assemblyVersion": "0.12.1.0",
+            "fileVersion": "0.12.1.0"
+          }
+        }
+      },
+      "Thrift/0.14.1.0": {
+        "runtime": {
+          "Thrift.dll": {
+            "assemblyVersion": "0.14.1.0",
+            "fileVersion": "0.14.1.0"
+          }
+        }
+      },
+      "Microsoft.Extensions.DependencyModel/7.0.0.0": {
+        "runtime": {
+          "Microsoft.Extensions.DependencyModel.dll": {
+            "assemblyVersion": "7.0.0.0",
+            "fileVersion": "7.0.22.51805"
+          }
+        }
+      },
+      "System.Runtime.Caching/4.0.0.0": {
+        "runtime": {
+          "System.Runtime.Caching.dll": {
+            "assemblyVersion": "4.0.0.0",
+            "fileVersion": "6.0.21.52210"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "HAS.Modules.UAS/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Win32.SystemEvents/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-hqTM5628jSsQiv+HGpiq3WKBl2c8v1KZfby2J6Pr7pEPlK9waPdgEO6b8A/+/xn/yZ9ulv8HuqK71ONy2tg67A==",
+      "path": "microsoft.win32.systemevents/6.0.0",
+      "hashPath": "microsoft.win32.systemevents.6.0.0.nupkg.sha512"
+    },
+    "System.Configuration.ConfigurationManager/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-7T+m0kDSlIPTHIkPMIu6m6tV6qsMqJpvQWW2jIc2qi7sn40qxFo0q+7mEQAhMPXZHMKnWrnv47ntGlM/ejvw3g==",
+      "path": "system.configuration.configurationmanager/6.0.0",
+      "hashPath": "system.configuration.configurationmanager.6.0.0.nupkg.sha512"
+    },
+    "System.Drawing.Common/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-NfuoKUiP2nUWwKZN6twGqXioIe1zVD0RIj2t976A+czLHr2nY454RwwXs6JU9Htc6mwqL6Dn/nEL3dpVf2jOhg==",
+      "path": "system.drawing.common/6.0.0",
+      "hashPath": "system.drawing.common.6.0.0.nupkg.sha512"
+    },
+    "System.Reactive/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-31kfaW4ZupZzPsI5PVe77VhnvFF55qgma7KZr/E0iFTs6fmdhhG8j0mgEx620iLTey1EynOkEfnyTjtNEpJzGw==",
+      "path": "system.reactive/6.0.0",
+      "hashPath": "system.reactive.6.0.0.nupkg.sha512"
+    },
+    "System.Security.AccessControl/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-AUADIc0LIEQe7MzC+I0cl0rAT8RrTAKFHl53yHjEUzNVIaUlhFY11vc2ebiVJzVBuOzun6F7FBA+8KAbGTTedQ==",
+      "path": "system.security.accesscontrol/6.0.0",
+      "hashPath": "system.security.accesscontrol.6.0.0.nupkg.sha512"
+    },
+    "System.Security.Cryptography.ProtectedData/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-rp1gMNEZpvx9vP0JW0oHLxlf8oSiQgtno77Y4PLUBjSiDYoD77Y8uXHr1Ea5XG4/pIKhqAdxZ8v8OTUtqo9PeQ==",
+      "path": "system.security.cryptography.protecteddata/6.0.0",
+      "hashPath": "system.security.cryptography.protecteddata.6.0.0.nupkg.sha512"
+    },
+    "System.Security.Permissions/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-T/uuc7AklkDoxmcJ7LGkyX1CcSviZuLCa4jg3PekfJ7SU0niF0IVTXwUiNVP9DSpzou2PpxJ+eNY2IfDM90ZCg==",
+      "path": "system.security.permissions/6.0.0",
+      "hashPath": "system.security.permissions.6.0.0.nupkg.sha512"
+    },
+    "System.Windows.Extensions/6.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-IXoJOXIqc39AIe+CIR7koBtRGMiCt/LPM3lI+PELtDIy9XdyeSrwXFdWV9dzJ2Awl0paLWUaknLxFQ5HpHZUog==",
+      "path": "system.windows.extensions/6.0.0",
+      "hashPath": "system.windows.extensions.6.0.0.nupkg.sha512"
+    },
+    "CSharpFunctionalExtensions/2.36.1.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CSharpFunctionalExtensions.FluentAssertions/1.1.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Dapper/2.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Easy-Password-Validator/1.1.8.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "HAS.Extensions.Forms/16.0.2.35": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "HAS.Extensions.Package/16.0.2.35": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "HAS.Server.Commons/16.0.2.35": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "HAS.Server.SiteModule/16.0.2.35": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Hopex.ApplicationServer.WebServices/16.0.2.35": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IdentityModel.AspNetCore/4.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IdentityModel.AspNetCore.OAuth2Introspection/4.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IdentityModel/6.1.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IdentityServer4.AccessTokenValidation/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IdentityServer4/4.1.2.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IdentityServer4.EntityFramework/4.1.2.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IdentityServer4.EntityFramework.Storage/4.1.2.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "IdentityServer4.Storage/4.1.2.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Jaeger.Communication.Thrift/1.0.3.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Jaeger.Core/1.0.3.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Jaeger.Senders.Thrift/1.0.3.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Authentication.JwtBearer/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Authentication.OpenIdConnect/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.DataProtection.EntityFrameworkCore/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Mvc.Razor.Extensions/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Razor.Language/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Data.SqlClient/5.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Data.Sqlite/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.EntityFrameworkCore.Abstractions/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.EntityFrameworkCore/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.EntityFrameworkCore.InMemory/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.EntityFrameworkCore.Relational/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.EntityFrameworkCore.Sqlite/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.EntityFrameworkCore.SqlServer/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Extensions.Caching.SqlServer/6.0.27.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.IdentityModel.Abstractions/6.35.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.IdentityModel.JsonWebTokens/6.35.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.IdentityModel.Logging/6.35.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.IdentityModel.Protocols/6.35.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.IdentityModel.Protocols.OpenIdConnect/6.35.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.IdentityModel.Tokens/6.35.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.IdentityModel.Tokens.Saml/5.2.4.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.IdentityModel.Xml/5.2.4.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.SqlServer.Server/1.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Newtonsoft.Json/12.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "NuGet.Versioning/6.6.1.2": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.AspNetCore/7.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog/2.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Enrichers.AssemblyName/0.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Extensions.Hosting/7.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Extensions.Logging/7.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Formatting.Compact/1.1.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Settings.Configuration/7.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Sinks.Async/1.5.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Sinks.Console/4.1.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Sinks.Debug/2.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Sinks.File/5.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Sinks.PeriodicBatching/3.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Serilog.Sinks.Seq/5.2.2.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SQLitePCLRaw.batteries_v2/2.1.2.1721": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SQLitePCLRaw.core/2.1.2.1721": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SQLitePCLRaw.provider.e_sqlite3/2.1.2.1721": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Sustainsys.Saml2.AspNetCore2/0.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Sustainsys.Saml2/2.9.2.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "System.DirectoryServices.AccountManagement/4.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "System.DirectoryServices/4.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "System.DirectoryServices.Protocols/4.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "System.IdentityModel.Tokens.Jwt/6.35.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "TestableIO.System.IO.Abstractions/19.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "TestableIO.System.IO.Abstractions.Wrappers/19.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FluentAssertions/6.8.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "OpenTracing/0.12.1.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Thrift/0.14.1.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.Extensions.DependencyModel/7.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "System.Runtime.Caching/4.0.0.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

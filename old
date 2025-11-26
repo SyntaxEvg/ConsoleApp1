@@ -100,6 +100,96 @@ namespace Mega.Has.Modules.UAS.Controllers
             _authenticationFailureHandlingService = authenticationFailureHandlingService;
             _viewModelFactory = viewModelFactory;
 
+            // ========== ЛОГИРОВАНИЕ ПРИ СОЗДАНИИ КОНТРОЛЛЕРА ==========
+            Log.Information("##################################################");
+            Log.Information("### AccountController СОЗДАН - DEBUG VERSION v1 ###");
+            Log.Information("##################################################");
+            
+            try
+            {
+                Log.Information($"_hopex (IHopexSSPClient) = {(_hopex != null ? _hopex.GetType().FullName : "NULL")}");
+                Log.Information($"_viewModelFactory = {(_viewModelFactory != null ? _viewModelFactory.GetType().FullName : "NULL")}");
+                Log.Information($"_clusterConfiguration = {(_clusterConfiguration != null ? "OK" : "NULL")}");
+                Log.Information($"_clusterAdminClient = {(_clusterAdminClient != null ? _clusterAdminClient.GetType().FullName : "NULL")}");
+                
+                if (_hopex != null)
+                {
+                    // Логируем информацию о _hopex через reflection
+                    var hopexType = _hopex.GetType();
+                    Log.Information($"_hopex Assembly: {hopexType.Assembly.GetName().Name}");
+                    Log.Information($"_hopex Assembly Version: {hopexType.Assembly.GetName().Version}");
+                    
+                    // Пробуем получить базовый URL или другие настройки
+                    foreach (var field in hopexType.GetFields(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance))
+                    {
+                        try
+                        {
+                            var value = field.GetValue(_hopex);
+                            if (value != null)
+                            {
+                                var valueStr = value.ToString();
+                                if (field.Name.ToLower().Contains("password") || field.Name.ToLower().Contains("secret") || field.Name.ToLower().Contains("key"))
+                                {
+                                    valueStr = "***MASKED***";
+                                }
+                                Log.Information($"  _hopex.{field.Name} = {valueStr}");
+                            }
+                        }
+                        catch { }
+                    }
+                    
+                    foreach (var prop in hopexType.GetProperties(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public))
+                    {
+                        try
+                        {
+                            if (prop.CanRead)
+                            {
+                                var value = prop.GetValue(_hopex);
+                                if (value != null)
+                                {
+                                    var valueStr = value.ToString();
+                                    if (prop.Name.ToLower().Contains("password") || prop.Name.ToLower().Contains("secret") || prop.Name.ToLower().Contains("key"))
+                                    {
+                                        valueStr = "***MASKED***";
+                                    }
+                                    Log.Information($"  _hopex.{prop.Name} = {valueStr}");
+                                }
+                            }
+                        }
+                        catch { }
+                    }
+                }
+                
+                if (_clusterConfiguration != null)
+                {
+                    try
+                    {
+                        var runtime = _clusterConfiguration.RuntimeClusterSettings;
+                        if (runtime != null)
+                        {
+                            Log.Information($"RuntimeClusterSettings.PublicAddress: {runtime.PublicAddress}");
+                            Log.Information($"RuntimeClusterSettings.Mode: {runtime.Mode}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"Ошибка при получении RuntimeClusterSettings: {ex.Message}");
+                    }
+                }
+                
+                if (_settings != null)
+                {
+                    Log.Information($"UasSettings.LoginLang: {_settings.LoginLang}");
+                    Log.Information($"UasSettings.HideModuleName: {_settings.HideModuleName}");
+                    Log.Information($"UasSettings.DefaultDb: {_settings.DefaultDb}");
+                    Log.Information($"UasSettings.DefaultProfile: {_settings.DefaultProfile}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"Ошибка при логировании конструктора AccountController: {ex.Message}");
+            }
+
             if (!string.IsNullOrEmpty(_settings.LoginLang) && _settings.LoginLang.ToLower() != "browser")
             {
                 try
@@ -249,20 +339,43 @@ namespace Mega.Has.Modules.UAS.Controllers
         [HttpGet]
         public async Task<IActionResult> Login(string returnUrl)
         {
+            Log.Information("##################################################");
+            Log.Information("### AccountController.Login: НАЧАЛО DEBUG v1 ###");
+            Log.Information("##################################################");
+            Log.Information($"returnUrl = {returnUrl}");
+            Log.Information($"Request.Path = {Request.Path}");
+            Log.Information($"Request.Host = {Request.Host}");
+            Log.Information($"Request.Scheme = {Request.Scheme}");
+            
+            // Логируем заголовки
+            Log.Information("Request Headers:");
+            foreach (var header in Request.Headers)
+            {
+                if (!header.Key.ToLower().Contains("cookie") && !header.Key.ToLower().Contains("auth"))
+                {
+                    Log.Information($"  {header.Key}: {header.Value}");
+                }
+            }
+
             if (!IsValidReturnUrl(returnUrl))
             {
+                Log.Warning($"IsValidReturnUrl вернул false для: {returnUrl}");
                 return BadRequest();
             }
 
             string warning = null;
             var currentModuleId = ModuleHelper.GetCurrentModuleId(returnUrl);
+            Log.Information($"currentModuleId = {currentModuleId}");
+            Log.Information($"_clusterConfiguration.IsInitialized = {_clusterConfiguration.IsInitialized}");
 
             if (currentModuleId != "has.console" && _clusterConfiguration.IsInitialized)
             {
                 var maintenanceSettings = _applicationSettings.GetValue<MaintenanceModeSettings>("MaintenanceModeSettings");
+                Log.Information($"maintenanceSettings = {(maintenanceSettings != null ? "exists" : "NULL")}");
 
                 if (maintenanceSettings != null && maintenanceSettings.IsValid())
                 {
+                    Log.Information("MaintenanceMode активен - возвращаем disabled login view");
                     return View(new LoginViewModel
                     {
                         Message = FormatMessage(maintenanceSettings),
@@ -291,11 +404,21 @@ namespace Mega.Has.Modules.UAS.Controllers
                     environmentId = envValue.ToString();
                 }
             }
+            Log.Information($"environmentId из URL = {environmentId}");
 
+            Log.Information(">>> Вызываем _viewModelFactory.BuildLoginViewModelAsync...");
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            
             var (error, viewModel) = await _viewModelFactory.BuildLoginViewModelAsync(returnUrl, environmentId, _settings.HideModuleName);
+            
+            stopwatch.Stop();
+            Log.Information($"<<< BuildLoginViewModelAsync завершён за {stopwatch.ElapsedMilliseconds} мс");
+            Log.Information($"error = '{error}'");
+            Log.Information($"viewModel.Environments = {(viewModel.Environments != null ? $"OK ({viewModel.Environments.Count()} items)" : "NULL")}");
 
             if (!string.IsNullOrEmpty(error))
             {
+                Log.Warning($"Добавляем ModelState ошибку: Unable to retrieve environments");
                 ModelState.AddModelError("", S["Unable to retrieve environments."]);
             }
 
@@ -308,9 +431,11 @@ namespace Mega.Has.Modules.UAS.Controllers
 
             if (viewModel.IsExternalLoginOnly && viewModel.ExternalLoginScheme != null && viewModel.EnvironmentId != null)
             {
+                Log.Information($"IsExternalLoginOnly = true, перенаправляем на ExternalLogin: {viewModel.ExternalLoginScheme}");
                 return await ExternalLogin(viewModel.VisibleExternalProviders.SingleOrDefault().DisplayName, returnUrl, viewModel.EnvironmentId);
             }
 
+            Log.Information("### AccountController.Login: Возвращаем View('Login') ###");
             return View("Login", viewModel);
         }
 
@@ -318,6 +443,11 @@ namespace Mega.Has.Modules.UAS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
+            Log.Information("### AccountController.Login POST: НАЧАЛО ###");
+            Log.Information($"model.UserName = {model.UserName}");
+            Log.Information($"model.EnvironmentId = {model.EnvironmentId}");
+            Log.Information($"model.ReturnUrl = {model.ReturnUrl}");
+            
             var (shouldReject, waitSeconds) = _authenticationFailureHandlingService.ShouldRejectAuthentication(model.UserName);
 
             if (shouldReject)
@@ -327,10 +457,12 @@ namespace Mega.Has.Modules.UAS.Controllers
 
             if (ModelState.IsValid)
             {
+                Log.Information("ModelState.IsValid = true, проверяем credentials...");
                 var credentialResult = await _userManagement.GetCredential(model.UserName, model.Password, model.EnvironmentId);
 
                 if (credentialResult.IsFailure)
                 {
+                    Log.Warning($"credentialResult.IsFailure = true, error = {credentialResult.Error}");
                     var (error, loginViewModel) = await _viewModelFactory.BuildLoginViewModelAsync(model.ReturnUrl, model.EnvironmentId, false);
 
                     if (!string.IsNullOrEmpty(error))
@@ -342,6 +474,7 @@ namespace Mega.Has.Modules.UAS.Controllers
                 }
 
                 var token = credentialResult.Value;
+                Log.Information($"token = {(token != null ? "OK" : "NULL")}, IsActive = {token?.IsActive}");
 
                 if (token != null && token.IsActive)
                 {
@@ -409,6 +542,11 @@ namespace Mega.Has.Modules.UAS.Controllers
         [HttpGet]
         public async Task<IActionResult> Mapping(MappingInputViewModel model)
         {
+            Log.Information("### AccountController.Mapping: НАЧАЛО ###");
+            Log.Information($"model.ReturnUrl = {model.ReturnUrl}");
+            Log.Information($"model.EnvironmentId = {model.EnvironmentId}");
+            Log.Information($"model.UserName = {model.UserName}");
+            
             string repositoryId = null;
             string environmentId = null;
             string profileId = null;
@@ -457,7 +595,23 @@ namespace Mega.Has.Modules.UAS.Controllers
 
             ModelState.Clear();
 
-            var environments = await _hopex.GetEnvironments();
+            Log.Information(">>> Вызываем _hopex.GetEnvironments() из Mapping...");
+            IEnumerable<HopexEnvironmentInfo> environments = null;
+            
+            try
+            {
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                environments = await _hopex.GetEnvironments();
+                stopwatch.Stop();
+                Log.Information($"<<< _hopex.GetEnvironments() завершён за {stopwatch.ElapsedMilliseconds} мс");
+                Log.Information($"environments = {(environments != null ? $"OK ({environments.Count()} items)" : "NULL")}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error("### EXCEPTION при _hopex.GetEnvironments() в Mapping ###");
+                LogExceptionDetails(ex, 0);
+                throw;
+            }
 
             var vm = new MappingViewModel
             {
@@ -491,6 +645,7 @@ namespace Mega.Has.Modules.UAS.Controllers
                 {
                     if (vm.PersonGroups == null)
                     {
+                        Log.Information(">>> Вызываем _hopex.GetPersonGroups...");
                         vm.PersonGroups = await _hopex.GetPersonGroups(new GetPersonGroupsArgs
                         {
                             EnvironmentId = vm.EnvironmentId,
@@ -500,6 +655,7 @@ namespace Mega.Has.Modules.UAS.Controllers
                             Profile = profileId,
                             ClaimForRoles = model.ClaimForRoles
                         }, User.Claims);
+                        Log.Information($"<<< GetPersonGroups OK, PersonGroups = {(vm.PersonGroups != null ? "OK" : "NULL")}");
                     }
 
                     if (vm.PersonGroups?.PersonGroups == null || vm.PersonGroups.PersonGroups.Count() == 0)
@@ -514,12 +670,13 @@ namespace Mega.Has.Modules.UAS.Controllers
                         }
                     }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    // Ignore exceptions
+                    Log.Error($"Exception в Mapping при GetPersonGroups: {ex.Message}");
                 }
             }
 
+            Log.Information("### AccountController.Mapping: КОНЕЦ, возвращаем View ###");
             return View("Mapping", vm);
         }
 
@@ -1203,6 +1360,119 @@ namespace Mega.Has.Modules.UAS.Controllers
             message = message.Replace("{enddate}", endDate, StringComparison.OrdinalIgnoreCase);
 
             return message;
+        }
+
+        /// <summary>
+        /// Рекурсивное логирование всех деталей исключения
+        /// </summary>
+        private void LogExceptionDetails(Exception ex, int level)
+        {
+            var prefix = new string(' ', level * 2);
+            var levelName = level == 0 ? "EXCEPTION" : $"INNER[{level}]";
+            
+            Log.Error($"{prefix}=== {levelName} ===");
+            Log.Error($"{prefix}Type: {ex.GetType().FullName}");
+            Log.Error($"{prefix}Message: {ex.Message}");
+            Log.Error($"{prefix}Source: {ex.Source}");
+            
+            // Логируем все публичные свойства исключения
+            try
+            {
+                var exType = ex.GetType();
+                foreach (var prop in exType.GetProperties())
+                {
+                    try
+                    {
+                        if (prop.Name == "Message" || prop.Name == "Source" || prop.Name == "StackTrace" || 
+                            prop.Name == "InnerException" || prop.Name == "TargetSite" || prop.Name == "Data" ||
+                            prop.Name == "HelpLink" || prop.Name == "HResult")
+                            continue;
+                            
+                        var value = prop.GetValue(ex);
+                        if (value != null)
+                        {
+                            Log.Error($"{prefix}{prop.Name}: {value}");
+                        }
+                    }
+                    catch { }
+                }
+            }
+            catch { }
+            
+            // Для HttpException
+            try
+            {
+                var statusCodeProp = ex.GetType().GetProperty("StatusCode");
+                if (statusCodeProp != null)
+                {
+                    var statusCode = statusCodeProp.GetValue(ex);
+                    Log.Error($"{prefix}StatusCode: {statusCode}");
+                }
+            }
+            catch { }
+            
+            // Для WebException
+            if (ex is System.Net.WebException webEx)
+            {
+                try
+                {
+                    Log.Error($"{prefix}WebException.Status: {webEx.Status}");
+                    if (webEx.Response != null)
+                    {
+                        var response = webEx.Response as System.Net.HttpWebResponse;
+                        if (response != null)
+                        {
+                            Log.Error($"{prefix}Response.StatusCode: {response.StatusCode}");
+                            Log.Error($"{prefix}Response.StatusDescription: {response.StatusDescription}");
+                            Log.Error($"{prefix}Response.ResponseUri: {response.ResponseUri}");
+                        }
+                    }
+                }
+                catch { }
+            }
+            
+            // Для HttpRequestException
+            if (ex is System.Net.Http.HttpRequestException httpReqEx)
+            {
+                Log.Error($"{prefix}HttpRequestException.StatusCode: {httpReqEx.StatusCode}");
+            }
+            
+            // Data dictionary
+            if (ex.Data != null && ex.Data.Count > 0)
+            {
+                Log.Error($"{prefix}Data:");
+                foreach (var key in ex.Data.Keys)
+                {
+                    Log.Error($"{prefix}  [{key}]: {ex.Data[key]}");
+                }
+            }
+            
+            Log.Error($"{prefix}StackTrace:");
+            if (!string.IsNullOrEmpty(ex.StackTrace))
+            {
+                foreach (var line in ex.StackTrace.Split('\n').Take(15))
+                {
+                    Log.Error($"{prefix}  {line.Trim()}");
+                }
+            }
+            
+            // Рекурсия
+            if (ex.InnerException != null)
+            {
+                LogExceptionDetails(ex.InnerException, level + 1);
+            }
+            
+            // AggregateException
+            if (ex is AggregateException aggEx)
+            {
+                int i = 0;
+                foreach (var inner in aggEx.InnerExceptions)
+                {
+                    Log.Error($"{prefix}=== AggregateException.InnerExceptions[{i}] ===");
+                    LogExceptionDetails(inner, level + 1);
+                    i++;
+                }
+            }
         }
     }
 }

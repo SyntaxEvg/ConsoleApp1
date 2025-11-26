@@ -1,14 +1,26 @@
-Создай или отредактируй файл %AppData%\NuGet\NuGet.Config:
-xml<?xml version="1.0" encoding="utf-8"?>
+0.0.0.0 crl.microsoft.com
+0.0.0.0 crl3.digicert.com
+0.0.0.0 crl4.digicert.com
+0.0.0.0 ocsp.digicert.com
+0.0.0.0 ocsp.msocsp.com
+0.0.0.0 mscrl.microsoft.com
+0.0.0.0 www.microsoft.com
+0.0.0.0 dc.services.visualstudio.com
+0.0.0.0 vortex.data.microsoft.com
+
 <configuration>
-  <packageSources>
-    <!-- Отключаем стандартный nuget.org -->
-    <clear />
-    <!-- Только локальный источник -->
-    <add key="LocalPackages" value="C:\путь\к\локальным\пакетам" />
-  </packageSources>
-  
-  <disabledPackageSources>
-    <add key="nuget.org" value="true" />
-  </disabledPackageSources>
+  <config>
+    <add key="signatureValidationMode" value="accept" />
+  </config>
 </configuration>
+```
+
+**2. Отключи проверку отзыва сертификатов (главный тормоз!)**
+
+Это часто основная причина — Windows пытается проверить CRL/OCSP.
+
+В реестре:
+```
+HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing
+```
+Параметр `State` — установи значение `0x23e00` (отключает проверку отзыва).

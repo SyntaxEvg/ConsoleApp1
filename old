@@ -1,969 +1,175 @@
-using Dapper;
-using HAS.Server.SiteModule.Cache;
-using IdentityServer4.EntityFramework.DbContexts;
-using IdentityServer4.EntityFramework.Entities;
-using IdentityServer4.EntityFramework.Mappers;
-using IdentityServer4.Models;
-using Mega.Has.Commons;
-using Mega.Has.Commons.Security;
-using Mega.Has.Modules.UAS.Models;
-using Mega.Has.Modules.UAS.Providers;
-using Mega.Has.Modules.UAS.Providers.Google;
-using Mega.Has.Modules.UAS.Providers.Hopex;
-using Mega.Has.Modules.UAS.Providers.Saml2;
-using Mega.Has.Modules.UAS.Providers.Windows;
-using Mega.Has.Modules.UAS.Stores;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Query;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
-
-
-namespace Mega.Has.Modules.UAS
-{
-    public class SeedData
-    {
-        private static void LogException(string location, Exception ex)
-        {
-            Log.Error("==========================================");
-            Log.Error($"ОШИБКА в: {location}");
-            Log.Error($"Message: {ex.Message}");
-            Log.Error($"Type: {ex.GetType().FullName}");
-
-            if (ex.InnerException != null)
-            {
-                Log.Error($"InnerException: {ex.InnerException.Message}");
-                Log.Error($"InnerException Type: {ex.InnerException.GetType().FullName}");
-
-                if (ex.InnerException.InnerException != null)
-                {
-                    Log.Error($"Inner.Inner: {ex.InnerException.InnerException.Message}");
-                }
-            }
-
-            Log.Error("--- FULL EXCEPTION ---");
-            Log.Error(ex.ToString());
-            Log.Error("--- END FULL EXCEPTION ---");
-            Log.Error("==========================================");
-        }
-
-        /// <summary>
-        /// Проверяет существует ли таблица в базе данных
-        /// </summary>
-        private static bool TableExists(SqlConnection connection, string tableName)
-        {
-            try
-            {
-                var result = connection.ExecuteScalar<int>(
-                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES 
-                      WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = @TableName",
-                    new { TableName = tableName });
-                return result > 0;
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"TableExists({tableName}): Ошибка проверки - {ex.Message}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Проверяет нужно ли применять миграции или таблицы уже существуют
-        /// </summary>
-        private static bool ShouldSkipMigration(DatabaseFacade database, string keyTableName)
-        {
-            try
-            {
-                var connectionString = database.GetConnectionString();
-                if (string.IsNullOrEmpty(connectionString))
-                    return false;
-
-                var pendingMigrations = database.GetPendingMigrations().ToList();
-                var appliedMigrations = database.GetAppliedMigrations().ToList();
-
-                Log.Information($"ShouldSkipMigration: Pending={pendingMigrations.Count}, Applied={appliedMigrations.Count}");
-
-                // Если нет pending миграций - всё ок, не пропускаем
-                if (pendingMigrations.Count == 0)
-                {
-                    Log.Information("ShouldSkipMigration: Нет pending миграций, пропуск не требуется");
-                    return false;
-                }
-
-                // Если есть applied миграции - всё ок, не пропускаем
-                if (appliedMigrations.Count > 0)
-                {
-                    Log.Information("ShouldSkipMigration: Есть applied миграции, пропуск не требуется");
-                    return false;
-                }
-
-                // Есть pending, нет applied - проверяем существуют ли таблицы
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    bool tableExists = TableExists(connection, keyTableName);
-                    Log.Information($"ShouldSkipMigration: Таблица '{keyTableName}' существует = {tableExists}");
-
-                    if (tableExists)
-                    {
-                        Log.Warning($"ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!");
-                        Log.Warning("ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'");
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"ShouldSkipMigration: Ошибка - {ex.Message}");
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Заполняет __EFMigrationsHistory записями о pending миграциях
-        /// </summary>
-        private static void MarkMigrationsAsApplied(DatabaseFacade database)
-        {
-            try
-            {
-                var connectionString = database.GetConnectionString();
-                if (string.IsNullOrEmpty(connectionString))
-                    return;
-
-                var pendingMigrations = database.GetPendingMigrations().ToList();
-                if (pendingMigrations.Count == 0)
-                    return;
-
-                using (var connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-
-                    // Создаём таблицу __EFMigrationsHistory если её нет
-                    connection.Execute(@"
-                        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '__EFMigrationsHistory')
-                        BEGIN
-                            CREATE TABLE [__EFMigrationsHistory] (
-                                [MigrationId] nvarchar(150) NOT NULL,
-                                [ProductVersion] nvarchar(32) NOT NULL,
-                                CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
-                            );
-                        END");
-
-                    // Добавляем записи о миграциях
-                    foreach (var migration in pendingMigrations)
-                    {
-                        try
-                        {
-                            connection.Execute(
-                                @"IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = @MigrationId)
-                                  INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion]) 
-                                  VALUES (@MigrationId, @ProductVersion)",
-                                new { MigrationId = migration, ProductVersion = "6.0.27" });
-
-                            Log.Information($"MarkMigrationsAsApplied: Добавлена запись для '{migration}'");
-                        }
-                        catch (Exception insertEx)
-                        {
-                            Log.Warning($"MarkMigrationsAsApplied: Не удалось добавить '{migration}': {insertEx.Message}");
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Warning($"MarkMigrationsAsApplied: Ошибка - {ex.Message}");
-            }
-        }
-
-        public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
-        {
-            Log.Information("##################################################");
-            Log.Information("!!! НОВАЯ ВЕРСИЯ КОДА v6 - С ПРОВЕРКОЙ ТАБЛИЦ !!!");
-            Log.Information("##################################################");
-            Log.Information("=== EnsureSeedData: НАЧАЛО ===");
-
-            ServiceProvider services = null;
-            try
-            {
-                Log.Information("Шаг 1: BuildServiceProvider...");
-                services = serviceCollection.BuildServiceProvider();
-                Log.Information("Шаг 1: BuildServiceProvider - OK");
-            }
-            catch (Exception ex)
-            {
-                LogException("EnsureSeedData -> BuildServiceProvider", ex);
-                throw;
-            }
-
-            try
-            {
-                using (IServiceScope scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope())
-                {
-                    ApplicationDbContext uasContext = null;
-                    ConfigurationDbContext context = null;
-                    ILogger<SeedData> logger = null;
-
-                    try
-                    {
-                        Log.Information("Шаг 2: Получение ApplicationDbContext...");
-                        uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
-                        Log.Information($"Шаг 2: ApplicationDbContext = {(uasContext != null ? "OK" : "NULL")}");
-
-                        Log.Information("Шаг 3: Получение ConfigurationDbContext...");
-                        context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
-                        Log.Information($"Шаг 3: ConfigurationDbContext = {(context != null ? "OK" : "NULL")}");
-
-                        Log.Information("Шаг 4: Получение ILogger...");
-                        logger = services.GetService<ILogger<SeedData>>();
-                        Log.Information($"Шаг 4: ILogger = {(logger != null ? "OK" : "NULL")}");
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("EnsureSeedData -> Получение сервисов", ex);
-                        throw;
-                    }
-
-                    if (context == null)
-                    {
-                        Log.Error("ОШИБКА: ConfigurationDbContext равен NULL!");
-                        throw new InvalidOperationException("ConfigurationDbContext is null");
-                    }
-
-                    bool isInMemory = false;
-                    try
-                    {
-                        Log.Information("Шаг 5: Проверка IsInMemory...");
-                        Log.Information($"Шаг 5.1: context.Database = {(context.Database != null ? "OK" : "NULL")}");
-                        isInMemory = context.Database.IsInMemory();
-                        Log.Information($"Шаг 5: IsInMemory = {isInMemory}");
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("EnsureSeedData -> IsInMemory", ex);
-                        throw;
-                    }
-
-                    if (!isInMemory)
-                    {
-                        Log.Information("=== Режим SQL Server (не InMemory) ===");
-                        try
-                        {
-                            Log.Information("Шаг 6: Получение ICryptoService...");
-                            ICryptoService cryptoService = services.GetRequiredService<ICryptoService>();
-                            Log.Information($"Шаг 6: ICryptoService = {(cryptoService != null ? "OK" : "NULL")}");
-
-                            Log.Information("Шаг 7: Вызов MigrateDatabase...");
-                            MigrateDatabase(logger, services, cryptoService);
-                            Log.Information("Шаг 7: MigrateDatabase - OK");
-
-                            Log.Information("Шаг 8: EnsureSeedData (с cryptoService)...");
-                            EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
-                            Log.Information("Шаг 8: EnsureSeedData - OK");
-
-                            Log.Information("Шаг 9: EnsureSeedData (uasContext)...");
-                            EnsureSeedData(logger, uasContext);
-                            Log.Information("Шаг 9: EnsureSeedData - OK");
-
-                            Log.Information("Шаг 10: EnsurePublicAddress...");
-                            string publicAddress = serverConfigurations.RuntimeClusterSettings.PublicAddress;
-                            RunningMode? mode = serverConfigurations.RuntimeClusterSettings.Mode;
-                            bool isDevelopment = (mode.GetValueOrDefault() == RunningMode.Development) & (mode != null);
-                            Log.Information($"Шаг 10: publicAddress = {publicAddress}, isDevelopment = {isDevelopment}");
-
-                            EnsurePublicAddress(logger, context, publicAddress, isDevelopment);
-                            Log.Information("Шаг 10: EnsurePublicAddress - OK");
-                        }
-                        catch (Exception ex)
-                        {
-                            LogException("EnsureSeedData -> Блок SQL Server", ex);
-                            throw;
-                        }
-                        finally
-                        {
-                            try
-                            {
-                                bool? testMode = serverConfigurations.StartingArguments.TestMode;
-                                bool flag = false;
-                                if ((testMode.GetValueOrDefault() == flag) & (testMode != null))
-                                {
-                                    Log.Information("Закрытие соединения с БД...");
-                                    context.Database.CloseConnection();
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                LogException("EnsureSeedData -> CloseConnection", ex);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Log.Information("=== Режим InMemory ===");
-                        try
-                        {
-                            EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
-                            EnsureSeedData(logger, uasContext);
-                        }
-                        catch (Exception ex)
-                        {
-                            LogException("EnsureSeedData -> Блок InMemory", ex);
-                            throw;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException("EnsureSeedData -> Главный блок", ex);
-                throw;
-            }
-
-            Log.Information("=== EnsureSeedData: КОНЕЦ ===");
-        }
-
-        private static void EnsureSQLiteDatabaseCreated(DatabaseFacade database)
-        {
-            Log.Information("EnsureSQLiteDatabaseCreated: НАЧАЛО");
-            try
-            {
-                string sql = database.GenerateCreateScript();
-                Log.Information($"EnsureSQLiteDatabaseCreated: SQL длина = {sql?.Length ?? 0}");
-                database.ExecuteSqlRaw(sql, Array.Empty<object>());
-                Log.Information("EnsureSQLiteDatabaseCreated: OK");
-            }
-            catch (Exception ex)
-            {
-                LogException("EnsureSQLiteDatabaseCreated", ex);
-            }
-        }
-
-        private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
-        {
-            Log.Information("##################################################");
-            Log.Information("!!! MigrateDatabase НАЧАЛО v6 - С ПРОВЕРКОЙ !!!");
-            Log.Information("##################################################");
-            Log.Information("=== MigrateDatabase: НАЧАЛО ===");
-
-            try
-            {
-                Log.Information("Проверка Standalone режима...");
-                bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
-                Log.Information($"Standalone = {standalone}");
-
-                bool isStandalone = (standalone.GetValueOrDefault() == true) & (standalone != null);
-                Log.Information($"isStandalone = {isStandalone}");
-
-                if (!isStandalone)
-                {
-                    Log.Information("=== SQL Server миграция ===");
-
-                    // ApplicationDbContext
-                    try
-                    {
-                        Log.Information("Миграция 1: Получение ApplicationDbContext...");
-                        var appDbContext = services.GetRequiredService<ApplicationDbContext>();
-                        var database = appDbContext.Database;
-
-                        Log.Information("Миграция 1: Проверка нужна ли миграция...");
-
-                        // НОВАЯ ЛОГИКА: Проверяем существуют ли таблицы
-                        if (ShouldSkipMigration(database, "AccessTokens"))
-                        {
-                            Log.Warning("Миграция 1: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!");
-                            Log.Information("Миграция 1: Помечаем миграции как применённые...");
-                            MarkMigrationsAsApplied(database);
-                        }
-                        else
-                        {
-                            Log.Information("Миграция 1: Вызов Migrate()...");
-                            database.Migrate();
-                            Log.Information("Миграция 1: ApplicationDbContext.Migrate() - OK");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("MigrateDatabase -> ApplicationDbContext.Migrate()", ex);
-                        throw;
-                    }
-
-                    // ConfigurationDbContext
-                    try
-                    {
-                        Log.Information("Миграция 2: Получение ConfigurationDbContext...");
-                        var configDbContext = services.GetRequiredService<ConfigurationDbContext>();
-                        var database = configDbContext.Database;
-
-                        Log.Information("Миграция 2: Проверка нужна ли миграция...");
-
-                        // НОВАЯ ЛОГИКА: Проверяем существуют ли таблицы
-                        if (ShouldSkipMigration(database, "Clients"))
-                        {
-                            Log.Warning("Миграция 2: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!");
-                            Log.Information("Миграция 2: Помечаем миграции как применённые...");
-                            MarkMigrationsAsApplied(database);
-                        }
-                        else
-                        {
-                            Log.Information("Миграция 2: Вызов Migrate()...");
-                            database.Migrate();
-                            Log.Information("Миграция 2: ConfigurationDbContext.Migrate() - OK");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("MigrateDatabase -> ConfigurationDbContext.Migrate()", ex);
-                        throw;
-                    }
-
-                    // PersistedGrantDbContext
-                    try
-                    {
-                        Log.Information("Миграция 3: Получение PersistedGrantDbContext...");
-                        var grantDbContext = services.GetRequiredService<PersistedGrantDbContext>();
-                        var database = grantDbContext.Database;
-
-                        Log.Information("Миграция 3: Проверка нужна ли миграция...");
-
-                        // НОВАЯ ЛОГИКА: Проверяем существуют ли таблицы
-                        if (ShouldSkipMigration(database, "PersistedGrants"))
-                        {
-                            Log.Warning("Миграция 3: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!");
-                            Log.Information("Миграция 3: Помечаем миграции как применённые...");
-                            MarkMigrationsAsApplied(database);
-                        }
-                        else
-                        {
-                            Log.Information("Миграция 3: Вызов Migrate()...");
-                            database.Migrate();
-                            Log.Information("Миграция 3: PersistedGrantDbContext.Migrate() - OK");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("MigrateDatabase -> PersistedGrantDbContext.Migrate()", ex);
-                        throw;
-                    }
-
-                    // Дополнительные миграции
-                    try
-                    {
-                        Log.Information("Шаг 4: Получение DatabaseConnectionString...");
-                        string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
-                        Log.Information($"Шаг 4: DatabaseConnectionString = {(string.IsNullOrEmpty(cnx) ? "ПУСТАЯ или NULL!" : "OK (длина: " + cnx.Length + ")")}");
-
-                        if (!string.IsNullOrEmpty(cnx))
-                        {
-                            var maskedCnx = Regex.Replace(
-                                cnx,
-                                @"(Password|Pwd)\s*=\s*[^;]+",
-                                "$1=***",
-                                RegexOptions.IgnoreCase);
-                            Log.Information($"DatabaseConnectionString (masked): {maskedCnx}");
-                        }
-
-                        Log.Information("Шаг 5: Migrate_HAS_5_0To5_0_1...");
-                        Migrate_HAS_5_0To5_0_1(cnx);
-                        Log.Information("Шаг 5: Migrate_HAS_5_0To5_0_1 - OK");
-
-                        Log.Information("Шаг 6: Migrate_HAS_5_0_xTo5_0_5...");
-                        Migrate_HAS_5_0_xTo5_0_5(cnx);
-                        Log.Information("Шаг 6: Migrate_HAS_5_0_xTo5_0_5 - OK");
-
-                        Log.Information("Шаг 7: SQLCacheTableCreator...");
-                        SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
-                        int result = slqCreator.CreateTableAndIndexes(cnx);
-                        Log.Information($"Шаг 7: SQLCacheTableCreator result = {result}");
-
-                        if (result != 0)
-                        {
-                            throw new Exception("Unable to create cache tables in database");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("MigrateDatabase -> Дополнительные миграции", ex);
-                        throw;
-                    }
-                }
-                else
-                {
-                    Log.Information("=== SQLite режим (Standalone) ===");
-
-                    try
-                    {
-                        Log.Information("SQLite: ApplicationDbContext...");
-                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
-                        Log.Information("SQLite: ApplicationDbContext - OK");
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("MigrateDatabase -> SQLite ApplicationDbContext", ex);
-                        throw;
-                    }
-
-                    try
-                    {
-                        Log.Information("SQLite: ConfigurationDbContext...");
-                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
-                        Log.Information("SQLite: ConfigurationDbContext - OK");
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("MigrateDatabase -> SQLite ConfigurationDbContext", ex);
-                        throw;
-                    }
-
-                    try
-                    {
-                        Log.Information("SQLite: PersistedGrantDbContext...");
-                        EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
-                        Log.Information("SQLite: PersistedGrantDbContext - OK");
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("MigrateDatabase -> SQLite PersistedGrantDbContext", ex);
-                        throw;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException("MigrateDatabase -> Главный блок", ex);
-                throw;
-            }
-
-            Log.Information("=== MigrateDatabase: КОНЕЦ ===");
-        }
-
-        internal static void Migrate_HAS_5_0To5_0_1(string cnxString)
-        {
-            Log.Information("Migrate_HAS_5_0To5_0_1: НАЧАЛО");
-
-            if (string.IsNullOrEmpty(cnxString))
-            {
-                Log.Information("Migrate_HAS_5_0To5_0_1: cnxString пустой, пропускаем");
-                return;
-            }
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(cnxString))
-                {
-                    Log.Information($"Migrate_HAS_5_0To5_0_1: Соединение создано");
-
-                    try
-                    {
-                        connection.Open();
-                        Log.Information($"Migrate_HAS_5_0To5_0_1: Соединение открыто, State = {connection.State}");
-                    }
-                    catch (Exception openEx)
-                    {
-                        LogException("Migrate_HAS_5_0To5_0_1 -> Open()", openEx);
-                        throw;
-                    }
-
-                    try
-                    {
-                        Log.Information("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<WindowsConfig>...");
-                        MigrateOldConfigTable<WindowsConfig>(connection);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("Migrate_HAS_5_0To5_0_1 -> WindowsConfig", ex);
-                    }
-
-                    try
-                    {
-                        Log.Information("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<HopexConfig>...");
-                        MigrateOldConfigTable<HopexConfig>(connection);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("Migrate_HAS_5_0To5_0_1 -> HopexConfig", ex);
-                    }
-
-                    try
-                    {
-                        Log.Information("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<Saml2Config>...");
-                        MigrateOldConfigTable<Saml2Config>(connection);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("Migrate_HAS_5_0To5_0_1 -> Saml2Config", ex);
-                    }
-
-                    try
-                    {
-                        Log.Information("Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<OpenIdConfig>...");
-                        MigrateOldConfigTable<OpenIdConfig>(connection);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("Migrate_HAS_5_0To5_0_1 -> OpenIdConfig", ex);
-                    }
-
-                    try
-                    {
-                        Log.Information("Migrate_HAS_5_0To5_0_1: Обработка ApiResources...");
-                        foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList())
-                        {
-                            var apiResource = connection.Query<IdentityServer4.EntityFramework.Entities.ApiResource>(
-                                $"select * from [dbo].[ApiResources] where Name='{resource.Name}'").FirstOrDefault();
-
-                            if (apiResource != null)
-                            {
-                                var existingScope = connection.Query<ApiResourceScope>(
-                                    $"select * from [dbo].[ApiResourceScopes] where ApiResourceId='{apiResource.Id}'").FirstOrDefault();
-
-                                if (existingScope == null)
-                                {
-                                    var p = new
-                                    {
-                                        ApiResourceId = apiResource.Id,
-                                        Scope = resource.Scopes.First()
-                                    };
-                                    connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p);
-                                }
-                            }
-                        }
-                        Log.Information("Migrate_HAS_5_0To5_0_1: ApiResources - OK");
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("Migrate_HAS_5_0To5_0_1 -> ApiResources", ex);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException("Migrate_HAS_5_0To5_0_1 -> Главный блок", ex);
-                throw;
-            }
-            Log.Information("Migrate_HAS_5_0To5_0_1: КОНЕЦ");
-        }
-
-        internal static void Migrate_HAS_5_0_xTo5_0_5(string cnxString)
-        {
-            Log.Information("Migrate_HAS_5_0_xTo5_0_5: НАЧАЛО");
-
-            if (string.IsNullOrEmpty(cnxString))
-            {
-                Log.Information("Migrate_HAS_5_0_xTo5_0_5: cnxString пустой, пропускаем");
-                return;
-            }
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(cnxString))
-                {
-                    try
-                    {
-                        connection.Open();
-                        Log.Information($"Migrate_HAS_5_0_xTo5_0_5: Соединение открыто");
-                    }
-                    catch (Exception openEx)
-                    {
-                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> Open()", openEx);
-                        throw;
-                    }
-
-                    try
-                    {
-                        Log.Information("Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<OpenIdConfig>...");
-                        updateClaimForSub<OpenIdConfig>(connection);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> OpenIdConfig", ex);
-                    }
-
-                    try
-                    {
-                        Log.Information("Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<Saml2Config>...");
-                        updateClaimForSub<Saml2Config>(connection);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogException("Migrate_HAS_5_0_xTo5_0_5 -> Saml2Config", ex);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException("Migrate_HAS_5_0_xTo5_0_5 -> Главный блок", ex);
-            }
-            Log.Information("Migrate_HAS_5_0_xTo5_0_5: КОНЕЦ");
-        }
-
-        private static void updateClaimForSub<T>(SqlConnection connection) where T : new()
-        {
-            Log.Information($"updateClaimForSub<{typeof(T).Name}>: НАЧАЛО");
-            try
-            {
-                var externalProviders = connection.Query<ExternalProvider>(
-                    $"select * from [dbo].[externalProviders] where type = '{typeof(T).Name}'");
-
-                foreach (var ep in externalProviders)
-                {
-                    T cfg = ep.GetConfiguration<T>();
-                    dynamic cfgDyn = cfg;
-                    if (string.IsNullOrEmpty(cfgDyn.ClaimForSub))
-                    {
-                        cfgDyn.ClaimForSub = "name";
-                        ep.SetConfiguration<T>(cfg);
-                        connection.Execute(
-                            $"update [dbo].[externalproviders] set Configuration=@Configuration where id = {ep.Id}", ep);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                LogException($"updateClaimForSub<{typeof(T).Name}>", ex);
-                throw;
-            }
-            Log.Information($"updateClaimForSub<{typeof(T).Name}>: КОНЕЦ");
-        }
-
-        private static void MigrateOldConfigTable<T>(SqlConnection connection)
-        {
-            Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: НАЧАЛО");
-            T cfg;
-            try
-            {
-                cfg = connection.Query<T>($"select * from [dbo].[{typeof(T).Name}]").FirstOrDefault();
-            }
-            catch (Exception ex)
-            {
-                Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: Таблица не найдена (это OK) - {ex.Message}");
-                return;
-            }
-
-            try
-            {
-                if (cfg != null)
-                {
-                    Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: cfg найден, обновляем...");
-                    var ep = connection.Query<OldExternalProvider>(
-                        $"select * from [dbo].[externalProviders] where type = '{typeof(T).Name}'").FirstOrDefault();
-
-                    if (ep != null)
-                    {
-                        (cfg as ProviderConfigBase).ClaimForRoles = ep.ClaimForRoles ?? (cfg as ProviderConfigBase).ClaimForRoles;
-
-                        if (typeof(T) == typeof(WindowsConfig))
-                        {
-                            WindowsConfig winCfg = cfg as WindowsConfig;
-                            winCfg.WindowsSourceIdentifier = ep.WindowsSourceIdentifier ?? winCfg.WindowsSourceIdentifier;
-                            winCfg.WindowsRole = ep.WindowsRole ?? winCfg.WindowsRole;
-                        }
-
-                        ep.SetConfiguration<T>(cfg);
-                        connection.Execute(
-                            $"update [dbo].[externalproviders] set Configuration=@Configuration where type = '{typeof(T).Name}'", ep);
-                    }
-                }
-
-                Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: Удаление старой таблицы...");
-                connection.Execute($"drop table [dbo].[{typeof(T).Name}]");
-            }
-            catch (Exception ex)
-            {
-                LogException($"MigrateOldConfigTable<{typeof(T).Name}>", ex);
-            }
-            Log.Information($"MigrateOldConfigTable<{typeof(T).Name}>: КОНЕЦ");
-        }
-
-        private static void EnsurePublicAddress(Microsoft.Extensions.Logging.ILogger logger, ConfigurationDbContext context, string publicAddress, bool isDevelopmentMode)
-        {
-            Log.Information("EnsurePublicAddress: НАЧАЛО");
-            Log.Information($"EnsurePublicAddress: publicAddress = {publicAddress}, isDevelopmentMode = {isDevelopmentMode}");
-
-            try
-            {
-                var query = context.Clients
-                    .Include(x => x.PostLogoutRedirectUris)
-                    .Include(x => x.RedirectUris);
-
-                logger?.LogInformation($"URLS Redirections are updating to public address {publicAddress}...");
-                UriBuilder publicUri = new UriBuilder(publicAddress);
-
-                Log.Information($"EnsurePublicAddress: publicUri = {publicUri}");
-
-                int clientCount = 0;
-                foreach (var client in query)
-                {
-                    clientCount++;
-                    if (client.FrontChannelLogoutUri != null)
-                    {
-                        client.FrontChannelLogoutUri = UpdateUri(client.FrontChannelLogoutUri, publicUri, isDevelopmentMode);
-                    }
-                    foreach (var redir in client.RedirectUris)
-                    {
-                        redir.RedirectUri = UpdateUri(redir.RedirectUri, publicUri, isDevelopmentMode);
-                    }
-                    foreach (var redir in client.PostLogoutRedirectUris)
-                    {
-                        redir.PostLogoutRedirectUri = UpdateUri(redir.PostLogoutRedirectUri, publicUri, isDevelopmentMode);
-                    }
-                }
-
-                Log.Information($"EnsurePublicAddress: Обработано клиентов: {clientCount}");
-
-                Log.Information("EnsurePublicAddress: SaveChanges...");
-                context.SaveChanges();
-                Log.Information("EnsurePublicAddress: SaveChanges - OK");
-            }
-            catch (Exception ex)
-            {
-                LogException("EnsurePublicAddress", ex);
-                throw;
-            }
-            Log.Information("EnsurePublicAddress: КОНЕЦ");
-        }
-
-        private static string UpdateUri(string uri, UriBuilder publicUri, bool isDevelopmentMode)
-        {
-            UriBuilder url = new UriBuilder(uri)
-            {
-                Port = publicUri.Port,
-                Host = publicUri.Host,
-                Scheme = publicUri.Scheme
-            };
-
-            if (url.Port == 80 || url.Port == 443)
-            {
-                url.Port = -1;
-            }
-
-            if (isDevelopmentMode && string.Compare(url.Path, "/authentication/login-callback", true) == 0)
-            {
-                return uri;
-            }
-
-            return url.ToString();
-        }
-
-        private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, IClusterConfiguration serverConfigurations, ApplicationDbContext uasContext, ConfigurationDbContext configurationStoreContext, ICryptoService cryptoService)
-        {
-            Log.Information("EnsureSeedData (with crypto): НАЧАЛО");
-            try
-            {
-                logger?.LogInformation("Seeding database...");
-
-                Log.Information("EnsureSeedData: Updating AccessTokens...");
-                int accessTokenCount = 0;
-                foreach (var user in DefaultConfiguration.GetAccessTokens(cryptoService))
-                {
-                    if (uasContext.AccessTokens.FirstOrDefault(a => a.TokenName == user.TokenName) == null)
-                    {
-                        uasContext.AccessTokens.Add(user);
-                        accessTokenCount++;
-                    }
-                }
-                Log.Information($"EnsureSeedData: Добавлено AccessTokens: {accessTokenCount}");
-
-                Log.Information("EnsureSeedData: Updating Clients...");
-                int clientCount = 0;
-                foreach (var client in DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings))
-                {
-                    if (configurationStoreContext.Clients.FirstOrDefault(a => a.ClientId == client.ClientId) == null)
-                    {
-                        var c = client.ToEntity();
-                        c.NonEditable = true;
-                        configurationStoreContext.Clients.Add(c);
-                        clientCount++;
-                    }
-                }
-                Log.Information($"EnsureSeedData: Добавлено Clients: {clientCount}");
-
-                Log.Information("EnsureSeedData: Updating Scope...");
-                int scopeCount = 0;
-                foreach (var scope in DefaultConfiguration.GetApiScopes())
-                {
-                    if (configurationStoreContext.ApiScopes.FirstOrDefault(a => a.Name == scope.Name) == null)
-                    {
-                        configurationStoreContext.ApiScopes.Add(scope.ToEntity());
-                        scopeCount++;
-                    }
-                }
-                Log.Information($"EnsureSeedData: Добавлено ApiScopes: {scopeCount}");
-
-                Log.Information("EnsureSeedData: Updating IdentityResources...");
-                int identityResourceCount = 0;
-                foreach (var resource in DefaultConfiguration.GetIdentityResources())
-                {
-                    if (configurationStoreContext.IdentityResources.FirstOrDefault(a => a.Name == resource.Name) == null)
-                    {
-                        configurationStoreContext.IdentityResources.Add(resource.ToEntity());
-                        identityResourceCount++;
-                    }
-                }
-                Log.Information($"EnsureSeedData: Добавлено IdentityResources: {identityResourceCount}");
-
-                Log.Information("EnsureSeedData: Updating ApiResources...");
-                int apiResourceCount = 0;
-                foreach (var resource in DefaultConfiguration.GetApiResources().ToList())
-                {
-                    if (configurationStoreContext.ApiResources.FirstOrDefault(a => a.Name == resource.Name) == null)
-                    {
-                        configurationStoreContext.ApiResources.Add(resource.ToEntity());
-                        apiResourceCount++;
-                    }
-                }
-                Log.Information($"EnsureSeedData: Добавлено ApiResources: {apiResourceCount}");
-
-                Log.Information("EnsureSeedData: SaveChanges...");
-                configurationStoreContext.SaveChanges();
-                Log.Information("EnsureSeedData: SaveChanges - OK");
-            }
-            catch (Exception ex)
-            {
-                LogException("EnsureSeedData (with crypto)", ex);
-                throw;
-            }
-            Log.Information("EnsureSeedData (with crypto): КОНЕЦ");
-        }
-
-        private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, ApplicationDbContext uasContext)
-        {
-            Log.Information("EnsureSeedData (uasContext): НАЧАЛО");
-            try
-            {
-                logger?.LogInformation("Updating External Providers...");
-
-                int providerCount = 0;
-                foreach (var externalProvider in DefaultConfiguration.GetExternalProviders())
-                {
-                    if (uasContext.ExternalProviders.FirstOrDefault(a => a.AuthenticationScheme == externalProvider.AuthenticationScheme) == null)
-                    {
-                        uasContext.ExternalProviders.Add(externalProvider);
-                        providerCount++;
-                    }
-                }
-                Log.Information($"EnsureSeedData (uasContext): Добавлено ExternalProviders: {providerCount}");
-
-                Log.Information("EnsureSeedData (uasContext): SaveChanges...");
-                uasContext.SaveChanges();
-                Log.Information("EnsureSeedData (uasContext): SaveChanges - OK");
-            }
-            catch (Exception ex)
-            {
-                LogException("EnsureSeedData (uasContext)", ex);
-                throw;
-            }
-            Log.Information("EnsureSeedData (uasContext): КОНЕЦ");
-        }
-    }
-}
+ ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
+ Starting module 2025-HAS Identity Provider - Mode : "Production"
+ Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
+ ##################################################
+ !!! НОВАЯ ВЕРСИЯ КОДА v6 - С ПРОВЕРКОЙ ТАБЛИЦ !!!
+ ##################################################
+ === EnsureSeedData: НАЧАЛО ===
+ Шаг 1: BuildServiceProvider...
+ Шаг 1: BuildServiceProvider - OK
+ Шаг 2: Получение ApplicationDbContext...
+ Шаг 2: ApplicationDbContext = OK
+ Шаг 3: Получение ConfigurationDbContext...
+ Шаг 3: ConfigurationDbContext = OK
+ Шаг 4: Получение ILogger...
+ Шаг 4: ILogger = OK
+ Шаг 5: Проверка IsInMemory...
+ Шаг 5.1: context.Database = OK
+ Шаг 5: IsInMemory = False
+ === Режим SQL Server (не InMemory) ===
+ Шаг 6: Получение ICryptoService...
+ Шаг 6: ICryptoService = OK
+ Шаг 7: Вызов MigrateDatabase...
+ ##################################################
+ !!! MigrateDatabase НАЧАЛО v6 - С ПРОВЕРКОЙ !!!
+ ##################################################
+ === MigrateDatabase: НАЧАЛО ===
+ Проверка Standalone режима...
+ Standalone = False
+ isStandalone = False
+ === SQL Server миграция ===
+ Миграция 1: Получение ApplicationDbContext...
+ Миграция 1: Проверка нужна ли миграция...
+ ShouldSkipMigration: Pending=5, Applied=0
+ ShouldSkipMigration: Таблица 'AccessTokens' существует = True
+ ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
+ ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
+ Миграция 1: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
+ Миграция 1: Помечаем миграции как применённые...
+ MarkMigrationsAsApplied: Добавлена запись для '20200512145632_InitialApplicationDbMigration'
+ MarkMigrationsAsApplied: Добавлена запись для '20211102091321_MultipleProviders'
+ MarkMigrationsAsApplied: Добавлена запись для '20230427065610_PasswordExpirationDate'
+ MarkMigrationsAsApplied: Добавлена запись для '20230906133336_OldPassword'
+ MarkMigrationsAsApplied: Добавлена запись для '20240311145607_RemoveSecrets'
+ Миграция 2: Получение ConfigurationDbContext...
+ Миграция 2: Проверка нужна ли миграция...
+ ShouldSkipMigration: Pending=2, Applied=0
+ ShouldSkipMigration: Таблица 'Clients' существует = True
+ ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
+ ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
+ Миграция 2: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
+ Миграция 2: Помечаем миграции как применённые...
+ MarkMigrationsAsApplied: Добавлена запись для '20200512145618_InitialIdentityServerConfigurationDbMigration'
+ MarkMigrationsAsApplied: Добавлена запись для '20211018165011_Migrate_3.1.4_to_4.1.2'
+ Миграция 3: Получение PersistedGrantDbContext...
+ Миграция 3: Проверка нужна ли миграция...
+ ShouldSkipMigration: Pending=2, Applied=0
+ ShouldSkipMigration: Таблица 'PersistedGrants' существует = True
+ ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
+ ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
+ Миграция 3: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
+ Миграция 3: Помечаем миграции как применённые...
+ MarkMigrationsAsApplied: Добавлена запись для '20200512145607_InitialIdentityServerPersistedGrantDbMigration'
+ MarkMigrationsAsApplied: Добавлена запись для '20211018201457_Migtaiondefrom3.1.4To4.1.2'
+ Шаг 4: Получение DatabaseConnectionString...
+ Шаг 4: DatabaseConnectionString = OK (длина: 111)
+ DatabaseConnectionString (masked): Data Source=vmshqeatdb03;User ID=MS-HQ-Srvhopexusr_p;Password=***;encrypt=false;Database=HAS_2025;
+ Шаг 5: Migrate_HAS_5_0To5_0_1...
+ Migrate_HAS_5_0To5_0_1: НАЧАЛО
+ Migrate_HAS_5_0To5_0_1: Соединение создано
+ Migrate_HAS_5_0To5_0_1: Соединение открыто, State = Open
+ Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<WindowsConfig>...
+ MigrateOldConfigTable<WindowsConfig>: НАЧАЛО
+ MigrateOldConfigTable<WindowsConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.WindowsConfig'.
+ Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<HopexConfig>...
+ MigrateOldConfigTable<HopexConfig>: НАЧАЛО
+ MigrateOldConfigTable<HopexConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.HopexConfig'.
+ Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<Saml2Config>...
+ MigrateOldConfigTable<Saml2Config>: НАЧАЛО
+ MigrateOldConfigTable<Saml2Config>: Таблица не найдена (это OK) - Invalid object name 'dbo.Saml2Config'.
+ Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<OpenIdConfig>...
+ MigrateOldConfigTable<OpenIdConfig>: НАЧАЛО
+ MigrateOldConfigTable<OpenIdConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.OpenIdConfig'.
+ Migrate_HAS_5_0To5_0_1: Обработка ApiResources...
+ Migrate_HAS_5_0To5_0_1: ApiResources - OK
+ Migrate_HAS_5_0To5_0_1: КОНЕЦ
+ Шаг 5: Migrate_HAS_5_0To5_0_1 - OK
+ Шаг 6: Migrate_HAS_5_0_xTo5_0_5...
+ Migrate_HAS_5_0_xTo5_0_5: НАЧАЛО
+ Migrate_HAS_5_0_xTo5_0_5: Соединение открыто
+ Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<OpenIdConfig>...
+ updateClaimForSub<OpenIdConfig>: НАЧАЛО
+ updateClaimForSub<OpenIdConfig>: КОНЕЦ
+ Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<Saml2Config>...
+ updateClaimForSub<Saml2Config>: НАЧАЛО
+ updateClaimForSub<Saml2Config>: КОНЕЦ
+ Migrate_HAS_5_0_xTo5_0_5: КОНЕЦ
+ Шаг 6: Migrate_HAS_5_0_xTo5_0_5 - OK
+ Шаг 7: SQLCacheTableCreator...
+ Шаг 7: SQLCacheTableCreator result = 0
+ === MigrateDatabase: КОНЕЦ ===
+ Шаг 7: MigrateDatabase - OK
+ Шаг 8: EnsureSeedData (с cryptoService)...
+ EnsureSeedData (with crypto): НАЧАЛО
+ Seeding database...
+ EnsureSeedData: Updating AccessTokens...
+ EnsureSeedData: Добавлено AccessTokens: 0
+ EnsureSeedData: Updating Clients...
+ EnsureSeedData: Добавлено Clients: 0
+ EnsureSeedData: Updating Scope...
+ EnsureSeedData: Добавлено ApiScopes: 0
+ EnsureSeedData: Updating IdentityResources...
+ EnsureSeedData: Добавлено IdentityResources: 0
+ EnsureSeedData: Updating ApiResources...
+ EnsureSeedData: Добавлено ApiResources: 0
+ EnsureSeedData: SaveChanges...
+ EnsureSeedData: SaveChanges - OK
+ EnsureSeedData (with crypto): КОНЕЦ
+ Шаг 8: EnsureSeedData - OK
+ Шаг 9: EnsureSeedData (uasContext)...
+ EnsureSeedData (uasContext): НАЧАЛО
+ Updating External Providers...
+ EnsureSeedData (uasContext): Добавлено ExternalProviders: 0
+ EnsureSeedData (uasContext): SaveChanges...
+ EnsureSeedData (uasContext): SaveChanges - OK
+ EnsureSeedData (uasContext): КОНЕЦ
+ Шаг 9: EnsureSeedData - OK
+ Шаг 10: EnsurePublicAddress...
+ Шаг 10: publicAddress = https://vmshqeat04.npr.nornick.ru, isDevelopment = False
+ EnsurePublicAddress: НАЧАЛО
+ EnsurePublicAddress: publicAddress = https://vmshqeat04.npr.nornick.ru, isDevelopmentMode = False
+ URLS Redirections are updating to public address https://vmshqeat04.npr.nornick.ru...
+ EnsurePublicAddress: publicUri = https://vmshqeat04.npr.nornick.ru:443/
+ EnsurePublicAddress: Обработано клиентов: 6
+ EnsurePublicAddress: SaveChanges...
+ EnsurePublicAddress: SaveChanges - OK
+ EnsurePublicAddress: КОНЕЦ
+ Шаг 10: EnsurePublicAddress - OK
+ Закрытие соединения с БД...
+ === EnsureSeedData: КОНЕЦ ===
+ Using external provider OpenIdProvider
+ Using external provider Saml2Provider
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Starting IdentityServer4 version 4.1.2+997a6cdd643e46cd5762b710c4ddc43574cbec2e
+ Custom IssuerUri set to https://vmshqeat04.npr.nornick.ru
+ Using the default authentication scheme Cookies for IdentityServer
+ Using Cookies as default ASP.NET Core scheme for authentication
+ Using Cookies as default ASP.NET Core scheme for sign-in
+ Using Cookies as default ASP.NET Core scheme for sign-out
+ Using OpenIdConnect as default ASP.NET Core scheme for challenge
+ Using OpenIdConnect as default ASP.NET Core scheme for forbid
+ Unhandled exception
+System.Reflection.ReflectionTypeLoadException: Unable to load one or more of the requested types.
+Could not load file or assembly 'System.Security.Cryptography.Xml, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
+   at RuntimeType[] System.Reflection.RuntimeModule.GetTypes(RuntimeModule module)
+   at IEnumerable<TypeInfo> System.Reflection.RuntimeAssembly.get_DefinedTypes()
+   at IEnumerable<TypeInfo> Microsoft.AspNetCore.Mvc.ApplicationParts.AssemblyPart.get_Types()
+   at void Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider.PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
+   at void Microsoft.AspNetCore.Mvc.ApplicationParts.ApplicationPartManager.PopulateFeature<TFeature>(TFeature feature)
+   at IEnumerable<TypeInfo> Microsoft.AspNetCore.Mvc.ApplicationModels.ControllerActionDescriptorProvider.GetControllerTypes()
+   at IEnumerable<ControllerActionDescriptor> Microsoft.AspNetCore.Mvc.ApplicationModels.ControllerActionDescriptorProvider.GetDescriptors()
+   at void Microsoft.AspNetCore.Mvc.ApplicationModels.ControllerActionDescriptorProvider.OnProvidersExecuting(ActionDescriptorProviderContext context)
+   at void Microsoft.AspNetCore.Mvc.Infrastructure.DefaultActionDescriptorCollectionProvider.UpdateCollection()
+   at void Microsoft.AspNetCore.Mvc.Infrastructure.DefaultActionDescriptorCollectionProvider.Initialize()
+   at void Microsoft.AspNetCore.Mvc.Routing.ActionEndpointDataSourceBase.Subscribe()+() => { }
+   at new Microsoft.Extensions.Primitives.ChangeToken+ChangeTokenRegistration<TState>(Func<IChangeToken> changeTokenProducer, Action<TState> changeTokenConsumer, TState state)
+   at IDisposable Microsoft.Extensions.Primitives.ChangeToken.OnChange(Func<IChangeToken> changeTokenProducer, Action changeTokenConsumer)
+   at void Microsoft.AspNetCore.Mvc.Routing.ActionEndpointDataSourceBase.Subscribe()
+   at new Microsoft.AspNetCore.Mvc.Routing.ControllerActionEndpointDataSource(ControllerActionEndpointDataSourceIdProvider dataSourceIdProvider, IActionDescriptorCollectionProvider actions, ActionEndpointFactory endpointFactory, OrderedEndpointsSequenceProvider orderSequence)
+   at ControllerActionEndpointDataSource Microsoft.AspNetCore.Builder.ControllerEndpointRouteBuilderExtensions.GetOrCreateDataSource(IEndpointRouteBuilder endpoints)
+   at ControllerActionEndpointConventionBuilder Microsoft.AspNetCore.Builder.ControllerEndpointRouteBuilderExtensions.MapControllerRoute(IEndpointRouteBuilder endpoints, string name, string pattern, object defaults, object constraints, object dataTokens)
+   at Task Program.Main(string[] args)+(IEndpointRouteBuilder endpoints) => { } in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Program.cs:line 99
+   at IApplicationBuilder Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseEndpoints(IApplicationBuilder builder, Action<IEndpointRouteBuilder> configure)
+   at async Task Program.Main(string[] args) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Program.cs:line 97
+   at void Program.<Main>(?)

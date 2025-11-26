@@ -1,8 +1,23 @@
-Severity	Code	Description	Project	File	Line	Suppression State
-Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyTitleAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	19	
-Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyCompanyAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	14	
-Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyConfigurationAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	15	
-Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyFileVersionAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	16	
-Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyInformationalVersionAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	17	
-Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyProductAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	18	
-Error (active)	CS0579	Duplicate 'System.Reflection.AssemblyVersionAttribute' attribute	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\obj\Debug\net6.0\HAS.Modules.UAS.AssemblyInfo.cs	20	
+<PropertyGroup>
+  <TargetFramework>net6.0</TargetFramework>
+  <Nullable>disable</Nullable>
+  <ImplicitUsings>enable</ImplicitUsings>
+  <OutputType>Exe</OutputType>
+  <RootNamespace>HAS.Modules.UAS</RootNamespace>
+  <AssemblyName>HAS.Modules.UAS</AssemblyName>
+  <Version>16.0.2.35</Version>
+  <LangVersion>latest</LangVersion>
+  
+  <!-- КРИТИЧНО: Отключаем автогенерацию AssemblyInfo -->
+  <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  
+  <!-- Отключаем автоматическое включение wwwroot -->
+  <EnableDefaultContentItems>false</EnableDefaultContentItems>
+  
+  <!-- Отключаем ошибки при downgrade версий -->
+  <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  <NoWarn>$(NoWarn);NU1605;NU1608;NU1701;NU1603</NoWarn>
+  
+  <!-- Копируем все зависимости -->
+  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+</PropertyGroup>

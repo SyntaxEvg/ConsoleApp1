@@ -1,4 +1,200 @@
-Windows Registry Editor Version 5.00
-
-[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\WinTrust\Trust Providers\Software Publishing]
-"State"=dword:00023e00
+ ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
+ Starting module 2025-HAS Identity Provider - Mode : "Production"
+ Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
+ ##################################################
+ !!! НОВАЯ ВЕРСИЯ КОДА v5 !!!
+ ##################################################
+ === EnsureSeedData: НАЧАЛО ===
+ Шаг 1: BuildServiceProvider...
+ Шаг 1: BuildServiceProvider - OK
+ Шаг 2: Получение ApplicationDbContext...
+ Шаг 2: ApplicationDbContext = OK
+ Шаг 3: Получение ConfigurationDbContext...
+ Шаг 3: ConfigurationDbContext = OK
+ Шаг 4: Получение ILogger...
+ Шаг 4: ILogger = OK
+ Шаг 5: Проверка IsInMemory...
+ Шаг 5.1: context.Database = OK
+ Шаг 5: IsInMemory = False
+ === Режим SQL Server (не InMemory) ===
+ Шаг 6: Получение ICryptoService...
+ Шаг 6: ICryptoService = OK
+ Шаг 7: Вызов MigrateDatabase...
+ ##################################################
+ !!! MigrateDatabase НАЧАЛО v5 !!!
+ ##################################################
+ === MigrateDatabase: НАЧАЛО ===
+ Проверка Standalone режима...
+ Standalone = False
+ isStandalone = False
+ === SQL Server миграция ===
+ Миграция 1: Получение ApplicationDbContext...
+ Миграция 1: ApplicationDbContext = OK
+ Миграция 1: Проверка Database...
+ Миграция 1: Database = OK
+ Миграция 1: Проверка ProviderName...
+ Миграция 1: ProviderName = Microsoft.EntityFrameworkCore.SqlServer
+ Миграция 1: Проверка ConnectionString...
+ Миграция 1: ConnectionString = OK (длина: 111)
+ ConnectionString (masked): Data Source=vmshqeatdb03;User ID=MS-HQ-Srvhopexusr_p;Password=***;encrypt=false;Database=HAS_2025;
+ Microsoft.Data.SqlClient Version: 5.0.0.0
+ Microsoft.Data.SqlClient Location: C:\MEGA\Hopex Application Server\2025\.shadowFiles\has.uas\16.0.2+57\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
+ >>> Проверка ConnectionString через SqlConnectionStringBuilder...
+   Server: vmshqeatdb03
+   Database: HAS_2025
+   IntegratedSecurity: False
+   UserID: MS-HQ-Srvhopexusr_p
+   TrustServerCertificate: False
+   Encrypt: False
+ SqlConnectionStringBuilder - OK
+ >>> Создание SqlConnection...
+ SqlConnection создан (пустой)
+ >>> Установка ConnectionString...
+ ConnectionString установлен
+ >>> Проверка State...
+ State = Closed
+ >>> Вызов Open()...
+ Open() - OK, State = Open
+ SQL Server Version: Microsoft SQL Server 2019 (RTM-CU32-GDR) (KB5068404) - 15.0.4455.2 (X64) 
+	Oct  7 2025 21:10:15 
+	Co...
+ Соединение закрыто и disposed
+ >>> Проверка pending миграций...
+ Pending миграций: 5
+   - 20200512145632_InitialApplicationDbMigration
+   - 20211102091321_MultipleProviders
+   - 20230427065610_PasswordExpirationDate
+   - 20230906133336_OldPassword
+   - 20240311145607_RemoveSecrets
+ >>> Проверка applied миграций...
+ Applied миграций: 0
+ Миграция 1: Вызов Migrate()...
+ >>> Перед вызовом database.Migrate() <<<
+ Failed executing DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [AccessTokens] (
+    [Id] int NOT NULL IDENTITY,
+    [Description] nvarchar(max) NULL,
+    [TokenName] nvarchar(max) NULL,
+    [Password] nvarchar(200) NULL,
+    [ProviderName] nvarchar(200) NULL,
+    [ExpirationDate] datetime2 NULL,
+    [Kind] int NOT NULL,
+    [Name] nvarchar(200) NULL,
+    [SubjectId] nvarchar(200) NULL,
+    [UserName] nvarchar(200) NULL,
+    CONSTRAINT [PK_AccessTokens] PRIMARY KEY ([Id])
+);
+ ==========================================
+ ОШИБКА в: MigrateDatabase -> ApplicationDbContext.Migrate()
+ Message: There is already an object named 'AccessTokens' in the database.
+ Type: Microsoft.Data.SqlClient.SqlException
+ --- FULL EXCEPTION ---
+ Microsoft.Data.SqlClient.SqlException (0x80131904): There is already an object named 'AccessTokens' in the database.
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
+   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
+   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
+   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 386
+ClientConnectionId:57a11d81-a287-40df-9e2a-25685cacfe7c
+Error Number:2714,State:6,Class:16
+ --- END FULL EXCEPTION ---
+ ==========================================
+ ==========================================
+ ОШИБКА в: MigrateDatabase -> Главный блок
+ Message: There is already an object named 'AccessTokens' in the database.
+ Type: Microsoft.Data.SqlClient.SqlException
+ --- FULL EXCEPTION ---
+ Microsoft.Data.SqlClient.SqlException (0x80131904): There is already an object named 'AccessTokens' in the database.
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
+   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
+   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
+   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 386
+ClientConnectionId:57a11d81-a287-40df-9e2a-25685cacfe7c
+Error Number:2714,State:6,Class:16
+ --- END FULL EXCEPTION ---
+ ==========================================
+ ==========================================
+ ОШИБКА в: EnsureSeedData -> Блок SQL Server
+ Message: There is already an object named 'AccessTokens' in the database.
+ Type: Microsoft.Data.SqlClient.SqlException
+ --- FULL EXCEPTION ---
+ Microsoft.Data.SqlClient.SqlException (0x80131904): There is already an object named 'AccessTokens' in the database.
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
+   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
+   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
+   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 386
+   at Mega.Has.Modules.UAS.SeedData.EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 138
+ClientConnectionId:57a11d81-a287-40df-9e2a-25685cacfe7c
+Error Number:2714,State:6,Class:16
+ --- END FULL EXCEPTION ---
+ ==========================================
+ Закрытие соединения с БД...
+ ==========================================
+ ОШИБКА в: EnsureSeedData -> Главный блок
+ Message: There is already an object named 'AccessTokens' in the database.
+ Type: Microsoft.Data.SqlClient.SqlException
+ --- FULL EXCEPTION ---
+ Microsoft.Data.SqlClient.SqlException (0x80131904): There is already an object named 'AccessTokens' in the database.
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
+   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
+   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
+   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 386
+   at Mega.Has.Modules.UAS.SeedData.EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 138
+ClientConnectionId:57a11d81-a287-40df-9e2a-25685cacfe7c
+Error Number:2714,State:6,Class:16
+ --- END FULL EXCEPTION ---
+ ==========================================
+ Unhandled exception
+Microsoft.Data.SqlClient.SqlException: There is already an object named 'AccessTokens' in the database.
+   at void Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction)
+   at void Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction)
+   at void Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, bool callerHasConnectionLock, bool asyncClose)
+   at bool Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, out bool dataReady)
+   at Task Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(string methodName, bool isAsync, int timeout, bool asyncWrite)
+   at Task Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource<object> completion, bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite, bool inRetry, string methodName)
+   at int Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
+   at int Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
+   at int Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary<string, object> parameterValues)
+   at void Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable<MigrationCommand> migrationCommands, IRelationalConnection connection)
+   at void Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(string targetMigration)
+   at void Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
+   at void Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Mega/Has/Modules/UAS/SeedData.cs:line 386
+   at void Mega.Has.Modules.UAS.SeedData.EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Mega/Has/Modules/UAS/SeedData.cs:line 138
+   at IServiceCollection HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.ConfigureUAS(IServiceCollection services) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Extensions/ServiceCollectionExtensions.cs:line 185
+   at async Task Program.Main(string[] args) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Program.cs:line 59
+   at void Program.<Main>(?)

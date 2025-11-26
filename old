@@ -1,142 +1,15 @@
  ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
  Starting module 2025-HAS Identity Provider - Mode : "Production"
  Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
- ##################################################
- !!! НОВАЯ ВЕРСИЯ КОДА v6 - С ПРОВЕРКОЙ ТАБЛИЦ !!!
- ##################################################
- === EnsureSeedData: НАЧАЛО ===
- Шаг 1: BuildServiceProvider...
- Шаг 1: BuildServiceProvider - OK
- Шаг 2: Получение ApplicationDbContext...
- Шаг 2: ApplicationDbContext = OK
- Шаг 3: Получение ConfigurationDbContext...
- Шаг 3: ConfigurationDbContext = OK
- Шаг 4: Получение ILogger...
- Шаг 4: ILogger = OK
- Шаг 5: Проверка IsInMemory...
- Шаг 5.1: context.Database = OK
- Шаг 5: IsInMemory = False
- === Режим SQL Server (не InMemory) ===
- Шаг 6: Получение ICryptoService...
- Шаг 6: ICryptoService = OK
- Шаг 7: Вызов MigrateDatabase...
- ##################################################
- !!! MigrateDatabase НАЧАЛО v6 - С ПРОВЕРКОЙ !!!
- ##################################################
- === MigrateDatabase: НАЧАЛО ===
- Проверка Standalone режима...
- Standalone = False
- isStandalone = False
- === SQL Server миграция ===
- Миграция 1: Получение ApplicationDbContext...
- Миграция 1: Проверка нужна ли миграция...
- ShouldSkipMigration: Pending=5, Applied=0
- ShouldSkipMigration: Таблица 'AccessTokens' существует = True
- ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
- ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
- Миграция 1: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
- Миграция 1: Помечаем миграции как применённые...
- MarkMigrationsAsApplied: Добавлена запись для '20200512145632_InitialApplicationDbMigration'
- MarkMigrationsAsApplied: Добавлена запись для '20211102091321_MultipleProviders'
- MarkMigrationsAsApplied: Добавлена запись для '20230427065610_PasswordExpirationDate'
- MarkMigrationsAsApplied: Добавлена запись для '20230906133336_OldPassword'
- MarkMigrationsAsApplied: Добавлена запись для '20240311145607_RemoveSecrets'
- Миграция 2: Получение ConfigurationDbContext...
- Миграция 2: Проверка нужна ли миграция...
- ShouldSkipMigration: Pending=2, Applied=0
- ShouldSkipMigration: Таблица 'Clients' существует = True
- ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
- ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
- Миграция 2: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
- Миграция 2: Помечаем миграции как применённые...
- MarkMigrationsAsApplied: Добавлена запись для '20200512145618_InitialIdentityServerConfigurationDbMigration'
- MarkMigrationsAsApplied: Добавлена запись для '20211018165011_Migrate_3.1.4_to_4.1.2'
- Миграция 3: Получение PersistedGrantDbContext...
- Миграция 3: Проверка нужна ли миграция...
- ShouldSkipMigration: Pending=2, Applied=0
- ShouldSkipMigration: Таблица 'PersistedGrants' существует = True
- ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
- ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
- Миграция 3: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
- Миграция 3: Помечаем миграции как применённые...
- MarkMigrationsAsApplied: Добавлена запись для '20200512145607_InitialIdentityServerPersistedGrantDbMigration'
- MarkMigrationsAsApplied: Добавлена запись для '20211018201457_Migtaiondefrom3.1.4To4.1.2'
- Шаг 4: Получение DatabaseConnectionString...
- Шаг 4: DatabaseConnectionString = OK (длина: 111)
- DatabaseConnectionString (masked): Data Source=vmshqeatdb03;User ID=MS-HQ-Srvhopexusr_p;Password=***;encrypt=false;Database=HAS_2025;
- Шаг 5: Migrate_HAS_5_0To5_0_1...
- Migrate_HAS_5_0To5_0_1: НАЧАЛО
- Migrate_HAS_5_0To5_0_1: Соединение создано
- Migrate_HAS_5_0To5_0_1: Соединение открыто, State = Open
- Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<WindowsConfig>...
- MigrateOldConfigTable<WindowsConfig>: НАЧАЛО
- MigrateOldConfigTable<WindowsConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.WindowsConfig'.
- Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<HopexConfig>...
- MigrateOldConfigTable<HopexConfig>: НАЧАЛО
- MigrateOldConfigTable<HopexConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.HopexConfig'.
- Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<Saml2Config>...
- MigrateOldConfigTable<Saml2Config>: НАЧАЛО
- MigrateOldConfigTable<Saml2Config>: Таблица не найдена (это OK) - Invalid object name 'dbo.Saml2Config'.
- Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<OpenIdConfig>...
- MigrateOldConfigTable<OpenIdConfig>: НАЧАЛО
- MigrateOldConfigTable<OpenIdConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.OpenIdConfig'.
- Migrate_HAS_5_0To5_0_1: Обработка ApiResources...
- Migrate_HAS_5_0To5_0_1: ApiResources - OK
- Migrate_HAS_5_0To5_0_1: КОНЕЦ
- Шаг 5: Migrate_HAS_5_0To5_0_1 - OK
- Шаг 6: Migrate_HAS_5_0_xTo5_0_5...
- Migrate_HAS_5_0_xTo5_0_5: НАЧАЛО
- Migrate_HAS_5_0_xTo5_0_5: Соединение открыто
- Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<OpenIdConfig>...
- updateClaimForSub<OpenIdConfig>: НАЧАЛО
- updateClaimForSub<OpenIdConfig>: КОНЕЦ
- Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<Saml2Config>...
- updateClaimForSub<Saml2Config>: НАЧАЛО
- updateClaimForSub<Saml2Config>: КОНЕЦ
- Migrate_HAS_5_0_xTo5_0_5: КОНЕЦ
- Шаг 6: Migrate_HAS_5_0_xTo5_0_5 - OK
- Шаг 7: SQLCacheTableCreator...
- Шаг 7: SQLCacheTableCreator result = 0
- === MigrateDatabase: КОНЕЦ ===
- Шаг 7: MigrateDatabase - OK
- Шаг 8: EnsureSeedData (с cryptoService)...
- EnsureSeedData (with crypto): НАЧАЛО
+ Migrate databases
  Seeding database...
- EnsureSeedData: Updating AccessTokens...
- EnsureSeedData: Добавлено AccessTokens: 0
- EnsureSeedData: Updating Clients...
- EnsureSeedData: Добавлено Clients: 0
- EnsureSeedData: Updating Scope...
- EnsureSeedData: Добавлено ApiScopes: 0
- EnsureSeedData: Updating IdentityResources...
- EnsureSeedData: Добавлено IdentityResources: 0
- EnsureSeedData: Updating ApiResources...
- EnsureSeedData: Добавлено ApiResources: 0
- EnsureSeedData: SaveChanges...
- EnsureSeedData: SaveChanges - OK
- EnsureSeedData (with crypto): КОНЕЦ
- Шаг 8: EnsureSeedData - OK
- Шаг 9: EnsureSeedData (uasContext)...
- EnsureSeedData (uasContext): НАЧАЛО
+ Updating AccessTokens...
+ Updating Clients...
+ Updating Scope...
+ Updating IdentityResources...
+ Updating ApiResources...
  Updating External Providers...
- EnsureSeedData (uasContext): Добавлено ExternalProviders: 0
- EnsureSeedData (uasContext): SaveChanges...
- EnsureSeedData (uasContext): SaveChanges - OK
- EnsureSeedData (uasContext): КОНЕЦ
- Шаг 9: EnsureSeedData - OK
- Шаг 10: EnsurePublicAddress...
- Шаг 10: publicAddress = https://vmshqeat04.npr.nornick.ru, isDevelopment = False
- EnsurePublicAddress: НАЧАЛО
- EnsurePublicAddress: publicAddress = https://vmshqeat04.npr.nornick.ru, isDevelopmentMode = False
  URLS Redirections are updating to public address https://vmshqeat04.npr.nornick.ru...
- EnsurePublicAddress: publicUri = https://vmshqeat04.npr.nornick.ru:443/
- EnsurePublicAddress: Обработано клиентов: 6
- EnsurePublicAddress: SaveChanges...
- EnsurePublicAddress: SaveChanges - OK
- EnsurePublicAddress: КОНЕЦ
- Шаг 10: EnsurePublicAddress - OK
- Закрытие соединения с БД...
- === EnsureSeedData: КОНЕЦ ===
  Using external provider OpenIdProvider
  Using external provider Saml2Provider
  Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
@@ -224,6 +97,112 @@
  AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
  Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
  Client hopex.supervisor registered by UAS with path supervisor
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification STOP_NODE locally
+ No endpoint entry found for request path: /__exec/Unload
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STOPPED locally
+ ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
+ Starting module 2025-HAS Identity Provider - Mode : "Production"
+ Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
+ Migrate databases
+ Seeding database...
+ Updating AccessTokens...
+ Updating Clients...
+ Updating Scope...
+ Updating IdentityResources...
+ Updating ApiResources...
+ Updating External Providers...
+ URLS Redirections are updating to public address https://vmshqeat04.npr.nornick.ru...
+ Using external provider OpenIdProvider
+ Using external provider Saml2Provider
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Starting IdentityServer4 version 4.1.2+997a6cdd643e46cd5762b710c4ddc43574cbec2e
+ Custom IssuerUri set to https://vmshqeat04.npr.nornick.ru
+ Using the default authentication scheme Cookies for IdentityServer
+ Using Cookies as default ASP.NET Core scheme for authentication
+ Using Cookies as default ASP.NET Core scheme for sign-in
+ Using Cookies as default ASP.NET Core scheme for sign-out
+ Using OpenIdConnect as default ASP.NET Core scheme for challenge
+ Using OpenIdConnect as default ASP.NET Core scheme for forbid
+ Loading application settings from SQL database
+ Declaring setting UasSettings
+ Dispatch notification RELOAD_SETTINGS_CACHE locally
+ Receive notification RELOAD_SETTINGS_CACHE from node local, module has.uas
+ Loading application settings from SQL database
+ Sending notification RELOAD_SETTINGS_CACHE from server local, module has.uas
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
+ Dispatch notification RELOAD_SETTINGS locally
+ Sending notification RELOAD_SETTINGS from server local, module has.uas
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
+ Saml2 logging enabled.
+ Login Url: /Account/Login
+ Login Return Url Parameter: ReturnUrl
+ Logout Url: /Account/Logout
+ ConsentUrl Url: /consent
+ Consent Return Url Parameter: returnUrl
+ Error Url: /account/error
+ Error Id Parameter: errorId
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification RELOAD_SETTINGS_CACHE locally
+ Receive notification RELOAD_SETTINGS_CACHE from node local, module hopex.supervisor
+ Loading application settings from SQL database
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification RELOAD_SETTINGS locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification MODULE_STARTED locally
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification ALL_MODULES_STARTED locally
+ Receive notification ALL_MODULES_STARTED from node local, module <server>
+ No endpoint entry found for request path: /api/registerclient
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification NODE_READY locally
+ Receive notification NODE_READY from node local, module <server>
+ No endpoint entry found for request path: /api/registerclient
+ No endpoint entry found for request path: /api/registerclient
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Client hopex.supervisor registered by UAS with path supervisor
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Client has.console registered by UAS with path console
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Sending notification UAS_CORS_ORIGINS_UPDATED from server local, module has.uas
+ No endpoint entry found for request path: /__exec/NOTIFY
+ AuthenticationScheme: InternalApiKeyScheme was successfully authenticated.
+ Dispatch notification UAS_CORS_ORIGINS_UPDATED locally
+ Client has.console registered by UAS with path console
  Start request GET https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration
  Request path /.well-known/openid-configuration matched to endpoint type Discovery
  Endpoint enabled: Discovery, successfully created handler: IdentityServer4.Endpoints.DiscoveryEndpoint
@@ -233,7 +212,7 @@
  Calling into discovery response generator: IdentityServer4.ResponseHandling.DiscoveryResponseGenerator
  Found ["openid","profile","hopex","hopex_mapping","hopex_api"] as all scopes, and ["hopex","hopex_mapping"] as API resources
  Invoking result: IdentityServer4.Endpoints.Results.DiscoveryDocumentResult
- End request https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration, status code 200 in 213 ms
+ End request https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration, status code 200 in 194 ms
  Start request GET https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration/jwks
  Request path /.well-known/openid-configuration/jwks matched to endpoint type Discovery
  Endpoint enabled: Discovery, successfully created handler: IdentityServer4.Endpoints.DiscoveryKeyEndpoint
@@ -243,7 +222,7 @@
  Calling into discovery response generator: IdentityServer4.ResponseHandling.DiscoveryResponseGenerator
  Invoking result: IdentityServer4.Endpoints.Results.JsonWebKeysResult
  End request https://vmshqeat04.npr.nornick.ru/uas/.well-known/openid-configuration/jwks, status code 200 in 10 ms
- Start request GET https://vmshqeat04.npr.nornick.ru/uas/connect/authorize?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=q3DGfaqJ6ieYVX0PcBx01hssEz7YFqKZidUJrwRzdYc&code_challenge_method=S256&response_mode=form_post&nonce=638997823239552994.NGU3MDU1YzAtMDE2OS00NDI1LWE3NGQtYWY0ZTIyNmU4ZGY2M2QzZGU2ZDQtOTEwNi00ZDVlLWIzNDEtM2RmODg5ZGE3YzRj&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkgycPrqoCUWP41ZimqroDH_nkZdIZSRfnkzuw12cUjuoWURT1QVUoaA_t_mO4bQ-IIAsrb-sJOSmyBa2PVj8coR1TAjqPMomdoYA5BnJOZdJ-Ajc642ucFs2ChPAth5HDy6NTLxB_w6ehjjzGKq1Hg7W6rUAwjXR33xENY-RY-H3p4KAFRY9YJp6LmOYNAWr3mB_mDBSKs_6x5kVZeYthia4eUpgUT5uClwcnnXRXNhs5vMFMWa8PsYr2qy2GWOPBzrR60dxvHTsZQNIk7Mcwd1npflx5YTgZBV-G6CZrySJQb20-RRtoPw2f8YyhLubbpKMKyKy7zDECQCZ52oyk5eyVN9wGscsfGffK5vInlv95A9wP2yS_M3AqwOzhu3PPU&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
+ Start request GET https://vmshqeat04.npr.nornick.ru/uas/connect/authorize?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=JHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4&code_challenge_method=S256&response_mode=form_post&nonce=638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
  Request path /connect/authorize matched to endpoint type Authorize
  Endpoint enabled: Authorize, successfully created handler: IdentityServer4.Endpoints.AuthorizeEndpoint
  Invoking IdentityServer endpoint: IdentityServer4.Endpoints.AuthorizeEndpoint for /connect/authorize
@@ -260,105 +239,15 @@
  Calling into custom validator: IdentityServer4.Validation.DefaultCustomAuthorizeRequestValidator
  Authorize request protocol validation successful
  ValidatedAuthorizeRequest
-{"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","AllowedRedirectUris":[null],"SubjectId":"anonymous","ResponseType":"code","ResponseMode":"form_post","GrantType":"authorization_code","RequestedScopes":"openid hopex offline_access","State":"CfDJ8G1kiFPUyC1JpPIKzqwHDkgycPrqoCUWP41ZimqroDH_nkZdIZSRfnkzuw12cUjuoWURT1QVUoaA_t_mO4bQ-IIAsrb-sJOSmyBa2PVj8coR1TAjqPMomdoYA5BnJOZdJ-Ajc642ucFs2ChPAth5HDy6NTLxB_w6ehjjzGKq1Hg7W6rUAwjXR33xENY-RY-H3p4KAFRY9YJp6LmOYNAWr3mB_mDBSKs_6x5kVZeYthia4eUpgUT5uClwcnnXRXNhs5vMFMWa8PsYr2qy2GWOPBzrR60dxvHTsZQNIk7Mcwd1npflx5YTgZBV-G6CZrySJQb20-RRtoPw2f8YyhLubbpKMKyKy7zDECQCZ52oyk5eyVN9wGscsfGffK5vInlv95A9wP2yS_M3AqwOzhu3PPU","UiLocales":null,"Nonce":"638997823239552994.NGU3MDU1YzAtMDE2OS00NDI1LWE3NGQtYWY0ZTIyNmU4ZGY2M2QzZGU2ZDQtOTEwNi00ZDVlLWIzNDEtM2RmODg5ZGE3YzRj","AuthenticationContextReferenceClasses":null,"DisplayMode":null,"PromptMode":"","MaxAge":null,"LoginHint":null,"SessionId":"","Raw":{},"$type":"AuthorizeRequestValidationLog"}
+{"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","AllowedRedirectUris":[null],"SubjectId":"anonymous","ResponseType":"code","ResponseMode":"form_post","GrantType":"authorization_code","RequestedScopes":"openid hopex offline_access","State":"CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164","UiLocales":null,"Nonce":"638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4","AuthenticationContextReferenceClasses":null,"DisplayMode":null,"PromptMode":"","MaxAge":null,"LoginHint":null,"SessionId":"","Raw":{},"$type":"AuthorizeRequestValidationLog"}
  ProcessInteractionAsync
  Showing login: User is not authenticated
  End authorize request. result type: IdentityServer4.Endpoints.Results.LoginPageResult
  Invoking result: IdentityServer4.Endpoints.Results.LoginPageResult
- End request https://vmshqeat04.npr.nornick.ru/uas/connect/authorize?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=q3DGfaqJ6ieYVX0PcBx01hssEz7YFqKZidUJrwRzdYc&code_challenge_method=S256&response_mode=form_post&nonce=638997823239552994.NGU3MDU1YzAtMDE2OS00NDI1LWE3NGQtYWY0ZTIyNmU4ZGY2M2QzZGU2ZDQtOTEwNi00ZDVlLWIzNDEtM2RmODg5ZGE3YzRj&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkgycPrqoCUWP41ZimqroDH_nkZdIZSRfnkzuw12cUjuoWURT1QVUoaA_t_mO4bQ-IIAsrb-sJOSmyBa2PVj8coR1TAjqPMomdoYA5BnJOZdJ-Ajc642ucFs2ChPAth5HDy6NTLxB_w6ehjjzGKq1Hg7W6rUAwjXR33xENY-RY-H3p4KAFRY9YJp6LmOYNAWr3mB_mDBSKs_6x5kVZeYthia4eUpgUT5uClwcnnXRXNhs5vMFMWa8PsYr2qy2GWOPBzrR60dxvHTsZQNIk7Mcwd1npflx5YTgZBV-G6CZrySJQb20-RRtoPw2f8YyhLubbpKMKyKy7zDECQCZ52oyk5eyVN9wGscsfGffK5vInlv95A9wP2yS_M3AqwOzhu3PPU&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0, status code 302 in 237 ms
- Start request GET https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3Dq3DGfaqJ6ieYVX0PcBx01hssEz7YFqKZidUJrwRzdYc%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997823239552994.NGU3MDU1YzAtMDE2OS00NDI1LWE3NGQtYWY0ZTIyNmU4ZGY2M2QzZGU2ZDQtOTEwNi00ZDVlLWIzNDEtM2RmODg5ZGE3YzRj%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkgycPrqoCUWP41ZimqroDH_nkZdIZSRfnkzuw12cUjuoWURT1QVUoaA_t_mO4bQ-IIAsrb-sJOSmyBa2PVj8coR1TAjqPMomdoYA5BnJOZdJ-Ajc642ucFs2ChPAth5HDy6NTLxB_w6ehjjzGKq1Hg7W6rUAwjXR33xENY-RY-H3p4KAFRY9YJp6LmOYNAWr3mB_mDBSKs_6x5kVZeYthia4eUpgUT5uClwcnnXRXNhs5vMFMWa8PsYr2qy2GWOPBzrR60dxvHTsZQNIk7Mcwd1npflx5YTgZBV-G6CZrySJQb20-RRtoPw2f8YyhLubbpKMKyKy7zDECQCZ52oyk5eyVN9wGscsfGffK5vInlv95A9wP2yS_M3AqwOzhu3PPU%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
+ End request https://vmshqeat04.npr.nornick.ru/uas/connect/authorize?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=JHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4&code_challenge_method=S256&response_mode=form_post&nonce=638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0, status code 302 in 238 ms
+ Start request GET https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DJHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
  No endpoint entry found for request path: /Account/Login
- ##################################################
- ### ViewModelFactory СОЗДАН - DEBUG VERSION v1 ###
- ##################################################
- _hopexSSPClient = Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient
- HopexSSPClient Assembly: HAS.Server.SiteModule, Version=16.0.2.35, Culture=neutral, PublicKeyToken=null
- HopexSSPClient Assembly Location: C:\MEGA\Hopex Application Server\2025\.shadowFiles\has.uas\16.0.2+60\HAS.Server.SiteModule.dll
-   Field '_client' (IHASClient): Mega.Has.WebSite.HASClient
-   Field '_clusterAdminClient' (IClusterAdminClient): Mega.Has.Commons.ClusterAdminClient
-   Field '_logger' (ILogger`1): Microsoft.Extensions.Logging.Logger`1[Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient]
- _clusterConfiguration = OK
- RuntimeClusterSettings.PublicAddress: https://vmshqeat04.npr.nornick.ru
- RuntimeClusterSettings.Mode: Production
-   RuntimeSettings.DataFolder: C:\MEGA\Hopex Application Server
-   RuntimeSettings.CurrentInstancePort: 2025
-   RuntimeSettings.Name: 2025
-   RuntimeSettings.InstanceId: 381cb0e668164cbbae4db6e0164fa454
-   RuntimeSettings.HopexStoreAddress: https://store.mega.com
-   RuntimeSettings.HopexStoreToken: $2YwUTdFDrBtM5qqJWfD8bTt43pknk3ih7Wn3tdxnNns7gGcFqmFzNZr5GHzcX9LHW5
-   RuntimeSettings.NodeCertificate: 7c73ac4e4e4e8c5680fdd7514d72fd4ba63acdc9
-   RuntimeSettings.NoSsl: True
-   RuntimeSettings.DatabaseConnectionString: ***MASKED***
- ### Конец инициализации ViewModelFactory ###
- ##################################################
- ### AccountController СОЗДАН - DEBUG VERSION v1 ###
- ##################################################
- _hopex (IHopexSSPClient) = Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient
- _viewModelFactory = HAS.Modules.UAS.Services.Factories.ViewModelFactory
- _clusterConfiguration = OK
- _clusterAdminClient = Mega.Has.Commons.ClusterAdminClient
- _hopex Assembly: HAS.Server.SiteModule
- _hopex Assembly Version: 16.0.2.35
-   _hopex._client = Mega.Has.WebSite.HASClient
-   _hopex._clusterAdminClient = Mega.Has.Commons.ClusterAdminClient
-   _hopex._logger = Microsoft.Extensions.Logging.Logger`1[Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient]
- RuntimeClusterSettings.PublicAddress: https://vmshqeat04.npr.nornick.ru
- RuntimeClusterSettings.Mode: Production
- UasSettings.LoginLang: 
- UasSettings.HideModuleName: False
- UasSettings.DefaultDb: 
- UasSettings.DefaultProfile: 
- ##################################################
- ### AccountController.Login: НАЧАЛО DEBUG v1 ###
- ##################################################
- returnUrl = /uas/connect/authorize/callback?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=q3DGfaqJ6ieYVX0PcBx01hssEz7YFqKZidUJrwRzdYc&code_challenge_method=S256&response_mode=form_post&nonce=638997823239552994.NGU3MDU1YzAtMDE2OS00NDI1LWE3NGQtYWY0ZTIyNmU4ZGY2M2QzZGU2ZDQtOTEwNi00ZDVlLWIzNDEtM2RmODg5ZGE3YzRj&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkgycPrqoCUWP41ZimqroDH_nkZdIZSRfnkzuw12cUjuoWURT1QVUoaA_t_mO4bQ-IIAsrb-sJOSmyBa2PVj8coR1TAjqPMomdoYA5BnJOZdJ-Ajc642ucFs2ChPAth5HDy6NTLxB_w6ehjjzGKq1Hg7W6rUAwjXR33xENY-RY-H3p4KAFRY9YJp6LmOYNAWr3mB_mDBSKs_6x5kVZeYthia4eUpgUT5uClwcnnXRXNhs5vMFMWa8PsYr2qy2GWOPBzrR60dxvHTsZQNIk7Mcwd1npflx5YTgZBV-G6CZrySJQb20-RRtoPw2f8YyhLubbpKMKyKy7zDECQCZ52oyk5eyVN9wGscsfGffK5vInlv95A9wP2yS_M3AqwOzhu3PPU&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
- Request.Path = /Account/Login
- Request.Host = vmshqeat04.npr.nornick.ru
- Request.Scheme = https
- Request Headers:
-   Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-   Accept-Encoding: gzip, deflate, br
-   Accept-Language: en,ru;q=0.9
-   Connection: keep-alive
-   Host: vmshqeat04.npr.nornick.ru
-   Max-Forwards: 10
-   User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36
-   X-B3-TraceId: 247e5d90c0f1d133dd844dfeb5e9aa3e
-   X-B3-ParentSpanId: dd844dfeb5e9aa3e
-   X-B3-SpanId: 06dab63b5d4d78dd
-   X-B3-Sampled: 1
-   Upgrade-Insecure-Requests: 1
-   sec-fetch-site: same-origin
-   sec-fetch-mode: navigate
-   sec-fetch-user: ?1
-   sec-fetch-dest: document
-   sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
-   sec-ch-ua-mobile: ?0
-   sec-ch-ua-platform: "Windows"
-   X-Original-URL: /uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3Dq3DGfaqJ6ieYVX0PcBx01hssEz7YFqKZidUJrwRzdYc%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997823239552994.NGU3MDU1YzAtMDE2OS00NDI1LWE3NGQtYWY0ZTIyNmU4ZGY2M2QzZGU2ZDQtOTEwNi00ZDVlLWIzNDEtM2RmODg5ZGE3YzRj%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkgycPrqoCUWP41ZimqroDH_nkZdIZSRfnkzuw12cUjuoWURT1QVUoaA_t_mO4bQ-IIAsrb-sJOSmyBa2PVj8coR1TAjqPMomdoYA5BnJOZdJ-Ajc642ucFs2ChPAth5HDy6NTLxB_w6ehjjzGKq1Hg7W6rUAwjXR33xENY-RY-H3p4KAFRY9YJp6LmOYNAWr3mB_mDBSKs_6x5kVZeYthia4eUpgUT5uClwcnnXRXNhs5vMFMWa8PsYr2qy2GWOPBzrR60dxvHTsZQNIk7Mcwd1npflx5YTgZBV-G6CZrySJQb20-RRtoPw2f8YyhLubbpKMKyKy7zDECQCZ52oyk5eyVN9wGscsfGffK5vInlv95A9wP2yS_M3AqwOzhu3PPU%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
-   X-ARR-SSL: 2048|256|DC=ru, DC=nornick, DC=npr, CN=NN-HQ-CA|C=RU, S=Moscow, L=Moscow, O=PJSC Mining and Metallurgical Company NORILSK NICKEL, OU=IT, CN=vmshqeat04.npr.nornick.ru
-   X-ARR-LOG-ID: 920a5d9a-45c2-4d4e-a4dc-8ce3634925db
-   X-Original-For: [::1]:50169
-   X-Original-Host: localhost:50104
-   traceparent: 00-788c54db94e58ea315afbe6a09dd31ca-419f0ca40918d9ca-00
-   X-Original-Proto: http
- currentModuleId = has.console
- _clusterConfiguration.IsInitialized = True
- environmentId из URL = 
- >>> Вызываем _viewModelFactory.BuildLoginViewModelAsync...
- ##################################################
- ### BuildLoginViewModelAsync: НАЧАЛО DEBUG v1 ###
- ##################################################
- returnUrl = /uas/connect/authorize/callback?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=q3DGfaqJ6ieYVX0PcBx01hssEz7YFqKZidUJrwRzdYc&code_challenge_method=S256&response_mode=form_post&nonce=638997823239552994.NGU3MDU1YzAtMDE2OS00NDI1LWE3NGQtYWY0ZTIyNmU4ZGY2M2QzZGU2ZDQtOTEwNi00ZDVlLWIzNDEtM2RmODg5ZGE3YzRj&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkgycPrqoCUWP41ZimqroDH_nkZdIZSRfnkzuw12cUjuoWURT1QVUoaA_t_mO4bQ-IIAsrb-sJOSmyBa2PVj8coR1TAjqPMomdoYA5BnJOZdJ-Ajc642ucFs2ChPAth5HDy6NTLxB_w6ehjjzGKq1Hg7W6rUAwjXR33xENY-RY-H3p4KAFRY9YJp6LmOYNAWr3mB_mDBSKs_6x5kVZeYthia4eUpgUT5uClwcnnXRXNhs5vMFMWa8PsYr2qy2GWOPBzrR60dxvHTsZQNIk7Mcwd1npflx5YTgZBV-G6CZrySJQb20-RRtoPw2f8YyhLubbpKMKyKy7zDECQCZ52oyk5eyVN9wGscsfGffK5vInlv95A9wP2yS_M3AqwOzhu3PPU&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
- environmentId = 
- hideModuleName = False
- Providers count = 3
-   Provider: Hopex, DisplayName: Hopex, Enabled: True
-   Provider: Windows, DisplayName: Windows, Enabled: False
-   Provider: Saml2, DisplayName: SAML2, Enabled: True
- hopexProvider = found
- hopexProviderEnabled = True
- hopexProviderVisible = True
+ Sending cluster request to http://vmshqeat05:2025/admin/modules
  returnUrl is valid
  Start authorize request protocol validation
  has.console found in database: true
@@ -372,108 +261,157 @@
  Authorize request protocol validation successful
  AuthorizationRequest being returned
  AuthorizationRequest being returned
- AuthorizationContext = OK
- context.Client.ClientId = has.console
- context.IdP = 
- Sending cluster request to http://vmshqeat05:2025/admin/modules
- ##################################################
- ### ВЫЗОВ _hopexSSPClient.GetEnvironments() ###
- ##################################################
- HttpContext.Request.Scheme: https
- HttpContext.Request.Host: vmshqeat04.npr.nornick.ru
- HttpContext.Request.Path: /Account/Login
- HttpContext.Request.PathBase: /uas
- Request Headers:
-   Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
-   Accept-Encoding: gzip, deflate, br
-   Accept-Language: en,ru;q=0.9
-   Connection: keep-alive
-   Host: vmshqeat04.npr.nornick.ru
-   Max-Forwards: 10
-   User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36
-   X-B3-TraceId: 247e5d90c0f1d133dd844dfeb5e9aa3e
-   X-B3-ParentSpanId: dd844dfeb5e9aa3e
-   X-B3-SpanId: 06dab63b5d4d78dd
-   X-B3-Sampled: 1
-   Upgrade-Insecure-Requests: 1
-   sec-fetch-site: same-origin
-   sec-fetch-mode: navigate
-   sec-fetch-user: ?1
-   sec-fetch-dest: document
-   sec-ch-ua: "Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"
-   sec-ch-ua-mobile: ?0
-   sec-ch-ua-platform: "Windows"
-   X-Original-URL: /uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3Dq3DGfaqJ6ieYVX0PcBx01hssEz7YFqKZidUJrwRzdYc%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997823239552994.NGU3MDU1YzAtMDE2OS00NDI1LWE3NGQtYWY0ZTIyNmU4ZGY2M2QzZGU2ZDQtOTEwNi00ZDVlLWIzNDEtM2RmODg5ZGE3YzRj%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkgycPrqoCUWP41ZimqroDH_nkZdIZSRfnkzuw12cUjuoWURT1QVUoaA_t_mO4bQ-IIAsrb-sJOSmyBa2PVj8coR1TAjqPMomdoYA5BnJOZdJ-Ajc642ucFs2ChPAth5HDy6NTLxB_w6ehjjzGKq1Hg7W6rUAwjXR33xENY-RY-H3p4KAFRY9YJp6LmOYNAWr3mB_mDBSKs_6x5kVZeYthia4eUpgUT5uClwcnnXRXNhs5vMFMWa8PsYr2qy2GWOPBzrR60dxvHTsZQNIk7Mcwd1npflx5YTgZBV-G6CZrySJQb20-RRtoPw2f8YyhLubbpKMKyKy7zDECQCZ52oyk5eyVN9wGscsfGffK5vInlv95A9wP2yS_M3AqwOzhu3PPU%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
-   X-ARR-SSL: 2048|256|DC=ru, DC=nornick, DC=npr, CN=NN-HQ-CA|C=RU, S=Moscow, L=Moscow, O=PJSC Mining and Metallurgical Company NORILSK NICKEL, OU=IT, CN=vmshqeat04.npr.nornick.ru
-   X-ARR-LOG-ID: 920a5d9a-45c2-4d4e-a4dc-8ce3634925db
-   X-Original-For: [::1]:50169
-   X-Original-Host: localhost:50104
-   traceparent: 00-788c54db94e58ea315afbe6a09dd31ca-419f0ca40918d9ca-00
-   X-Original-Proto: http
- >>> Вызываем GetEnvironments()...
  HAS Client - No session token founded - User is authenticated=False
  Start request out /ssp/environments
  End request out /ssp/environments, status code 404
- End client for traceId 247e5d90c0f1d133dd844dfeb5e9aa3e
- ##################################################
- ### EXCEPTION при GetEnvironments() ###
- ##################################################
- === EXCEPTION ===
- Type: Mega.Has.WebSite.HttpException
- Message: Exception of type 'Mega.Has.WebSite.HttpException' was thrown.
- Source: HAS.Server.SiteModule
- StatusCode: 404
- StatusCode: 404
- StackTrace:
-   at Mega.Has.WebSite.HASClient.CallWebService[T](String path, Object data, IDictionary`2 headers, Boolean skipInstrumentation) in C:\build-agents\agent1\_work\1\s\Server\src\HAS.Server.SiteModule\HASClient.cs:line 146
-   at Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient.GetEnvironments() in C:\build-agents\agent1\_work\1\s\Server\src\HAS.Server.SiteModule\LoginWorkflow\HopexSSPCLient.cs:line 61
-   at HAS.Modules.UAS.Services.Factories.ViewModelFactory.BuildLoginViewModelAsync(String returnUrl, String environmentId, Boolean hideModuleName) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Services\Factories\ViewModelFactory.cs:line 360
- Unable to retrieve environments
+ End client for traceId b0f1eaa7494e871cffb238081c9b433d
+ Unable to log environments
 Mega.Has.WebSite.HttpException: Exception of type 'Mega.Has.WebSite.HttpException' was thrown.
    at async Task<T> Mega.Has.WebSite.HASClient.CallWebService<T>(string path, object data, IDictionary<string, string> headers, bool skipInstrumentation) in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/HASClient.cs:line 146
    at async Task<IEnumerable<HopexEnvironmentInfo>> Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient.GetEnvironments() in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/LoginWorkflow/HopexSSPCLient.cs:line 61
-   at async Task<(string error, LoginViewModel viewModel)> HAS.Modules.UAS.Services.Factories.ViewModelFactory.BuildLoginViewModelAsync(string returnUrl, string environmentId, bool hideModuleName) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Services/Factories/ViewModelFactory.cs:line 360
+   at async Task<ValueTuple<string, LoginViewModel>> HAS.Modules.UAS.Services.Factories.ViewModelFactory.BuildLoginViewModelAsync(string returnUrl, string environmentId, bool hideModuleName) in C:/build-agents/agent1/_work/1/s/Modules/UAS/src/HAS.Modules.UAS/Services/Factories/ViewModelFactory.cs:line 193
  has.console found in database: true
  Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
  client configuration validation for client has.console succeeded.
- РЕЗУЛЬТАТ: vm.Environments = NULL
- РЕЗУЛЬТАТ: error = 'Unable to retrieve environments.'
- ### BuildLoginViewModelAsync: КОНЕЦ ###
- <<< BuildLoginViewModelAsync завершён за 167 мс
- error = 'Unable to retrieve environments.'
- viewModel.Environments = NULL
- Добавляем ModelState ошибку: Unable to retrieve environments
- ### AccountController.Login: Возвращаем View('Login') ###
- Module request failed /uas/Account/Login - Value cannot be null. (Parameter 'source')
- Error request /uas/Account/Login
-System.ArgumentNullException: Value cannot be null. (Parameter 'source')
-   at void System.Linq.ThrowHelper.ThrowArgumentNullException(ExceptionArgument argument)
-   at bool System.Linq.Enumerable.Any<TSource>(IEnumerable<TSource> source)
-   at async Task AspNetCoreGeneratedDocument.Views_Account_Login.ExecuteAsync()+(?) => { } in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/AspNetCoreGeneratedDocument/Views_Account_Login.cs:line 221
-   at async Task<TagHelperContent> Microsoft.AspNetCore.Razor.Runtime.TagHelpers.TagHelperExecutionContext.GetChildContentAsync(bool useCachedResult, HtmlEncoder encoder)
-   at async Task Microsoft.AspNetCore.Mvc.TagHelpers.RenderAtEndOfFormTagHelper.ProcessAsync(TagHelperContext context, TagHelperOutput output)
-   at async Task Microsoft.AspNetCore.Razor.Runtime.TagHelpers.TagHelperRunner.RunAsync(TagHelperExecutionContext executionContext)+Awaited(?)
-   at async Task AspNetCoreGeneratedDocument.Views_Account_Login.ExecuteAsync() in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/AspNetCoreGeneratedDocument/Views_Account_Login.cs:line 324
-   at async Task Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderPageCoreAsync(IRazorPage page, ViewContext context)
-   at async Task<ViewBufferTextWriter> Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderPageAsync(IRazorPage page, ViewContext context, bool invokeViewStarts)
-   at async Task Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderAsync(ViewContext context)
-   at async Task Microsoft.AspNetCore.Mvc.ViewFeatures.ViewExecutor.ExecuteAsync(ViewContext viewContext, string contentType, int? statusCode) x 3
-   at async Task Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor.ExecuteAsync(ActionContext context, ViewResult result)
-   at async Task Microsoft.AspNetCore.Mvc.ViewResult.ExecuteResultAsync(ActionContext context)
-   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeNextResultFilterAsync<TFilter, TFilterAsync>()+Awaited(?)
-   at void Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResultExecutedContextSealed context)
-   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.ResultNext<TFilter, TFilterAsync>(ref State next, ref Scope scope, ref object state, ref bool isCompleted)
-   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeResultFilters()
-   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeNextResourceFilter()+Awaited(?)
-   at void Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
-   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(ref State next, ref Scope scope, ref object state, ref bool isCompleted)
-   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()+Awaited(?)
-   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeAsync()+Awaited(?) x 2
-   at async Task Microsoft.AspNetCore.Routing.EndpointMiddleware.Invoke(HttpContext httpContext)+AwaitRequestTask(?)
-   at async Task Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
-   at async Task IdentityServer4.Hosting.IdentityServerMiddleware.Invoke(HttpContext context, IEndpointRouter router, IUserSession session, IEventService events, IBackChannelLogoutService backChannelLogoutService)
-   at async Task IdentityServer4.Hosting.MutualTlsEndpointMiddleware.Invoke(HttpContext context, IAuthenticationSchemeProvider schemes)
-   at async Task Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
-   at async Task IdentityServer4.Hosting.BaseUrlMiddleware.Invoke(HttpContext context)
-   at async Task Microsoft.AspNetCore.Builder.Extensions.UsePathBaseMiddleware.InvokeCore(HttpContext context, PathString matchedPath, PathString remainingPath)
-   at async Task Microsoft.AspNetCore.Builder.ApplicationBuilderExtension.ModuleMiddleware(ITraceInstrumentation traceInstrumentation, IModuleConfiguration moduleConfiguration, HttpContext context, Func<Task> next) in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/Extensions/ApplicationBuilderExtension.cs:line 150
+ End request https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DJHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0, status code 200 in 273 ms
+ Start request POST https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DJHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0
+ CORS request made for path: /Account/Login from origin: null
+ Origin null is allowed: false
+ CorsPolicyService did not allow origin: null
+ No endpoint entry found for request path: /Account/Login
+ returnUrl is valid
+ IsValidReturnUrl true
+ Augmenting SignInContext
+ Adding idp claim with value: local
+ Adding amr claim with value: pwd
+ Adding auth_time claim with value: 1764186240
+ {"Username":null,"Provider":"InternalLogin","ProviderUserId":"InternalLogin","SubjectId":"Admin","DisplayName":"Admin","Endpoint":"UI","ClientId":"has.console","Category":"Authentication","Name":"User Login Success","EventType":"Success","Id":1000,"Message":null,"ActivityId":"80000005-0009-ff00-b63f-84710c7967bb","TimeStamp":"2025-11-26T19:44:00.0000000Z","ProcessId":13284,"LocalIpAddress":"::1:50561","RemoteIpAddress":"::ffff:10.2.50.200","$type":"UserLoginSuccessEvent"}
+ Sending cluster request to http://vmshqeat05:2025/admin/supervision/hasevent
+ Signing user Admin with claims ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role: HasAdmin","has.sessionGuid: ea17e5fa1c304dddb4ffd43d04182dea","name: Admin","sub: Admin","idp: local","amr: pwd","auth_time: 1764186240"]
+ End request https://vmshqeat04.npr.nornick.ru/uas/Account/Login?ReturnUrl=%2Fuas%2Fconnect%2Fauthorize%2Fcallback%3Fclient_id%3Dhas.console%26redirect_uri%3Dhttps%253A%252F%252Fvmshqeat04.npr.nornick.ru%252Fconsole%252Fsignin-oidc%26response_type%3Dcode%26scope%3Dopenid%2520hopex%2520offline_access%26code_challenge%3DJHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4%26code_challenge_method%3DS256%26response_mode%3Dform_post%26nonce%3D638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4%26state%3DCfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164%26x-client-SKU%3DID_NET6_0%26x-client-ver%3D6.35.0.0, status code 302 in 194 ms
+ Start request GET https://vmshqeat04.npr.nornick.ru/uas/connect/authorize/callback?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=JHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4&code_challenge_method=S256&response_mode=form_post&nonce=638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0
+ Request path /connect/authorize/callback matched to endpoint type Authorize
+ Endpoint enabled: Authorize, successfully created handler: IdentityServer4.Endpoints.AuthorizeCallbackEndpoint
+ Invoking IdentityServer endpoint: IdentityServer4.Endpoints.AuthorizeCallbackEndpoint for /connect/authorize/callback
+ Start authorize callback request
+ User in authorize request: Admin
+ Start authorize request protocol validation
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ Checking for PKCE parameters
+ Found ["openid","hopex"] identity scopes in database
+ Found [] API resources in database
+ Found [] scopes in database
+ Calling into custom validator: IdentityServer4.Validation.DefaultCustomAuthorizeRequestValidator
+ Authorize request protocol validation successful
+ ValidatedAuthorizeRequest
+{"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","AllowedRedirectUris":[null],"SubjectId":"Admin","ResponseType":"code","ResponseMode":"form_post","GrantType":"authorization_code","RequestedScopes":"openid hopex offline_access","State":"CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164","UiLocales":null,"Nonce":"638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4","AuthenticationContextReferenceClasses":null,"DisplayMode":null,"PromptMode":"","MaxAge":null,"LoginHint":null,"SessionId":"4B9F2FFA6BAED897CE31E6EB2C58CE05","Raw":{},"$type":"AuthorizeRequestValidationLog"}
+ ProcessInteractionAsync
+ IsActive called from: AuthorizeEndpoint
+ Client is configured to not require consent, no consent is required
+ Creating Authorization Code Flow response.
+ qhii4D2mgT2pqco3zRLL2llgaxyZPLWCLyDIQgwagkQ= not found in database
+ Code issued for has.console (HAS Console) / Admin: 2873B2D05442D30FB1AAF0C65657438107D55DA3A442BD7A59E83090061F271D
+ {"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","Endpoint":"Authorize","SubjectId":"Admin","Scopes":"openid hopex offline_access","GrantType":"authorization_code","Tokens":[null],"Category":"Token","Name":"Token Issued Success","EventType":"Success","Id":2000,"Message":null,"ActivityId":"8000000f-0000-fe00-b63f-84710c7967bb","TimeStamp":"2025-11-26T19:44:00.0000000Z","ProcessId":13284,"LocalIpAddress":"::1:50561","RemoteIpAddress":"::ffff:10.2.50.200","$type":"TokenIssuedSuccessEvent"}
+ Authorize endpoint response
+{"SubjectId":"Admin","ClientId":"has.console","RedirectUri":"https://vmshqeat04.npr.nornick.ru/console/signin-oidc","State":"CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164","Scope":"openid hopex offline_access","Error":null,"ErrorDescription":null,"$type":"AuthorizeResponseLog"}
+ End Authorize Request. Result type: IdentityServer4.Endpoints.Results.AuthorizeResult
+ Invoking result: IdentityServer4.Endpoints.Results.AuthorizeResult
+ Augmenting SignInContext
+ End request https://vmshqeat04.npr.nornick.ru/uas/connect/authorize/callback?client_id=has.console&redirect_uri=https%3A%2F%2Fvmshqeat04.npr.nornick.ru%2Fconsole%2Fsignin-oidc&response_type=code&scope=openid%20hopex%20offline_access&code_challenge=JHXLXD2AnMAJlZck4m6OPx3EtyfDRjFkwjLbgBgFGr4&code_challenge_method=S256&response_mode=form_post&nonce=638997830284026163.OWVmYTZiOWItM2ZjMy00NDBkLTk1NDgtYTc2ZGQ0YmY5OTk3ZWQ3MDZjMWMtMTRhZi00YzNiLTg4YmMtZTJiNDQ1ZjA0MWQ4&state=CfDJ8G1kiFPUyC1JpPIKzqwHDkhiIm11EED2vdvrR1a8YzAys14zFf2GfRIM3fueL4eINpNhyG-RKNxztifXNw4Di4nGfhK8d66nHV1ick6jQRXDhJD0gzy4ExAuYdFbMkqhWob2fUEBu9Yph6i2D4yib4zFtHgx1Ce2GE-AxImixkSlX5QM5q0WH7GiK7la-5ffq9qBhmOGDiHRVVhRYfTqwRzOx_W6--NF9oWmzHshcvfUPA-4XNubsadDpgfk-7CdmLj_w3ICSNrOwqoMVYa39B_SzqIMdBbN_p84_0lM7-TcsJwk6GDQ5WI4R3ciPFtIkgHqXjTX3fjd8HDscNvZYXtt8jWIEbPP-VBs5heDbvppL5kN8xIoWHtbWOR9wXVj4WmRRyImZr9Loy1uzaIK164&x-client-SKU=ID_NET6_0&x-client-ver=6.35.0.0, status code 200 in 176 ms
+ Start request POST https://vmshqeat04.npr.nornick.ru/uas/connect/token
+ Request path /connect/token matched to endpoint type Token
+ Endpoint enabled: Token, successfully created handler: IdentityServer4.Endpoints.TokenEndpoint
+ Invoking IdentityServer endpoint: IdentityServer4.Endpoints.TokenEndpoint for /connect/token
+ Processing token request.
+ Start token request.
+ Start client validation
+ Start parsing Basic Authentication secret
+ Start parsing for secret in post body
+ client id without secret found
+ Parser found secret: PostBodySecretParser
+ Secret id found: has.console
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ Public Client - skipping secret validation success
+ Client validation success
+ {"ClientId":"has.console","AuthenticationMethod":"NoSecret","Category":"Authentication","Name":"Client Authentication Success","EventType":"Success","Id":1010,"Message":null,"ActivityId":"80000002-0000-fd00-b63f-84710c7967bb","TimeStamp":"2025-11-26T19:44:00.0000000Z","ProcessId":13284,"LocalIpAddress":"::1:50561","RemoteIpAddress":"::ffff:10.2.50.200","$type":"ClientAuthenticationSuccessEvent"}
+ Calling into token request validator: IdentityServer4.Validation.TokenRequestValidator
+ Start token request validation
+ Start validation of authorization code token request
+ qhii4D2mgT2pqco3zRLL2llgaxyZPLWCLyDIQgwagkQ= found in database: true
+ removing qhii4D2mgT2pqco3zRLL2llgaxyZPLWCLyDIQgwagkQ= persisted grant from database
+ Client required a proof key for code exchange. Starting PKCE validation
+ IsActive called from: AuthorizationCodeValidation
+ Validation of authorization code token request success
+ Calling into custom request validator: IdentityServer4.Validation.DefaultCustomTokenRequestValidator
+ Token request validation success, {"ClientId":"has.console","ClientName":"HAS Console","GrantType":"authorization_code","Scopes":null,"AuthorizationCode":"****271D","RefreshToken":"********","UserName":null,"AuthenticationContextReferenceClasses":null,"Tenant":null,"IdP":null,"Raw":{},"$type":"TokenRequestValidationLog"}
+ Calling into token request response generator: IdentityServer4.ResponseHandling.TokenResponseGenerator
+ Creating response for authorization code request
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ Found ["openid","hopex"] identity scopes in database
+ Found [] API resources in database
+ Found [] scopes in database
+ Creating access token
+ Getting claims for access token for client: has.console
+ Getting claims for access token for subject: Admin
+ Get profile called for subject Admin from client HAS Console with claim types [] via ClaimsProviderAccessToken
+ Issued claims: ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role","has.sessionGuid","name","sub","idp","amr","auth_time"]
+ Claim types from profile service that were filtered: ["sub","idp","amr","auth_time"]
+ Creating JWT access token
+ Creating refresh token
+ Setting an absolute lifetime: 2592000
+ oNd35gLbf0dbq6zQ7SwAnTyx6vGv0BkNH9zfq+Jq68k= not found in database
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ Found ["openid","hopex"] identity scopes in database
+ Found [] API resources in database
+ Found [] scopes in database
+ Creating identity token
+ Getting claims for identity token for subject: Admin and client: has.console
+ Get profile called for subject Admin from client HAS Console with claim types ["has.guiLanguageId","has.environmentId","has.dataLanguageId","has.login","has.profileId","has.repositoryid","has.userId","has.sessionGuid","has.connectionMode","has.sessionMode","has.baseline"] via ClaimsProviderIdentityToken
+ Issued claims: ["http://schemas.microsoft.com/ws/2008/06/identity/claims/role","has.sessionGuid","name","sub","idp","amr","auth_time"]
+ Claim types from profile service that were filtered: ["sub","idp","amr","auth_time"]
+ Creating JWT identity token
+ {"ClientId":"has.console","ClientName":"HAS Console","RedirectUri":null,"Endpoint":"Token","SubjectId":"Admin","Scopes":"openid hopex offline_access","GrantType":"authorization_code","Tokens":[null,null,null],"Category":"Token","Name":"Token Issued Success","EventType":"Success","Id":2000,"Message":null,"ActivityId":"80000002-0000-fd00-b63f-84710c7967bb","TimeStamp":"2025-11-26T19:44:00.0000000Z","ProcessId":13284,"LocalIpAddress":"::1:50561","RemoteIpAddress":"::ffff:10.2.50.200","$type":"TokenIssuedSuccessEvent"}
+ Identity token issued for has.console (HAS Console) / Admin: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYmYiOjE3NjQxODYyNDAsImV4cCI6MTc2NDE4NjU0MCwiaXNzIjoiaHR0cHM6Ly92bXNocWVhdDA0Lm5wci5ub3JuaWNrLnJ1IiwiYXVkIjoiaGFzLmNvbnNvbGUiLCJub25jZSI6IjYzODk5NzgzMDI4NDAyNjE2My5PV1ZtWVRaaU9XSXRNMlpqTXkwME5EQmtMVGsxTkRndFlUYzJaR1EwWW1ZNU9UazNaV1EzTURaak1XTXRNVFJoWmkwMFl6TmlMVGc0WW1NdFpUSmlORFExWmpBME1XUTQiLCJpYXQiOjE3NjQxODYyNDAsImF0X2hhc2giOiIyRlhRcTA0dlRZUzZ0d3otUmVwOXNRIiwic19oYXNoIjoieUU5Y0pGQUlUQVFaaV9FOThiS2VmQSIsInNpZCI6IjRCOUYyRkZBNkJBRUQ4OTdDRTMxRTZFQjJDNThDRTA1Iiwic3ViIjoiQWRtaW4iLCJhdXRoX3RpbWUiOjE3NjQxODYyNDAsImlkcCI6ImxvY2FsIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiSGFzQWRtaW4iLCJoYXMuc2Vzc2lvbkd1aWQiOiJlYTE3ZTVmYTFjMzA0ZGRkYjRmZmQ0M2QwNDE4MmRlYSIsIm5hbWUiOiJBZG1pbiIsImFtciI6WyJwd2QiXX0.qAQ507HkZqbfeW_xnX9qX8wXiX1VMbWfcfZLP54ysloWS6mTw56jZa74f7NS560_GPsZ2Ljnr0MJbeao4Y1EqX1HJUppgQjoaaJuESciOsiVbnkxi2PDBx9xhmOSjkgnhvMEItEFyByhLdHzqFywBBw8M05OF1aKmHmRJCoXJr8VvTiSrJ1IfdP_cBUSmESDYVI5MR9n2NB1JRYtmag8Lxlx1R8qeXlv8avmvg2Il6YNYD_q5Ifg6BZveTG6OsoTVe0t5G-WU0kuea2A-EJngTp1HHhV0XFs8NaHxHvQi-F-vgBTliYtShrqhkgeRlGg0tLon1d9VRgNRFfwFHmPQA
+ Refresh token issued for has.console (HAS Console) / Admin: 0A79876E23E4FD5B5BE930977AAC2F3CCD41E9DC949942346E8C41ED4286BE05
+ Access token issued for has.console (HAS Console) / Admin: eyJhbGciOiJSUzI1NiIsInR5cCI6ImF0K2p3dCJ9.eyJuYmYiOjE3NjQxODYyNDAsImV4cCI6MTc2NDE4OTg0MCwiaXNzIjoiaHR0cHM6Ly92bXNocWVhdDA0Lm5wci5ub3JuaWNrLnJ1IiwiY2xpZW50X2lkIjoiaGFzLmNvbnNvbGUiLCJzdWIiOiJBZG1pbiIsImF1dGhfdGltZSI6MTc2NDE4NjI0MCwiaWRwIjoibG9jYWwiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJIYXNBZG1pbiIsImhhcy5zZXNzaW9uR3VpZCI6ImVhMTdlNWZhMWMzMDRkZGRiNGZmZDQzZDA0MTgyZGVhIiwibmFtZSI6IkFkbWluIiwianRpIjoiMEVFNzMwN0Y4QjRCNTUyMkY3MTIzQTUxNzFGRDFEOUEiLCJzaWQiOiI0QjlGMkZGQTZCQUVEODk3Q0UzMUU2RUIyQzU4Q0UwNSIsImlhdCI6MTc2NDE4NjI0MCwic2NvcGUiOlsib3BlbmlkIiwiaG9wZXgiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.ouYYXii8A0AwrS1tD9ED74Oowgv1TtuwwEcC3jktBrX0s-OBMkBwNwzmyVi6sygJyuc4SmBlVkGF0PuFwm5QA6m2YaUeTtSPvzzZWiCyOteEKQFWtYFApn1lk7TBdrda0l1Cb4XCb02K6rdmINLlV5JAJnIXBRmFE6Wu2eQWsF91QPpL2Uby1us45TdPxrefee3domd-39n5R-f6E1pI_JKQUzgSWd3jv283uXtAtnsgegZl3TABN4FtZWBfTjPw172gZmmUzG9OY1JiSR4mEPlyxPijJWM8NxZ-XUlxj6b_QmrQ1F7xOn6KmfJKX78B20ZJYmmdjQbKFIiWeJ14uA
+ Token request success.
+ Invoking result: IdentityServer4.Endpoints.Results.TokenResult
+ End request https://vmshqeat04.npr.nornick.ru/uas/connect/token, status code 200 in 252 ms
+ Start request GET https://vmshqeat04.npr.nornick.ru/uas/connect/userinfo
+ Request path /connect/userinfo matched to endpoint type Userinfo
+ Endpoint enabled: Userinfo, successfully created handler: IdentityServer4.Endpoints.UserInfoEndpoint
+ Invoking IdentityServer endpoint: IdentityServer4.Endpoints.UserInfoEndpoint for /connect/userinfo
+ Start userinfo request
+ Bearer token found in header
+ Calling into userinfo request validator: IdentityServer4.Validation.UserInfoRequestValidator
+ Start access token validation
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ has.console found in database: true
+ Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+ client configuration validation for client has.console succeeded.
+ IsActive called from: AccessTokenValidation
+ Calling into custom token validator: IdentityServer4.Validation.DefaultCustomTokenValidator
+ Token validation success
+{"ClientId":null,"ClientName":null,"ValidateLifetime":true,"AccessTokenType":"Jwt","ExpectedScope":"openid","TokenHandle":null,"JwtId":"0EE7307F8B4B5522F7123A5171FD1D9A","Claims":{},"$type":"TokenValidationLog"}
+ IsActive called from: UserInfoRequestValidation
+ Calling into userinfo response generator: IdentityServer4.ResponseHandling.UserInfoResponseGenerator
+ Creating userinfo response
+ Scopes in access token: openid hopex offline_access
+ Found ["openid","hopex"] identity scopes in database
+ Requested claim types: sub has.guiLanguageId has.environmentId has.dataLanguageId has.login has.profileId has.repositoryid has.userId has.sessionGuid has.connectionMode has.sessionMode has.baseline
+ Get profile called for subject Admin from client HAS Console with claim types ["sub","has.guiLanguageId","has.environmentId","has.dataLanguageId","has.login","has.profileId","has.repositoryid","has.userId","has.sessionGuid","has.connectionMode","has.sessionMode","has.baseline"] via UserInfoEndpoint
+ Issued claims: ["sub","auth_time","idp","http://schemas.microsoft.com/ws/2008/06/identity/claims/role","has.sessionGuid","name","amr"]
+ Profile service returned the following claim types: sub auth_time idp http://schemas.microsoft.com/ws/2008/06/identity/claims/role has.sessionGuid name amr
+ End userinfo request
+ Invoking result: IdentityServer4.Endpoints.Results.UserInfoResult
+ End request https://vmshqeat04.npr.nornick.ru/uas/connect/userinfo, status code 200 in 101 ms

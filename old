@@ -1,175 +1,41 @@
- ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
- Starting module 2025-HAS Identity Provider - Mode : "Production"
- Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
- ##################################################
- !!! НОВАЯ ВЕРСИЯ КОДА v6 - С ПРОВЕРКОЙ ТАБЛИЦ !!!
- ##################################################
- === EnsureSeedData: НАЧАЛО ===
- Шаг 1: BuildServiceProvider...
- Шаг 1: BuildServiceProvider - OK
- Шаг 2: Получение ApplicationDbContext...
- Шаг 2: ApplicationDbContext = OK
- Шаг 3: Получение ConfigurationDbContext...
- Шаг 3: ConfigurationDbContext = OK
- Шаг 4: Получение ILogger...
- Шаг 4: ILogger = OK
- Шаг 5: Проверка IsInMemory...
- Шаг 5.1: context.Database = OK
- Шаг 5: IsInMemory = False
- === Режим SQL Server (не InMemory) ===
- Шаг 6: Получение ICryptoService...
- Шаг 6: ICryptoService = OK
- Шаг 7: Вызов MigrateDatabase...
- ##################################################
- !!! MigrateDatabase НАЧАЛО v6 - С ПРОВЕРКОЙ !!!
- ##################################################
- === MigrateDatabase: НАЧАЛО ===
- Проверка Standalone режима...
- Standalone = False
- isStandalone = False
- === SQL Server миграция ===
- Миграция 1: Получение ApplicationDbContext...
- Миграция 1: Проверка нужна ли миграция...
- ShouldSkipMigration: Pending=5, Applied=0
- ShouldSkipMigration: Таблица 'AccessTokens' существует = True
- ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
- ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
- Миграция 1: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
- Миграция 1: Помечаем миграции как применённые...
- MarkMigrationsAsApplied: Добавлена запись для '20200512145632_InitialApplicationDbMigration'
- MarkMigrationsAsApplied: Добавлена запись для '20211102091321_MultipleProviders'
- MarkMigrationsAsApplied: Добавлена запись для '20230427065610_PasswordExpirationDate'
- MarkMigrationsAsApplied: Добавлена запись для '20230906133336_OldPassword'
- MarkMigrationsAsApplied: Добавлена запись для '20240311145607_RemoveSecrets'
- Миграция 2: Получение ConfigurationDbContext...
- Миграция 2: Проверка нужна ли миграция...
- ShouldSkipMigration: Pending=2, Applied=0
- ShouldSkipMigration: Таблица 'Clients' существует = True
- ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
- ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
- Миграция 2: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
- Миграция 2: Помечаем миграции как применённые...
- MarkMigrationsAsApplied: Добавлена запись для '20200512145618_InitialIdentityServerConfigurationDbMigration'
- MarkMigrationsAsApplied: Добавлена запись для '20211018165011_Migrate_3.1.4_to_4.1.2'
- Миграция 3: Получение PersistedGrantDbContext...
- Миграция 3: Проверка нужна ли миграция...
- ShouldSkipMigration: Pending=2, Applied=0
- ShouldSkipMigration: Таблица 'PersistedGrants' существует = True
- ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!
- ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'
- Миграция 3: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!
- Миграция 3: Помечаем миграции как применённые...
- MarkMigrationsAsApplied: Добавлена запись для '20200512145607_InitialIdentityServerPersistedGrantDbMigration'
- MarkMigrationsAsApplied: Добавлена запись для '20211018201457_Migtaiondefrom3.1.4To4.1.2'
- Шаг 4: Получение DatabaseConnectionString...
- Шаг 4: DatabaseConnectionString = OK (длина: 111)
- DatabaseConnectionString (masked): Data Source=vmshqeatdb03;User ID=MS-HQ-Srvhopexusr_p;Password=***;encrypt=false;Database=HAS_2025;
- Шаг 5: Migrate_HAS_5_0To5_0_1...
- Migrate_HAS_5_0To5_0_1: НАЧАЛО
- Migrate_HAS_5_0To5_0_1: Соединение создано
- Migrate_HAS_5_0To5_0_1: Соединение открыто, State = Open
- Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<WindowsConfig>...
- MigrateOldConfigTable<WindowsConfig>: НАЧАЛО
- MigrateOldConfigTable<WindowsConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.WindowsConfig'.
- Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<HopexConfig>...
- MigrateOldConfigTable<HopexConfig>: НАЧАЛО
- MigrateOldConfigTable<HopexConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.HopexConfig'.
- Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<Saml2Config>...
- MigrateOldConfigTable<Saml2Config>: НАЧАЛО
- MigrateOldConfigTable<Saml2Config>: Таблица не найдена (это OK) - Invalid object name 'dbo.Saml2Config'.
- Migrate_HAS_5_0To5_0_1: MigrateOldConfigTable<OpenIdConfig>...
- MigrateOldConfigTable<OpenIdConfig>: НАЧАЛО
- MigrateOldConfigTable<OpenIdConfig>: Таблица не найдена (это OK) - Invalid object name 'dbo.OpenIdConfig'.
- Migrate_HAS_5_0To5_0_1: Обработка ApiResources...
- Migrate_HAS_5_0To5_0_1: ApiResources - OK
- Migrate_HAS_5_0To5_0_1: КОНЕЦ
- Шаг 5: Migrate_HAS_5_0To5_0_1 - OK
- Шаг 6: Migrate_HAS_5_0_xTo5_0_5...
- Migrate_HAS_5_0_xTo5_0_5: НАЧАЛО
- Migrate_HAS_5_0_xTo5_0_5: Соединение открыто
- Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<OpenIdConfig>...
- updateClaimForSub<OpenIdConfig>: НАЧАЛО
- updateClaimForSub<OpenIdConfig>: КОНЕЦ
- Migrate_HAS_5_0_xTo5_0_5: updateClaimForSub<Saml2Config>...
- updateClaimForSub<Saml2Config>: НАЧАЛО
- updateClaimForSub<Saml2Config>: КОНЕЦ
- Migrate_HAS_5_0_xTo5_0_5: КОНЕЦ
- Шаг 6: Migrate_HAS_5_0_xTo5_0_5 - OK
- Шаг 7: SQLCacheTableCreator...
- Шаг 7: SQLCacheTableCreator result = 0
- === MigrateDatabase: КОНЕЦ ===
- Шаг 7: MigrateDatabase - OK
- Шаг 8: EnsureSeedData (с cryptoService)...
- EnsureSeedData (with crypto): НАЧАЛО
- Seeding database...
- EnsureSeedData: Updating AccessTokens...
- EnsureSeedData: Добавлено AccessTokens: 0
- EnsureSeedData: Updating Clients...
- EnsureSeedData: Добавлено Clients: 0
- EnsureSeedData: Updating Scope...
- EnsureSeedData: Добавлено ApiScopes: 0
- EnsureSeedData: Updating IdentityResources...
- EnsureSeedData: Добавлено IdentityResources: 0
- EnsureSeedData: Updating ApiResources...
- EnsureSeedData: Добавлено ApiResources: 0
- EnsureSeedData: SaveChanges...
- EnsureSeedData: SaveChanges - OK
- EnsureSeedData (with crypto): КОНЕЦ
- Шаг 8: EnsureSeedData - OK
- Шаг 9: EnsureSeedData (uasContext)...
- EnsureSeedData (uasContext): НАЧАЛО
- Updating External Providers...
- EnsureSeedData (uasContext): Добавлено ExternalProviders: 0
- EnsureSeedData (uasContext): SaveChanges...
- EnsureSeedData (uasContext): SaveChanges - OK
- EnsureSeedData (uasContext): КОНЕЦ
- Шаг 9: EnsureSeedData - OK
- Шаг 10: EnsurePublicAddress...
- Шаг 10: publicAddress = https://vmshqeat04.npr.nornick.ru, isDevelopment = False
- EnsurePublicAddress: НАЧАЛО
- EnsurePublicAddress: publicAddress = https://vmshqeat04.npr.nornick.ru, isDevelopmentMode = False
- URLS Redirections are updating to public address https://vmshqeat04.npr.nornick.ru...
- EnsurePublicAddress: publicUri = https://vmshqeat04.npr.nornick.ru:443/
- EnsurePublicAddress: Обработано клиентов: 6
- EnsurePublicAddress: SaveChanges...
- EnsurePublicAddress: SaveChanges - OK
- EnsurePublicAddress: КОНЕЦ
- Шаг 10: EnsurePublicAddress - OK
- Закрытие соединения с БД...
- === EnsureSeedData: КОНЕЦ ===
- Using external provider OpenIdProvider
- Using external provider Saml2Provider
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Loading metadata for idp http://fedsvc.nornik.ru/adfs/services/trust
- Starting IdentityServer4 version 4.1.2+997a6cdd643e46cd5762b710c4ddc43574cbec2e
- Custom IssuerUri set to https://vmshqeat04.npr.nornick.ru
- Using the default authentication scheme Cookies for IdentityServer
- Using Cookies as default ASP.NET Core scheme for authentication
- Using Cookies as default ASP.NET Core scheme for sign-in
- Using Cookies as default ASP.NET Core scheme for sign-out
- Using OpenIdConnect as default ASP.NET Core scheme for challenge
- Using OpenIdConnect as default ASP.NET Core scheme for forbid
- Unhandled exception
-System.Reflection.ReflectionTypeLoadException: Unable to load one or more of the requested types.
-Could not load file or assembly 'System.Security.Cryptography.Xml, Version=8.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51'. The system cannot find the file specified.
-   at RuntimeType[] System.Reflection.RuntimeModule.GetTypes(RuntimeModule module)
-   at IEnumerable<TypeInfo> System.Reflection.RuntimeAssembly.get_DefinedTypes()
-   at IEnumerable<TypeInfo> Microsoft.AspNetCore.Mvc.ApplicationParts.AssemblyPart.get_Types()
-   at void Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider.PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
-   at void Microsoft.AspNetCore.Mvc.ApplicationParts.ApplicationPartManager.PopulateFeature<TFeature>(TFeature feature)
-   at IEnumerable<TypeInfo> Microsoft.AspNetCore.Mvc.ApplicationModels.ControllerActionDescriptorProvider.GetControllerTypes()
-   at IEnumerable<ControllerActionDescriptor> Microsoft.AspNetCore.Mvc.ApplicationModels.ControllerActionDescriptorProvider.GetDescriptors()
-   at void Microsoft.AspNetCore.Mvc.ApplicationModels.ControllerActionDescriptorProvider.OnProvidersExecuting(ActionDescriptorProviderContext context)
-   at void Microsoft.AspNetCore.Mvc.Infrastructure.DefaultActionDescriptorCollectionProvider.UpdateCollection()
-   at void Microsoft.AspNetCore.Mvc.Infrastructure.DefaultActionDescriptorCollectionProvider.Initialize()
-   at void Microsoft.AspNetCore.Mvc.Routing.ActionEndpointDataSourceBase.Subscribe()+() => { }
-   at new Microsoft.Extensions.Primitives.ChangeToken+ChangeTokenRegistration<TState>(Func<IChangeToken> changeTokenProducer, Action<TState> changeTokenConsumer, TState state)
-   at IDisposable Microsoft.Extensions.Primitives.ChangeToken.OnChange(Func<IChangeToken> changeTokenProducer, Action changeTokenConsumer)
-   at void Microsoft.AspNetCore.Mvc.Routing.ActionEndpointDataSourceBase.Subscribe()
-   at new Microsoft.AspNetCore.Mvc.Routing.ControllerActionEndpointDataSource(ControllerActionEndpointDataSourceIdProvider dataSourceIdProvider, IActionDescriptorCollectionProvider actions, ActionEndpointFactory endpointFactory, OrderedEndpointsSequenceProvider orderSequence)
-   at ControllerActionEndpointDataSource Microsoft.AspNetCore.Builder.ControllerEndpointRouteBuilderExtensions.GetOrCreateDataSource(IEndpointRouteBuilder endpoints)
-   at ControllerActionEndpointConventionBuilder Microsoft.AspNetCore.Builder.ControllerEndpointRouteBuilderExtensions.MapControllerRoute(IEndpointRouteBuilder endpoints, string name, string pattern, object defaults, object constraints, object dataTokens)
-   at Task Program.Main(string[] args)+(IEndpointRouteBuilder endpoints) => { } in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Program.cs:line 99
-   at IApplicationBuilder Microsoft.AspNetCore.Builder.EndpointRoutingApplicationBuilderExtensions.UseEndpoints(IApplicationBuilder builder, Action<IEndpointRouteBuilder> configure)
-   at async Task Program.Main(string[] args) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Program.cs:line 97
-   at void Program.<Main>(?)
+Unable to retrieve environments
+Mega.Has.WebSite.HttpException: Exception of type 'Mega.Has.WebSite.HttpException' was thrown.
+   at async Task<T> Mega.Has.WebSite.HASClient.CallWebService<T>(string path, object data, IDictionary<string, string> headers, bool skipInstrumentation) in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/HASClient.cs:line 146
+   at async Task<IEnumerable<HopexEnvironmentInfo>> Mega.Has.WebSite.LoginWorkflow.HopexSSPCLient.GetEnvironments() in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/LoginWorkflow/HopexSSPCLient.cs:line 61
+   at async Task<(string error, LoginViewModel viewModel)> HAS.Modules.UAS.Services.Factories.ViewModelFactory.BuildLoginViewModelAsync(string returnUrl, string environmentId, bool hideModuleName) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Services/Factories/ViewModelFactory.cs:line 193
+2025-11-26T21:50:54.7093539+03:00 [VMSHQEAT05-HAS Identity Provider-16.0.2-848c122c2441da15e52836084fe660df]  has.console found in database: true
+2025-11-26T21:50:54.7093902+03:00 [VMSHQEAT05-HAS Identity Provider-16.0.2-848c122c2441da15e52836084fe660df]  Calling into client configuration validator: IdentityServer4.Validation.DefaultClientConfigurationValidator
+2025-11-26T21:50:54.7094088+03:00 [VMSHQEAT05-HAS Identity Provider-16.0.2-848c122c2441da15e52836084fe660df]  client configuration validation for client has.console succeeded.
+2025-11-26T21:50:54.7740692+03:00 [VMSHQEAT05-HAS Identity Provider-16.0.2-848c122c2441da15e52836084fe660df]  Module request failed /uas/Account/Login - Value cannot be null. (Parameter 'source')
+2025-11-26T21:50:54.7745185+03:00 [VMSHQEAT05-HAS Identity Provider-16.0.2-848c122c2441da15e52836084fe660df]  Error request /uas/Account/Login
+System.ArgumentNullException: Value cannot be null. (Parameter 'source')
+   at void System.Linq.ThrowHelper.ThrowArgumentNullException(ExceptionArgument argument)
+   at bool System.Linq.Enumerable.Any<TSource>(IEnumerable<TSource> source)
+   at async Task AspNetCoreGeneratedDocument.Views_Account_Login.ExecuteAsync()+(?) => { } in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/AspNetCoreGeneratedDocument/Views_Account_Login.cs:line 221
+   at async Task<TagHelperContent> Microsoft.AspNetCore.Razor.Runtime.TagHelpers.TagHelperExecutionContext.GetChildContentAsync(bool useCachedResult, HtmlEncoder encoder)
+   at async Task Microsoft.AspNetCore.Mvc.TagHelpers.RenderAtEndOfFormTagHelper.ProcessAsync(TagHelperContext context, TagHelperOutput output)
+   at async Task Microsoft.AspNetCore.Razor.Runtime.TagHelpers.TagHelperRunner.RunAsync(TagHelperExecutionContext executionContext)+Awaited(?)
+   at async Task AspNetCoreGeneratedDocument.Views_Account_Login.ExecuteAsync() in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/AspNetCoreGeneratedDocument/Views_Account_Login.cs:line 324
+   at async Task Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderPageCoreAsync(IRazorPage page, ViewContext context)
+   at async Task<ViewBufferTextWriter> Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderPageAsync(IRazorPage page, ViewContext context, bool invokeViewStarts)
+   at async Task Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderAsync(ViewContext context)
+   at async Task Microsoft.AspNetCore.Mvc.ViewFeatures.ViewExecutor.ExecuteAsync(ViewContext viewContext, string contentType, int? statusCode) x 3
+   at async Task Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor.ExecuteAsync(ActionContext context, ViewResult result)
+   at async Task Microsoft.AspNetCore.Mvc.ViewResult.ExecuteResultAsync(ActionContext context)
+   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeNextResultFilterAsync<TFilter, TFilterAsync>()+Awaited(?)
+   at void Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResultExecutedContextSealed context)
+   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.ResultNext<TFilter, TFilterAsync>(ref State next, ref Scope scope, ref object state, ref bool isCompleted)
+   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeResultFilters()
+   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeNextResourceFilter()+Awaited(?)
+   at void Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
+   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(ref State next, ref Scope scope, ref object state, ref bool isCompleted)
+   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()+Awaited(?)
+   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeAsync()+Awaited(?) x 2
+   at async Task Microsoft.AspNetCore.Routing.EndpointMiddleware.Invoke(HttpContext httpContext)+AwaitRequestTask(?)
+   at async Task Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at async Task IdentityServer4.Hosting.IdentityServerMiddleware.Invoke(HttpContext context, IEndpointRouter router, IUserSession session, IEventService events, IBackChannelLogoutService backChannelLogoutService)
+   at async Task IdentityServer4.Hosting.MutualTlsEndpointMiddleware.Invoke(HttpContext context, IAuthenticationSchemeProvider schemes)
+   at async Task Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at async Task IdentityServer4.Hosting.BaseUrlMiddleware.Invoke(HttpContext context)
+   at async Task Microsoft.AspNetCore.Builder.Extensions.UsePathBaseMiddleware.InvokeCore(HttpContext context, PathString matchedPath, PathString remainingPath)
+   at async Task Microsoft.AspNetCore.Builder.ApplicationBuilderExtension.ModuleMiddleware(ITraceInstrumentation traceInstrumentation, IModuleConfiguration moduleConfiguration, HttpContext context, Func<Task> next) in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/Extensions/ApplicationBuilderExtension.cs:line 177

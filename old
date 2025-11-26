@@ -1,200 +1,426 @@
- ***** Starting HAS Identity Provider - Logs initialized with mode Verbose.
- Starting module 2025-HAS Identity Provider - Mode : "Production"
- Using 'https://vmshqeat04.npr.nornick.ru/uas' as openid authority
- ##################################################
- !!! НОВАЯ ВЕРСИЯ КОДА v5 !!!
- ##################################################
- === EnsureSeedData: НАЧАЛО ===
- Шаг 1: BuildServiceProvider...
- Шаг 1: BuildServiceProvider - OK
- Шаг 2: Получение ApplicationDbContext...
- Шаг 2: ApplicationDbContext = OK
- Шаг 3: Получение ConfigurationDbContext...
- Шаг 3: ConfigurationDbContext = OK
- Шаг 4: Получение ILogger...
- Шаг 4: ILogger = OK
- Шаг 5: Проверка IsInMemory...
- Шаг 5.1: context.Database = OK
- Шаг 5: IsInMemory = False
- === Режим SQL Server (не InMemory) ===
- Шаг 6: Получение ICryptoService...
- Шаг 6: ICryptoService = OK
- Шаг 7: Вызов MigrateDatabase...
- ##################################################
- !!! MigrateDatabase НАЧАЛО v5 !!!
- ##################################################
- === MigrateDatabase: НАЧАЛО ===
- Проверка Standalone режима...
- Standalone = False
- isStandalone = False
- === SQL Server миграция ===
- Миграция 1: Получение ApplicationDbContext...
- Миграция 1: ApplicationDbContext = OK
- Миграция 1: Проверка Database...
- Миграция 1: Database = OK
- Миграция 1: Проверка ProviderName...
- Миграция 1: ProviderName = Microsoft.EntityFrameworkCore.SqlServer
- Миграция 1: Проверка ConnectionString...
- Миграция 1: ConnectionString = OK (длина: 111)
- ConnectionString (masked): Data Source=vmshqeatdb03;User ID=MS-HQ-Srvhopexusr_p;Password=***;encrypt=false;Database=HAS_2025;
- Microsoft.Data.SqlClient Version: 5.0.0.0
- Microsoft.Data.SqlClient Location: C:\MEGA\Hopex Application Server\2025\.shadowFiles\has.uas\16.0.2+57\runtimes\win\lib\net6.0\Microsoft.Data.SqlClient.dll
- >>> Проверка ConnectionString через SqlConnectionStringBuilder...
-   Server: vmshqeatdb03
-   Database: HAS_2025
-   IntegratedSecurity: False
-   UserID: MS-HQ-Srvhopexusr_p
-   TrustServerCertificate: False
-   Encrypt: False
- SqlConnectionStringBuilder - OK
- >>> Создание SqlConnection...
- SqlConnection создан (пустой)
- >>> Установка ConnectionString...
- ConnectionString установлен
- >>> Проверка State...
- State = Closed
- >>> Вызов Open()...
- Open() - OK, State = Open
- SQL Server Version: Microsoft SQL Server 2019 (RTM-CU32-GDR) (KB5068404) - 15.0.4455.2 (X64) 
-	Oct  7 2025 21:10:15 
-	Co...
- Соединение закрыто и disposed
- >>> Проверка pending миграций...
- Pending миграций: 5
-   - 20200512145632_InitialApplicationDbMigration
-   - 20211102091321_MultipleProviders
-   - 20230427065610_PasswordExpirationDate
-   - 20230906133336_OldPassword
-   - 20240311145607_RemoveSecrets
- >>> Проверка applied миграций...
- Applied миграций: 0
- Миграция 1: Вызов Migrate()...
- >>> Перед вызовом database.Migrate() <<<
- Failed executing DbCommand (0ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
-CREATE TABLE [AccessTokens] (
-    [Id] int NOT NULL IDENTITY,
-    [Description] nvarchar(max) NULL,
-    [TokenName] nvarchar(max) NULL,
-    [Password] nvarchar(200) NULL,
-    [ProviderName] nvarchar(200) NULL,
-    [ExpirationDate] datetime2 NULL,
-    [Kind] int NOT NULL,
-    [Name] nvarchar(200) NULL,
-    [SubjectId] nvarchar(200) NULL,
-    [UserName] nvarchar(200) NULL,
-    CONSTRAINT [PK_AccessTokens] PRIMARY KEY ([Id])
-);
- ==========================================
- ОШИБКА в: MigrateDatabase -> ApplicationDbContext.Migrate()
- Message: There is already an object named 'AccessTokens' in the database.
- Type: Microsoft.Data.SqlClient.SqlException
- --- FULL EXCEPTION ---
- Microsoft.Data.SqlClient.SqlException (0x80131904): There is already an object named 'AccessTokens' in the database.
-   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
-   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
-   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
-   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
-   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
-   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
-   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
-   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 386
-ClientConnectionId:57a11d81-a287-40df-9e2a-25685cacfe7c
-Error Number:2714,State:6,Class:16
- --- END FULL EXCEPTION ---
- ==========================================
- ==========================================
- ОШИБКА в: MigrateDatabase -> Главный блок
- Message: There is already an object named 'AccessTokens' in the database.
- Type: Microsoft.Data.SqlClient.SqlException
- --- FULL EXCEPTION ---
- Microsoft.Data.SqlClient.SqlException (0x80131904): There is already an object named 'AccessTokens' in the database.
-   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
-   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
-   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
-   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
-   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
-   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
-   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
-   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 386
-ClientConnectionId:57a11d81-a287-40df-9e2a-25685cacfe7c
-Error Number:2714,State:6,Class:16
- --- END FULL EXCEPTION ---
- ==========================================
- ==========================================
- ОШИБКА в: EnsureSeedData -> Блок SQL Server
- Message: There is already an object named 'AccessTokens' in the database.
- Type: Microsoft.Data.SqlClient.SqlException
- --- FULL EXCEPTION ---
- Microsoft.Data.SqlClient.SqlException (0x80131904): There is already an object named 'AccessTokens' in the database.
-   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
-   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
-   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
-   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
-   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
-   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
-   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
-   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 386
-   at Mega.Has.Modules.UAS.SeedData.EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 138
-ClientConnectionId:57a11d81-a287-40df-9e2a-25685cacfe7c
-Error Number:2714,State:6,Class:16
- --- END FULL EXCEPTION ---
- ==========================================
- Закрытие соединения с БД...
- ==========================================
- ОШИБКА в: EnsureSeedData -> Главный блок
- Message: There is already an object named 'AccessTokens' in the database.
- Type: Microsoft.Data.SqlClient.SqlException
- --- FULL EXCEPTION ---
- Microsoft.Data.SqlClient.SqlException (0x80131904): There is already an object named 'AccessTokens' in the database.
-   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
-   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
-   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
-   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
-   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
-   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
-   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
-   at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
-   at Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 386
-   at Mega.Has.Modules.UAS.SeedData.EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder) in C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\Mega\Has\Modules\UAS\SeedData.cs:line 138
-ClientConnectionId:57a11d81-a287-40df-9e2a-25685cacfe7c
-Error Number:2714,State:6,Class:16
- --- END FULL EXCEPTION ---
- ==========================================
- Unhandled exception
-Microsoft.Data.SqlClient.SqlException: There is already an object named 'AccessTokens' in the database.
-   at void Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction)
-   at void Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, bool breakConnection, Action<Action> wrapCloseInAction)
-   at void Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, bool callerHasConnectionLock, bool asyncClose)
-   at bool Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, out bool dataReady)
-   at Task Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(string methodName, bool isAsync, int timeout, bool asyncWrite)
-   at Task Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource<object> completion, bool sendToPipe, int timeout, out bool usedCache, bool asyncWrite, bool inRetry, string methodName)
-   at int Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
-   at int Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
-   at int Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary<string, object> parameterValues)
-   at void Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable<MigrationCommand> migrationCommands, IRelationalConnection connection)
-   at void Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(string targetMigration)
-   at void Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.Migrate(DatabaseFacade databaseFacade)
-   at void Mega.Has.Modules.UAS.SeedData.MigrateDatabase(ILogger logger, IServiceProvider services, ICryptoService cryptoService) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Mega/Has/Modules/UAS/SeedData.cs:line 386
-   at void Mega.Has.Modules.UAS.SeedData.EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Mega/Has/Modules/UAS/SeedData.cs:line 138
-   at IServiceCollection HAS.Modules.UAS.Extensions.ServiceCollectionExtensions.ConfigureUAS(IServiceCollection services) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Extensions/ServiceCollectionExtensions.cs:line 185
-   at async Task Program.Main(string[] args) in C:/DotnetFolder/source/HAS.Modules.UAS-master/HAS.Modules.UAS/Program.cs:line 59
-   at void Program.<Main>(?)
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
+using Dapper;
+using HAS.Server.SiteModule.Cache;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Entities;
+using IdentityServer4.EntityFramework.Mappers;
+using IdentityServer4.Models;
+using Mega.Has.Commons;
+using Mega.Has.Commons.Security;
+using Mega.Has.Modules.UAS.Models;
+using Mega.Has.Modules.UAS.Providers;
+using Mega.Has.Modules.UAS.Providers.Google;
+using Mega.Has.Modules.UAS.Providers.Hopex;
+using Mega.Has.Modules.UAS.Providers.Saml2;
+using Mega.Has.Modules.UAS.Providers.Windows;
+using Mega.Has.Modules.UAS.Stores;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.CSharp.RuntimeBinder;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Serilog;
+
+namespace Mega.Has.Modules.UAS
+{
+	// Token: 0x02000051 RID: 81
+	public class SeedData
+	{
+		// Token: 0x060003B4 RID: 948 RVA: 0x0000E05C File Offset: 0x0000C25C
+		public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
+		{
+			ServiceProvider services = serviceCollection.BuildServiceProvider();
+			using (IServiceScope scope = services.GetRequiredService<IServiceScopeFactory>().CreateScope())
+			{
+				ApplicationDbContext uasContext = scope.ServiceProvider.GetService<ApplicationDbContext>();
+				ConfigurationDbContext context = scope.ServiceProvider.GetService<ConfigurationDbContext>();
+				ILogger<SeedData> logger = services.GetService<ILogger<SeedData>>();
+				if (!context.Database.IsInMemory())
+				{
+					try
+					{
+						ICryptoService cryptoService = services.GetRequiredService<ICryptoService>();
+						SeedData.MigrateDatabase(logger, services, cryptoService);
+						SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, cryptoService);
+						SeedData.EnsureSeedData(logger, uasContext);
+						Microsoft.Extensions.Logging.ILogger logger2 = logger;
+						ConfigurationDbContext configurationDbContext = context;
+						string publicAddress = serverConfigurations.RuntimeClusterSettings.PublicAddress;
+						RunningMode? mode = serverConfigurations.RuntimeClusterSettings.Mode;
+						RunningMode runningMode = RunningMode.Development;
+						SeedData.EnsurePublicAddress(logger2, configurationDbContext, publicAddress, (mode.GetValueOrDefault() == runningMode) & (mode != null));
+						return;
+					}
+					finally
+					{
+						bool? testMode = serverConfigurations.StartingArguments.TestMode;
+						bool flag = false;
+						if ((testMode.GetValueOrDefault() == flag) & (testMode != null))
+						{
+							context.Database.CloseConnection();
+						}
+					}
+				}
+				SeedData.EnsureSeedData(logger, serverConfigurations, uasContext, context, null);
+				SeedData.EnsureSeedData(logger, uasContext);
+			}
+		}
+
+		// Token: 0x060003B5 RID: 949 RVA: 0x0000E178 File Offset: 0x0000C378
+		private static void EnsureSQLiteDatabaseCreated(DatabaseFacade database)
+		{
+			string sql = database.GenerateCreateScript();
+			try
+			{
+				database.ExecuteSqlRaw(sql, Array.Empty<object>());
+			}
+			catch
+			{
+			}
+		}
+
+		// Token: 0x060003B6 RID: 950 RVA: 0x0000E1B0 File Offset: 0x0000C3B0
+		private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
+		{
+			bool? standalone = cryptoService.Configuration.StartingArguments.Standalone;
+			bool flag = true;
+			if (!((standalone.GetValueOrDefault() == flag) & (standalone != null)))
+			{
+				logger.LogInformation("Migrate databases", Array.Empty<object>());
+				services.GetRequiredService<ApplicationDbContext>().Database.Migrate();
+				services.GetRequiredService<ConfigurationDbContext>().Database.Migrate();
+				services.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
+				string cnx = cryptoService.Configuration.RuntimeClusterSettings.GetDatabaseConnectionString(true);
+				SeedData.Migrate_HAS_5_0To5_0_1(cnx);
+				SeedData.Migrate_HAS_5_0_xTo5_0_5(cnx);
+				SQLCacheTableCreator slqCreator = new SQLCacheTableCreator();
+				if (slqCreator.CreateTableAndIndexes(cnx) != 0)
+				{
+					throw new Exception("Unable to create cache tables in database");
+				}
+			}
+			else
+			{
+				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ApplicationDbContext>().Database);
+				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<ConfigurationDbContext>().Database);
+				SeedData.EnsureSQLiteDatabaseCreated(services.GetRequiredService<PersistedGrantDbContext>().Database);
+			}
+		}
+
+		// Token: 0x060003B7 RID: 951 RVA: 0x0000E28C File Offset: 0x0000C48C
+		internal static void Migrate_HAS_5_0To5_0_1(string cnxString)
+		{
+			using (SqlConnection connection = new SqlConnection(cnxString))
+			{
+				SeedData.MigrateOldConfigTable<WindowsConfig>(connection);
+				SeedData.MigrateOldConfigTable<HopexConfig>(connection);
+				SeedData.MigrateOldConfigTable<Saml2Config>(connection);
+				SeedData.MigrateOldConfigTable<OpenIdConfig>(connection);
+				try
+				{
+					foreach (IdentityServer4.Models.ApiResource resource in DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>())
+					{
+						IdentityServer4.EntityFramework.Entities.ApiResource apiResource = connection.Query("select * from [dbo].[ApiResources] where Name='" + resource.Name + "'", null, null, true, null, null).FirstOrDefault<IdentityServer4.EntityFramework.Entities.ApiResource>();
+						if (apiResource != null)
+						{
+							IDbConnection dbConnection = connection;
+							DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(62, 1);
+							defaultInterpolatedStringHandler.AppendLiteral("select * from [dbo].[ApiResourceScopes] where ApiResourceId='");
+							defaultInterpolatedStringHandler.AppendFormatted<int>(apiResource.Id);
+							defaultInterpolatedStringHandler.AppendLiteral("'");
+							if (dbConnection.Query(defaultInterpolatedStringHandler.ToStringAndClear(), null, null, true, null, null).FirstOrDefault<ApiResourceScope>() == null)
+							{
+								var p = new
+								{
+									ApiResourceId = apiResource.Id,
+									Scope = resource.Scopes.First<string>()
+								};
+								connection.Execute("insert into [dbo].[ApiResourceScopes] (ApiResourceId, Scope) values( @ApiResourceId, @Scope)", p, null, null, null);
+							}
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					Log.Logger.Error(ex, "Warning");
+				}
+			}
+		}
+
+		// Token: 0x060003B8 RID: 952 RVA: 0x0000E438 File Offset: 0x0000C638
+		internal static void Migrate_HAS_5_0_xTo5_0_5(string cnxString)
+		{
+			using (SqlConnection connection = new SqlConnection(cnxString))
+			{
+				try
+				{
+					SeedData.updateClaimForSub<OpenIdConfig>(connection);
+					SeedData.updateClaimForSub<Saml2Config>(connection);
+				}
+				catch (Exception ex)
+				{
+					Log.Logger.Error(ex, "Warning");
+				}
+			}
+		}
+
+		// Token: 0x060003B9 RID: 953 RVA: 0x0000E494 File Offset: 0x0000C694
+		private static void updateClaimForSub<T>(SqlConnection connection) where T : new()
+		{
+			IEnumerable<ExternalProvider> externalProviders = connection.Query("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null);
+			foreach (ExternalProvider ep in externalProviders)
+			{
+				T Cfg = ep.GetConfiguration<T>();
+				object CfgDyn = Cfg;
+				if (SeedData.<>o__5<T>.<>p__2 == null)
+				{
+					SeedData.<>o__5<T>.<>p__2 = CallSite<Func<CallSite, object, bool>>.Create(Binder.UnaryOperation(CSharpBinderFlags.None, ExpressionType.IsTrue, typeof(SeedData), new CSharpArgumentInfo[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) }));
+				}
+				Func<CallSite, object, bool> target = SeedData.<>o__5<T>.<>p__2.Target;
+				CallSite <>p__ = SeedData.<>o__5<T>.<>p__2;
+				if (SeedData.<>o__5<T>.<>p__1 == null)
+				{
+					SeedData.<>o__5<T>.<>p__1 = CallSite<Func<CallSite, Type, object, object>>.Create(Binder.InvokeMember(CSharpBinderFlags.None, "IsNullOrEmpty", null, typeof(SeedData), new CSharpArgumentInfo[]
+					{
+						CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType | CSharpArgumentInfoFlags.IsStaticType, null),
+						CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
+					}));
+				}
+				Func<CallSite, Type, object, object> target2 = SeedData.<>o__5<T>.<>p__1.Target;
+				CallSite <>p__2 = SeedData.<>o__5<T>.<>p__1;
+				Type typeFromHandle = typeof(string);
+				if (SeedData.<>o__5<T>.<>p__0 == null)
+				{
+					SeedData.<>o__5<T>.<>p__0 = CallSite<Func<CallSite, object, object>>.Create(Binder.GetMember(CSharpBinderFlags.None, "ClaimForSub", typeof(SeedData), new CSharpArgumentInfo[] { CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null) }));
+				}
+				if (target(<>p__, target2(<>p__2, typeFromHandle, SeedData.<>o__5<T>.<>p__0.Target(SeedData.<>o__5<T>.<>p__0, CfgDyn))))
+				{
+					if (SeedData.<>o__5<T>.<>p__3 == null)
+					{
+						SeedData.<>o__5<T>.<>p__3 = CallSite<Func<CallSite, object, string, object>>.Create(Binder.SetMember(CSharpBinderFlags.None, "ClaimForSub", typeof(SeedData), new CSharpArgumentInfo[]
+						{
+							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null),
+							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType | CSharpArgumentInfoFlags.Constant, null)
+						}));
+					}
+					SeedData.<>o__5<T>.<>p__3.Target(SeedData.<>o__5<T>.<>p__3, CfgDyn, "name");
+					if (SeedData.<>o__5<T>.<>p__4 == null)
+					{
+						SeedData.<>o__5<T>.<>p__4 = CallSite<Action<CallSite, ExternalProvider, object>>.Create(Binder.InvokeMember(CSharpBinderFlags.ResultDiscarded, "SetConfiguration", null, typeof(SeedData), new CSharpArgumentInfo[]
+						{
+							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.UseCompileTimeType, null),
+							CSharpArgumentInfo.Create(CSharpArgumentInfoFlags.None, null)
+						}));
+					}
+					SeedData.<>o__5<T>.<>p__4.Target(SeedData.<>o__5<T>.<>p__4, ep, CfgDyn);
+					DefaultInterpolatedStringHandler defaultInterpolatedStringHandler = new DefaultInterpolatedStringHandler(77, 1);
+					defaultInterpolatedStringHandler.AppendLiteral("update [dbo].[externalproviders] set Configuration=@Configuration where id = ");
+					defaultInterpolatedStringHandler.AppendFormatted<int>(ep.Id);
+					connection.Execute(defaultInterpolatedStringHandler.ToStringAndClear(), ep, null, null, null);
+				}
+			}
+		}
+
+		// Token: 0x060003BA RID: 954 RVA: 0x0000E730 File Offset: 0x0000C930
+		private static void MigrateOldConfigTable<T>(SqlConnection connection)
+		{
+			T cfg;
+			try
+			{
+				cfg = connection.Query("select * from [dbo].[" + typeof(T).Name + "]", null, null, true, null, null).FirstOrDefault<T>();
+			}
+			catch
+			{
+				return;
+			}
+			try
+			{
+				if (cfg != null)
+				{
+					OldExternalProvider ep = connection.Query("select * from [dbo].[externalProviders] where type = '" + typeof(T).Name + "'", null, null, true, null, null).FirstOrDefault<OldExternalProvider>();
+					if (ep != null)
+					{
+						(cfg as ProviderConfigBase).ClaimForRoles = ep.ClaimForRoles ?? (cfg as ProviderConfigBase).ClaimForRoles;
+						if (typeof(T) == typeof(WindowsConfig))
+						{
+							WindowsConfig winCfg = cfg as WindowsConfig;
+							winCfg.WindowsSourceIdentifier = ep.WindowsSourceIdentifier ?? winCfg.WindowsSourceIdentifier;
+							winCfg.WindowsRole = ep.WindowsRole ?? winCfg.WindowsRole;
+						}
+						ep.SetConfiguration<T>(cfg);
+						connection.Execute("update [dbo].[externalproviders] set Configuration=@Configuration where type = '" + typeof(T).Name + "'", ep, null, null, null);
+					}
+				}
+				connection.Execute("drop table [dbo].[" + typeof(T).Name + "]", null, null, null, null);
+			}
+			catch (Exception ex)
+			{
+				Log.Logger.Error(ex, "Warning");
+			}
+		}
+
+		// Token: 0x060003BB RID: 955 RVA: 0x0000E91C File Offset: 0x0000CB1C
+		private static void EnsurePublicAddress(Microsoft.Extensions.Logging.ILogger logger, ConfigurationDbContext context, string publicAddress, bool isDevelopmentMode)
+		{
+			SeedData.<>c__DisplayClass7_0 CS$<>8__locals1;
+			CS$<>8__locals1.isDevelopmentMode = isDevelopmentMode;
+			IQueryable<IdentityServer4.EntityFramework.Entities.Client> clients = context.Clients;
+			ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "x");
+			IQueryable<IdentityServer4.EntityFramework.Entities.Client> queryable = clients.Include(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, List<ClientPostLogoutRedirectUri>>>(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_PostLogoutRedirectUris())), new ParameterExpression[] { parameterExpression }));
+			parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "x");
+			IIncludableQueryable<IdentityServer4.EntityFramework.Entities.Client, List<ClientRedirectUri>> query = queryable.Include(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, List<ClientRedirectUri>>>(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_RedirectUris())), new ParameterExpression[] { parameterExpression }));
+			logger.LogInformation("URLS Redirections are updating to public address " + publicAddress + "...", Array.Empty<object>());
+			CS$<>8__locals1.publicUri = new UriBuilder(publicAddress);
+			foreach (IdentityServer4.EntityFramework.Entities.Client client in query)
+			{
+				if (client.FrontChannelLogoutUri != null)
+				{
+					client.FrontChannelLogoutUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(client.FrontChannelLogoutUri, ref CS$<>8__locals1);
+				}
+				foreach (ClientRedirectUri redir in client.RedirectUris)
+				{
+					redir.RedirectUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(redir.RedirectUri, ref CS$<>8__locals1);
+				}
+				foreach (ClientPostLogoutRedirectUri redir2 in client.PostLogoutRedirectUris)
+				{
+					redir2.PostLogoutRedirectUri = SeedData.<EnsurePublicAddress>g__UpdateUri|7_2(redir2.PostLogoutRedirectUri, ref CS$<>8__locals1);
+				}
+			}
+			context.SaveChanges();
+		}
+
+		// Token: 0x060003BC RID: 956 RVA: 0x0000EAE4 File Offset: 0x0000CCE4
+		private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, IClusterConfiguration serverConfigurations, ApplicationDbContext uasContext, ConfigurationDbContext configurationStoreContext, ICryptoService cryptoService)
+		{
+			logger.LogInformation("Seeding database...", Array.Empty<object>());
+			logger.LogInformation("Updating AccessTokens...", Array.Empty<object>());
+			using (IEnumerator<AccessToken> enumerator = DefaultConfiguration.GetAccessTokens(cryptoService).GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_0 CS$<>8__locals1 = new SeedData.<>c__DisplayClass8_0();
+					CS$<>8__locals1.user = enumerator.Current;
+					IQueryable<AccessToken> accessTokens = uasContext.AccessTokens;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(AccessToken), "a");
+					if (accessTokens.FirstOrDefault(Expression.Lambda<Func<AccessToken, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(AccessToken.get_TokenName())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals1, typeof(SeedData.<>c__DisplayClass8_0)), fieldof(SeedData.<>c__DisplayClass8_0.user)), methodof(AccessToken.get_TokenName()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						uasContext.AccessTokens.Add(CS$<>8__locals1.user);
+					}
+				}
+			}
+			logger.LogInformation("Updating Clients...", Array.Empty<object>());
+			using (IEnumerator<IdentityServer4.Models.Client> enumerator2 = DefaultConfiguration.GetClients(serverConfigurations.RuntimeClusterSettings).GetEnumerator())
+			{
+				while (enumerator2.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_1 CS$<>8__locals2 = new SeedData.<>c__DisplayClass8_1();
+					CS$<>8__locals2.client = enumerator2.Current;
+					IQueryable<IdentityServer4.EntityFramework.Entities.Client> clients = configurationStoreContext.Clients;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.Client), "a");
+					if (clients.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.Client, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.Client.get_ClientId())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals2, typeof(SeedData.<>c__DisplayClass8_1)), fieldof(SeedData.<>c__DisplayClass8_1.client)), methodof(IdentityServer4.Models.Client.get_ClientId()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						IdentityServer4.EntityFramework.Entities.Client c = CS$<>8__locals2.client.ToEntity();
+						c.NonEditable = true;
+						configurationStoreContext.Clients.Add(c);
+					}
+				}
+			}
+			logger.LogInformation("Updating Scope...", Array.Empty<object>());
+			using (IEnumerator<IdentityServer4.Models.ApiScope> enumerator3 = DefaultConfiguration.GetApiScopes().GetEnumerator())
+			{
+				while (enumerator3.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_2 CS$<>8__locals3 = new SeedData.<>c__DisplayClass8_2();
+					CS$<>8__locals3.scope = enumerator3.Current;
+					IQueryable<IdentityServer4.EntityFramework.Entities.ApiScope> apiScopes = configurationStoreContext.ApiScopes;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.ApiScope), "a");
+					if (apiScopes.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.ApiScope, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.ApiScope.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals3, typeof(SeedData.<>c__DisplayClass8_2)), fieldof(SeedData.<>c__DisplayClass8_2.scope)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						configurationStoreContext.ApiScopes.Add(CS$<>8__locals3.scope.ToEntity());
+					}
+				}
+			}
+			logger.LogInformation("Updating IdentityResources...", Array.Empty<object>());
+			using (IEnumerator<IdentityServer4.Models.IdentityResource> enumerator4 = DefaultConfiguration.GetIdentityResources().GetEnumerator())
+			{
+				while (enumerator4.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_3 CS$<>8__locals4 = new SeedData.<>c__DisplayClass8_3();
+					CS$<>8__locals4.resource = enumerator4.Current;
+					IQueryable<IdentityServer4.EntityFramework.Entities.IdentityResource> identityResources = configurationStoreContext.IdentityResources;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.IdentityResource), "a");
+					if (identityResources.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.IdentityResource, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.IdentityResource.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals4, typeof(SeedData.<>c__DisplayClass8_3)), fieldof(SeedData.<>c__DisplayClass8_3.resource)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						configurationStoreContext.IdentityResources.Add(CS$<>8__locals4.resource.ToEntity());
+					}
+				}
+			}
+			logger.LogInformation("Updating ApiResources...", Array.Empty<object>());
+			using (List<IdentityServer4.Models.ApiResource>.Enumerator enumerator5 = DefaultConfiguration.GetApiResources().ToList<IdentityServer4.Models.ApiResource>().GetEnumerator())
+			{
+				while (enumerator5.MoveNext())
+				{
+					SeedData.<>c__DisplayClass8_4 CS$<>8__locals5 = new SeedData.<>c__DisplayClass8_4();
+					CS$<>8__locals5.resource = enumerator5.Current;
+					IQueryable<IdentityServer4.EntityFramework.Entities.ApiResource> apiResources = configurationStoreContext.ApiResources;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(IdentityServer4.EntityFramework.Entities.ApiResource), "a");
+					if (apiResources.FirstOrDefault(Expression.Lambda<Func<IdentityServer4.EntityFramework.Entities.ApiResource, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(IdentityServer4.EntityFramework.Entities.ApiResource.get_Name())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals5, typeof(SeedData.<>c__DisplayClass8_4)), fieldof(SeedData.<>c__DisplayClass8_4.resource)), methodof(Resource.get_Name()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						configurationStoreContext.ApiResources.Add(CS$<>8__locals5.resource.ToEntity());
+					}
+				}
+			}
+			configurationStoreContext.SaveChanges();
+		}
+
+		// Token: 0x060003BD RID: 957 RVA: 0x0000EFEC File Offset: 0x0000D1EC
+		private static void EnsureSeedData(Microsoft.Extensions.Logging.ILogger logger, ApplicationDbContext uasContext)
+		{
+			logger.LogInformation("Updating External Providers...", Array.Empty<object>());
+			using (IEnumerator<ExternalProvider> enumerator = DefaultConfiguration.GetExternalProviders().GetEnumerator())
+			{
+				while (enumerator.MoveNext())
+				{
+					SeedData.<>c__DisplayClass9_0 CS$<>8__locals1 = new SeedData.<>c__DisplayClass9_0();
+					CS$<>8__locals1.externalProvider = enumerator.Current;
+					IQueryable<ExternalProvider> externalProviders = uasContext.ExternalProviders;
+					ParameterExpression parameterExpression = Expression.Parameter(typeof(ExternalProvider), "a");
+					if (externalProviders.FirstOrDefault(Expression.Lambda<Func<ExternalProvider, bool>>(Expression.Equal(Expression.Property(parameterExpression, methodof(ExternalProvider.get_AuthenticationScheme())), Expression.Property(Expression.Field(Expression.Constant(CS$<>8__locals1, typeof(SeedData.<>c__DisplayClass9_0)), fieldof(SeedData.<>c__DisplayClass9_0.externalProvider)), methodof(ExternalProvider.get_AuthenticationScheme()))), new ParameterExpression[] { parameterExpression })) == null)
+					{
+						uasContext.ExternalProviders.Add(CS$<>8__locals1.externalProvider);
+					}
+				}
+			}
+			uasContext.SaveChanges();
+		}
+
+		// Token: 0x060003BF RID: 959 RVA: 0x0000F0F4 File Offset: 0x0000D2F4
+		[CompilerGenerated]
+		internal static string <EnsurePublicAddress>g__UpdateUri|7_2(string uri, ref SeedData.<>c__DisplayClass7_0 A_1)
+		{
+			UriBuilder url = new UriBuilder(uri)
+			{
+				Port = A_1.publicUri.Port,
+				Host = A_1.publicUri.Host,
+				Scheme = A_1.publicUri.Scheme
+			};
+			if (url.Port == 80 || url.Port == 443)
+			{
+				url.Port = -1;
+			}
+			if (A_1.isDevelopmentMode && string.Compare(url.Path, "/authentication/login-callback", true) == 0)
+			{
+				return uri;
+			}
+			return url.ToString();
+		}
+	}
+}

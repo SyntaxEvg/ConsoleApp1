@@ -26,6 +26,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Serilog;
+
 namespace HAS.Modules.UAS.Services.Factories
 {
     internal class ViewModelFactory : IViewModelFactory
@@ -39,6 +41,7 @@ namespace HAS.Modules.UAS.Services.Factories
         private readonly IIdentityServerInteractionService _interactionService;
         private readonly ILogger<ViewModelFactory> _logger;
         private readonly IStringLocalizer S;
+
         public ViewModelFactory(
             IHopexSSPClient hopexSSPClient,
             IIdentityServerInteractionService interactionService,
@@ -59,40 +62,71 @@ namespace HAS.Modules.UAS.Services.Factories
             _clusterAdminClient = clusterAdminClient;
             _clientStore = clientStore;
             S = s;
+
+            // Логируем при создании фабрики
+            Log.Information("=== ViewModelFactory СОЗДАН ===");
+            Log.Information($"ViewModelFactory: _hopexSSPClient = {(_hopexSSPClient != null ? _hopexSSPClient.GetType().FullName : "NULL")}");
+            Log.Information($"ViewModelFactory: _clusterConfiguration = {(_clusterConfiguration != null ? "OK" : "NULL")}");
+            
+            if (_clusterConfiguration != null)
+            {
+                try
+                {
+                    var publicAddress = _clusterConfiguration.RuntimeClusterSettings?.PublicAddress;
+                    Log.Information($"ViewModelFactory: PublicAddress = {publicAddress}");
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"ViewModelFactory: Не удалось получить PublicAddress: {ex.Message}");
+                }
+            }
         }
+
         public async Task<LoggedOutViewModel> BuildLoggedOutViewModelAsync(string logoutId)
         {
             var logout = await _interactionService.GetLogoutContextAsync(logoutId);
+
             if (logout == null)
             {
                 throw new Exception("Logout context cannot be null.");
             }
+
             var automaticRedirectAfterSignOut = AccountOptions.AutomaticRedirectAfterSignOut;
+
             if (automaticRedirectAfterSignOut)
             {
                 var providers = _externalProviderService.GetExternalProviders().ToList();
+
                 var hopexProvider = providers.FirstOrDefault(x => x.AuthenticationScheme == "Hopex");
                 var hopexProviderEnabled = hopexProvider == null || hopexProvider.Enabled;
                 var hopexProviderVisible = hopexProviderEnabled &&
                     (hopexProvider == null || !hopexProvider.GetConfiguration<HopexConfig>()?.Hidden == true);
+
                 var otherProviders = providers.Where(x => x.Enabled && x.AuthenticationScheme != "Hopex");
+
                 var noOtherEnabledProviders = !hopexProviderEnabled || otherProviders.Count(ep => ep.Enabled) == 0;
+
                 if (otherProviders.Count() == 1 && (!noOtherEnabledProviders || !hopexProviderVisible))
                 {
                     automaticRedirectAfterSignOut = false;
                 }
             }
+
             var client = await _clientStore.FindEnabledClientByIdAsync(logout.ClientId);
+
             if (client == null)
             {
                 throw new Exception($"No client {logout.ClientId} found.");
             }
+
             var clientName = string.IsNullOrEmpty(client.Description)
                 ? (string.IsNullOrEmpty(logout.ClientName) ? logout.ClientId : logout.ClientName)
                 : client.Description;
+
             var postLogoutRedirectUri = string.IsNullOrEmpty(logout.PostLogoutRedirectUri)
                 ? _clusterConfiguration.RuntimeClusterSettings.PublicAddress
                 : logout.PostLogoutRedirectUri;
+
             var vm = new LoggedOutViewModel
             {
                 AutomaticRedirectAfterSignOut = automaticRedirectAfterSignOut,
@@ -101,32 +135,50 @@ namespace HAS.Modules.UAS.Services.Factories
                 SignOutIframeUrl = logout.SignOutIFrameUrl,
                 LogoutId = logoutId
             };
+
             var user = _httpContextAccessor.HttpContext.User;
+
             if (user?.Identity?.IsAuthenticated == true)
             {
                 var idp = _httpContextAccessor.HttpContext.User.FindFirst("idp")?.Value;
+
                 if (idp != null && idp != "local" && await _httpContextAccessor.HttpContext.GetSchemeSupportsSignOutAsync(idp))
                 {
                     if (vm.LogoutId == null)
                     {
                         vm.LogoutId = await _interactionService.CreateLogoutContextAsync();
                     }
+
                     vm.ExternalAuthenticationScheme = idp;
                 }
             }
+
             return vm;
         }
+
         public async Task<(string error, LoginViewModel viewModel)> BuildLoginViewModelAsync(
             string returnUrl,
             string environmentId,
             bool hideModuleName = false)
         {
+            Log.Information("=== BuildLoginViewModelAsync: НАЧАЛО ===");
+            Log.Information($"BuildLoginViewModelAsync: returnUrl = {returnUrl}");
+            Log.Information($"BuildLoginViewModelAsync: environmentId = {environmentId}");
+            Log.Information($"BuildLoginViewModelAsync: hideModuleName = {hideModuleName}");
+
             string error = string.Empty;
+
             var providers = _externalProviderService.GetExternalProviders().ToList();
+            Log.Information($"BuildLoginViewModelAsync: Найдено providers = {providers.Count}");
+
             var hopexProvider = providers.FirstOrDefault(x => x.AuthenticationScheme == "Hopex");
             var hopexProviderEnabled = hopexProvider == null || hopexProvider.Enabled;
             var hopexProviderVisible = hopexProviderEnabled &&
                 (hopexProvider == null || !hopexProvider.GetConfiguration<HopexConfig>()?.Hidden == true);
+
+            Log.Information($"BuildLoginViewModelAsync: hopexProviderEnabled = {hopexProviderEnabled}");
+            Log.Information($"BuildLoginViewModelAsync: hopexProviderVisible = {hopexProviderVisible}");
+
             bool hasNoSsoParam = false;
             try
             {
@@ -140,15 +192,20 @@ namespace HAS.Modules.UAS.Services.Factories
             {
                 // Ignore parsing errors
             }
+
             var vm = new LoginViewModel
             {
                 HopexProviderEnabled = hopexProviderEnabled,
                 ShowBasicSignin = false
             };
+
             var allowLocal = true;
             var isEnvironmentsRequired = false;
             IEnumerable<HopexEnvironmentInfo> environments = null;
+
             var context = await _interactionService.GetAuthorizationContextAsync(returnUrl);
+            Log.Information($"BuildLoginViewModelAsync: context = {(context != null ? "OK" : "NULL")}");
+
             if (context != null)
             {
                 if (!string.IsNullOrEmpty(context.IdP) && !context.IdP.Equals("local"))
@@ -156,28 +213,141 @@ namespace HAS.Modules.UAS.Services.Factories
                     allowLocal = false;
                     providers = providers.Where(provider => provider.AuthenticationScheme == context.IdP).ToList();
                 }
+
                 if (!hideModuleName)
                 {
                     vm.ModuleFriendlyName = await ModuleHelper.GetModuleFriendlyName(_clusterAdminClient, returnUrl);
                 }
+
                 if (hopexProviderEnabled)
                 {
+                    Log.Information("=== ВЫЗОВ _hopexSSPClient.GetEnvironments() ===");
+                    Log.Information($"_hopexSSPClient тип: {_hopexSSPClient?.GetType().FullName}");
+                    
                     try
                     {
+                        // Логируем информацию о конфигурации перед вызовом
+                        try
+                        {
+                            var runtimeSettings = _clusterConfiguration?.RuntimeClusterSettings;
+                            if (runtimeSettings != null)
+                            {
+                                Log.Information($"RuntimeClusterSettings.PublicAddress: {runtimeSettings.PublicAddress}");
+                                Log.Information($"RuntimeClusterSettings.Mode: {runtimeSettings.Mode}");
+                                
+                                // Попробуем получить connection string (для диагностики)
+                                try
+                                {
+                                    var dbConnStr = runtimeSettings.GetDatabaseConnectionString(false);
+                                    Log.Information($"DatabaseConnectionString exists: {!string.IsNullOrEmpty(dbConnStr)}");
+                                }
+                                catch (Exception dbEx)
+                                {
+                                    Log.Warning($"Не удалось получить DatabaseConnectionString: {dbEx.Message}");
+                                }
+                            }
+                        }
+                        catch (Exception cfgEx)
+                        {
+                            Log.Warning($"Ошибка при получении конфигурации: {cfgEx.Message}");
+                        }
+
+                        Log.Information(">>> Вызываем GetEnvironments()...");
+                        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+                        
                         environments = await _hopexSSPClient.GetEnvironments();
+                        
+                        stopwatch.Stop();
+                        Log.Information($"<<< GetEnvironments() завершён за {stopwatch.ElapsedMilliseconds} мс");
+                        Log.Information($"environments = {(environments != null ? $"OK, count = {environments.Count()}" : "NULL")}");
+                    }
+                    catch (Mega.Has.WebSite.HttpException httpEx)
+                    {
+                        Log.Error("=== HttpException при GetEnvironments() ===");
+                        Log.Error($"HttpException.Message: {httpEx.Message}");
+                        Log.Error($"HttpException.Source: {httpEx.Source}");
+                        
+                        // Пытаемся получить больше информации через reflection
+                        try
+                        {
+                            var exType = httpEx.GetType();
+                            foreach (var prop in exType.GetProperties())
+                            {
+                                try
+                                {
+                                    var value = prop.GetValue(httpEx);
+                                    if (value != null && prop.Name != "TargetSite" && prop.Name != "Data")
+                                    {
+                                        Log.Error($"HttpException.{prop.Name}: {value}");
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                        catch { }
+                        
+                        Log.Error($"HttpException.StackTrace: {httpEx.StackTrace}");
+                        
+                        if (httpEx.InnerException != null)
+                        {
+                            Log.Error($"InnerException.Type: {httpEx.InnerException.GetType().FullName}");
+                            Log.Error($"InnerException.Message: {httpEx.InnerException.Message}");
+                            Log.Error($"InnerException.StackTrace: {httpEx.InnerException.StackTrace}");
+                        }
+                        
+                        _logger.LogError(httpEx, "Unable to retrieve environments (HttpException)");
+                        error = "Unable to retrieve environments.";
+                    }
+                    catch (System.Net.Http.HttpRequestException reqEx)
+                    {
+                        Log.Error("=== HttpRequestException при GetEnvironments() ===");
+                        Log.Error($"HttpRequestException.Message: {reqEx.Message}");
+                        Log.Error($"HttpRequestException.StatusCode: {reqEx.StatusCode}");
+                        Log.Error($"HttpRequestException.StackTrace: {reqEx.StackTrace}");
+                        
+                        if (reqEx.InnerException != null)
+                        {
+                            Log.Error($"InnerException.Type: {reqEx.InnerException.GetType().FullName}");
+                            Log.Error($"InnerException.Message: {reqEx.InnerException.Message}");
+                        }
+                        
+                        _logger.LogError(reqEx, "Unable to retrieve environments (HttpRequestException)");
+                        error = "Unable to retrieve environments.";
                     }
                     catch (Exception ex)
                     {
+                        Log.Error("=== EXCEPTION при GetEnvironments() ===");
+                        Log.Error($"Exception.Type: {ex.GetType().FullName}");
+                        Log.Error($"Exception.Message: {ex.Message}");
+                        Log.Error($"Exception.Source: {ex.Source}");
+                        Log.Error($"Exception.StackTrace: {ex.StackTrace}");
+                        
+                        if (ex.InnerException != null)
+                        {
+                            Log.Error($"InnerException.Type: {ex.InnerException.GetType().FullName}");
+                            Log.Error($"InnerException.Message: {ex.InnerException.Message}");
+                            Log.Error($"InnerException.StackTrace: {ex.InnerException.StackTrace}");
+                            
+                            if (ex.InnerException.InnerException != null)
+                            {
+                                Log.Error($"Inner.Inner.Type: {ex.InnerException.InnerException.GetType().FullName}");
+                                Log.Error($"Inner.Inner.Message: {ex.InnerException.InnerException.Message}");
+                            }
+                        }
+                        
                         _logger.LogError(ex, "Unable to retrieve environments");
                         error = "Unable to retrieve environments.";
                     }
                 }
+
                 if (context.Client?.ClientId != null)
                 {
                     var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
+
                     if (client != null)
                     {
                         allowLocal = client.EnableLocalLogin;
+
                         if (client.IdentityProviderRestrictions?.Any() == true)
                         {
                             providers = providers.Where(provider =>
@@ -185,7 +355,9 @@ namespace HAS.Modules.UAS.Services.Factories
                         }
                     }
                 }
+
                 var windowsProvider = providers.FirstOrDefault(c => c.AuthenticationScheme == "Windows");
+
                 if (windowsProvider != null)
                 {
                     var windowsConfig = windowsProvider.GetConfiguration<WindowsConfig>();
@@ -195,6 +367,7 @@ namespace HAS.Modules.UAS.Services.Factories
                     AccountOptions.ClaimForRoles = windowsConfig.ClaimForRoles;
                 }
             }
+
             vm.IsEnvironmentsRequired = isEnvironmentsRequired;
             vm.EnvironmentId = environmentId;
             vm.AllowRememberLogin = AccountOptions.AllowRememberLogin;
@@ -205,12 +378,20 @@ namespace HAS.Modules.UAS.Services.Factories
             vm.ExternalProviders = providers?.ToArray() ?? Enumerable.Empty<ExternalProvider>();
             vm.ShowBasicSignin |= allowLocal && AccountOptions.AllowLocalLogin &&
                 vm.HopexProviderEnabled && (hopexProviderVisible || hasNoSsoParam);
+
+            Log.Information($"BuildLoginViewModelAsync: vm.Environments = {(vm.Environments != null ? $"OK, count = {vm.Environments.Count()}" : "NULL")}");
+            Log.Information($"BuildLoginViewModelAsync: error = '{error}'");
+            Log.Information("=== BuildLoginViewModelAsync: КОНЕЦ ===");
+
             return (error, vm);
         }
+
         public async Task<LostPasswordViewModel> BuildLostPasswordViewModel()
         {
             var vm = new LostPasswordViewModel();
+
             var environments = await _hopexSSPClient.GetEnvironments();
+
             if (environments == null || !environments.Any())
             {
                 vm.Environments = null;
@@ -219,8 +400,10 @@ namespace HAS.Modules.UAS.Services.Factories
             {
                 vm.Environments = environments.Select(e => new SelectListItem(e.Name, e.Id));
             }
+
             return vm;
         }
+
         public async Task<MappingViewModel> BuildMappingViewModelAsync(
             string environmentId,
             string userName,
@@ -230,7 +413,9 @@ namespace HAS.Modules.UAS.Services.Factories
             IEnumerable<Claim> claims)
         {
             GetPersonGroupsResult personGroupsResult = null;
+
             var queryParams = HttpUtility.ParseQueryString(HttpUtility.UrlDecode(returnUrl));
+
             var vm = new MappingViewModel
             {
                 PersonGroups = personGroupsResult,
@@ -247,13 +432,16 @@ namespace HAS.Modules.UAS.Services.Factories
                 Provider = provider,
                 ClaimForRoles = claimForRoles
             };
+
             var environments = await _hopexSSPClient.GetEnvironments();
             vm.Environments = environments.Select(e => new SelectListItem(e.Name, e.Id));
             vm.ModuleFriendlyName = await ModuleHelper.GetModuleFriendlyName(_clusterAdminClient, returnUrl);
+
             if (vm.EnvironmentId == null && vm.Environments.Count() == 1)
             {
                 vm.EnvironmentId = vm.Environments.First().Value;
             }
+
             try
             {
                 personGroupsResult = await _hopexSSPClient.GetPersonGroups(new GetPersonGroupsArgs
@@ -270,8 +458,11 @@ namespace HAS.Modules.UAS.Services.Factories
             {
                 vm.ErrorMessage = "Login is not possible.<br/>Please contact your HOPEX administrator to check logs.";
             }
+
             vm.PersonGroups = personGroupsResult;
+
             _logger.LogInformation($"Claims and Roles From Provider [ {claims.SerializeToString()} ]");
+
             if (_httpContextAccessor.HttpContext.Request.Path.HasValue &&
                 _httpContextAccessor.HttpContext.Request.Path.Value.Contains("MappingSubmit"))
             {
@@ -279,1028 +470,8 @@ namespace HAS.Modules.UAS.Services.Factories
                     S["No profile is configured for the user {0}. Please contact your administrator."],
                     vm.UserName));
             }
+
             return vm;
-        }
-    }
-}
-====================
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.DirectoryServices.AccountManagement;
-using System.Globalization;
-using System.Linq;
-using System.Net;
-using System.Security.Claims;
-using System.Security.Principal;
-using System.Text.Json;
-using System.Threading.Tasks;
-using CSharpFunctionalExtensions;
-using HAS.Modules.UAS.Extensions;
-using HAS.Modules.UAS.Helpers;
-using HAS.Modules.UAS.Services;
-using HAS.Modules.UAS.Services.Factories;
-using HAS.Server.Commons;
-using HAS.Server.Commons.Models;
-using HAS.Server.Commons.Supervision;
-using HAS.Server.Hopex.Module.Adapter.SSP.Models;
-using HAS.Server.SiteModule.Attributes;
-using IdentityServer4.Events;
-using IdentityServer4.Extensions;
-using IdentityServer4.Models;
-using IdentityServer4.Services;
-using IdentityServer4.Stores;
-using Mega.Has.Commons;
-using Mega.Has.Modules.UAS.Hopex;
-using Mega.Has.Modules.UAS.Models;
-using Mega.Has.Modules.UAS.Providers;
-using Mega.Has.Modules.UAS.Services;
-using Mega.Has.Modules.UAS.ViewModels;
-using Mega.Has.WebSite;
-using Mega.Has.WebSite.LoginWorkflow;
-using Mega.Has.WebSite.LoginWorkflow.Models;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Primitives;
-using Serilog;
-namespace Mega.Has.Modules.UAS.Controllers
-{
-    [DefaultSecurityHeaders]
-    public class AccountController : Controller
-    {
-        public const string InternalLogin = "InternalLogin";
-        private readonly IIdentityServerInteractionService _interaction;
-        private readonly IClientStore _clientStore;
-        private readonly IClusterConfiguration _clusterConfiguration;
-        private readonly IEventService _events;
-        private readonly IHopexSSPClient _hopex;
-        private readonly IExternalProviderService _externalProviderService;
-        private readonly ILogger<AccountController> _logger;
-        private readonly IStringLocalizer S;
-        private readonly UasSettings _settings;
-        private readonly IClusterAdminClient _clusterAdminClient;
-        private readonly IApplicationSettings _applicationSettings;
-        private readonly HopexUserManagement _userManagement;
-        private readonly ISupervisionServices _supervisionServices;
-        private readonly IAuthenticationFailureHandlingService _authenticationFailureHandlingService;
-        private readonly IViewModelFactory _viewModelFactory;
-        public AccountController(
-            IIdentityServerInteractionService interaction,
-            IClientStore clientStore,
-            IClusterConfiguration configuration,
-            IEventService events,
-            IHopexSSPClient hopex,
-            IExternalProviderService externalProviderService,
-            ILogger<AccountController> logger,
-            IStringLocalizer<AccountController> stringLocalizer,
-            UasSettings settings,
-            IClusterAdminClient clusterAdminClient,
-            IApplicationSettings applicationSettings,
-            ISupervisionServices supervisionServices,
-            IAuthenticationFailureHandlingService authenticationFailureHandlingService,
-            IViewModelFactory viewModelFactory,
-            HopexUserManagement userManagement = null)
-        {
-            _interaction = interaction;
-            _clientStore = clientStore;
-            _clusterConfiguration = configuration;
-            _events = events;
-            _hopex = hopex;
-            _externalProviderService = externalProviderService;
-            _logger = logger;
-            S = stringLocalizer;
-            _settings = settings;
-            _clusterAdminClient = clusterAdminClient;
-            _applicationSettings = applicationSettings;
-            _userManagement = userManagement;
-            _supervisionServices = supervisionServices;
-            _authenticationFailureHandlingService = authenticationFailureHandlingService;
-            _viewModelFactory = viewModelFactory;
-            if (!string.IsNullOrEmpty(_settings.LoginLang) && _settings.LoginLang.ToLower() != "browser")
-            {
-                try
-                {
-                    CultureInfo.CurrentUICulture = new CultureInfo(_settings.LoginLang);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, ex.Message);
-                }
-            }
-        }
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> Error(string errorId)
-        {
-            var vm = new ErrorViewModel();
-            var errorMessage = await _interaction.GetErrorContextAsync(errorId);
-            if (errorMessage != null)
-            {
-                vm.Error = errorMessage.Error;
-                vm.ErrorDescription = errorMessage.ErrorDescription;
-            }
-            return View("Error", vm);
-        }
-        [HttpGet]
-        public async Task<IActionResult> Privacy(string env)
-        {
-            const string macroId = "40CA415252B83912";
-            try
-            {
-                var privacyContent = await _hopex.ExecuteMacro<string>(env, macroId, null);
-                return Content(privacyContent);
-            }
-            catch
-            {
-                return Content(S["Privacy not found"]);
-            }
-        }
-        [HttpGet]
-        public IActionResult ChangePasswordSucceed(ChangePasswordViewModel model)
-        {
-            return View("ChangePassword", model);
-        }
-        [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
-        {
-            var username = User.GetDisplayName();
-            var result = await TryChangePassword(username, model);
-            if (result.IsFailure)
-            {
-                var errorMessage = result.Error;
-                return View(new ChangePasswordViewModel
-                {
-                    ErrorMessage = errorMessage,
-                    UserName = username,
-                    ReturnUrl = model.ReturnUrl,
-                    Settings = _settings
-                });
-            }
-            await SignoutAsync();
-            return RedirectToAction("ChangePasswordSucceed", new ChangePasswordViewModel
-            {
-                ReturnUrl = model.ReturnUrl,
-                Success = true
-            });
-        }
-        private async Task<Result> TryChangePassword(string userName, ChangePasswordViewModel model)
-        {
-            if (string.IsNullOrEmpty(model.Password1) || model.Password1 != model.Password2)
-            {
-                var errorMessage = S["Passwords must be the same and not empty."];
-                ModelState.AddModelError("Password1", errorMessage);
-                ModelState.AddModelError("Password2", errorMessage);
-                return Result.Failure(errorMessage);
-            }
-            if (_userManagement.IsInvalidPasswordForUser(userName, model.CurrentPassword))
-            {
-                var errorMessage = S["Invalid username or password"];
-                ModelState.AddModelError("CurrentPassword", errorMessage);
-                return Result.Failure(errorMessage);
-            }
-            var password = model.Password1;
-            var errorResult = await _userManagement.ChangePassword(userName, password);
-            if (!string.IsNullOrEmpty(errorResult))
-            {
-                ModelState.AddModelError("Password1", errorResult);
-                ModelState.AddModelError("Password2", errorResult);
-                return Result.Failure(errorResult);
-            }
-            return Result.Success();
-        }
-        [Authorize]
-        [HttpGet]
-        public IActionResult ChangePassword(string returnUrl, [Required] string userName)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-            if (!IsValidReturnUrl(returnUrl))
-            {
-                return BadRequest();
-            }
-            var viewModel = new ChangePasswordViewModel
-            {
-                UserName = userName,
-                ReturnUrl = returnUrl,
-                Settings = _settings
-            };
-            return View(viewModel);
-        }
-        [HttpGet]
-        public async Task<IActionResult> TestPassword(string password)
-        {
-            var userName = User.IsAuthenticated() ? User.GetDisplayName() : null;
-            var (pass, score) = await _userManagement.TestPassword(userName, password);
-            return Json(new
-            {
-                pass,
-                score
-            }, JsonSerialization.Options);
-        }
-        [HttpGet]
-        public async Task<IActionResult> Login(string returnUrl)
-        {
-            if (!IsValidReturnUrl(returnUrl))
-            {
-                return BadRequest();
-            }
-            string warning = null;
-            var currentModuleId = ModuleHelper.GetCurrentModuleId(returnUrl);
-            if (currentModuleId != "has.console" && _clusterConfiguration.IsInitialized)
-            {
-                var maintenanceSettings = _applicationSettings.GetValue<MaintenanceModeSettings>("MaintenanceModeSettings");
-                if (maintenanceSettings != null && maintenanceSettings.IsValid())
-                {
-                    return View(new LoginViewModel
-                    {
-                        Message = FormatMessage(maintenanceSettings),
-                        IsLoginDisabled = true,
-                        HideFriendlyName = _settings.HideModuleName
-                    });
-                }
-                if (maintenanceSettings != null && maintenanceSettings.Enabled &&
-                    maintenanceSettings.StartAt != null && maintenanceSettings.StartAt > DateTime.UtcNow)
-                {
-                    warning = FormatMessage(maintenanceSettings);
-                }
-            }
-            string environmentId = null;
-            var queryIndex = returnUrl?.IndexOf('?') ?? -1;
-            if (queryIndex > 0)
-            {
-                var queryString = returnUrl.Substring(queryIndex, returnUrl.Length - queryIndex);
-                var queryParams = QueryHelpers.ParseNullableQuery(queryString);
-                if (queryParams.TryGetValue("Env", out var envValue))
-                {
-                    environmentId = envValue.ToString();
-                }
-            }
-            var (error, viewModel) = await _viewModelFactory.BuildLoginViewModelAsync(returnUrl, environmentId, _settings.HideModuleName);
-            if (!string.IsNullOrEmpty(error))
-            {
-                ModelState.AddModelError("", S["Unable to retrieve environments."]);
-            }
-            viewModel.Message = warning;
-            if (Request.Query.TryGetValue("Error", out var errorValue))
-            {
-                viewModel.Message = errorValue;
-            }
-            if (viewModel.IsExternalLoginOnly && viewModel.ExternalLoginScheme != null && viewModel.EnvironmentId != null)
-            {
-                return await ExternalLogin(viewModel.VisibleExternalProviders.SingleOrDefault().DisplayName, returnUrl, viewModel.EnvironmentId);
-            }
-            return View("Login", viewModel);
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
-        {
-            var (shouldReject, waitSeconds) = _authenticationFailureHandlingService.ShouldRejectAuthentication(model.UserName);
-            if (shouldReject)
-            {
-                ModelState.AddModelError("", S[$"Please wait {waitSeconds} seconds before retrying to connect!"]);
-            }
-            if (ModelState.IsValid)
-            {
-                var credentialResult = await _userManagement.GetCredential(model.UserName, model.Password, model.EnvironmentId);
-                if (credentialResult.IsFailure)
-                {
-                    var (error, loginViewModel) = await _viewModelFactory.BuildLoginViewModelAsync(model.ReturnUrl, model.EnvironmentId, false);
-                    if (!string.IsNullOrEmpty(error))
-                    {
-                        ModelState.AddModelError("", S["Unable to retrieve environments."]);
-                    }
-                    return View("Login", loginViewModel);
-                }
-                var token = credentialResult.Value;
-                if (token != null && token.IsActive)
-                {
-                    if (token.UserClaims.Any(c => c.Type == "has.mustChangePassword" && c.Value == bool.TrueString))
-                    {
-                        await SignInAsync(model.UserName, token.Claims.ToArray(), model.ReturnUrl, InternalLogin);
-                        return RedirectToAction("ChangePassword", new ChangePasswordViewModel
-                        {
-                            ReturnUrl = model.ReturnUrl,
-                            UserName = model.UserName,
-                            Settings = _settings
-                        });
-                    }
-                    if (Request.IsHopexLogin(null))
-                    {
-                        model.ReturnUrl += MappingHelper.GetQueryState(model.UserName);
-                        var mappingViewModel = await _viewModelFactory.BuildMappingViewModelAsync(
-                            model.EnvironmentId, model.UserName, model.ReturnUrl, null, null, token.Claims);
-                        if (!string.IsNullOrEmpty(mappingViewModel.PersonGroups?.Email))
-                        {
-                            token.UserClaims.Add(new AccessTokenClaim
-                            {
-                                Type = "email",
-                                Value = mappingViewModel.PersonGroups.Email
-                            });
-                        }
-                        return await Mapping(mappingViewModel);
-                    }
-                    if (_interaction.IsValidReturnUrl(model.ReturnUrl) || Url.IsLocalUrl(model.ReturnUrl))
-                    {
-                        await SignInAsync(model.UserName, token.Claims.ToArray(), model.ReturnUrl, InternalLogin);
-                        return Redirect(model.ReturnUrl);
-                    }
-                }
-                Log.Logger.Error($"Invalid user/password for user {model.UserName} result={(token == null ? "not found or invalid password" : "not active")}");
-                var failedEvent = new UserLoginFailureEvent(model.UserName, "invalid credentials", true, null);
-                await _events.RaiseAsync(failedEvent);
-                await _supervisionServices.SendSupervisionEvent("UASAuthenticationFailed", SupervisionEventType.Error, new
-                {
-                    error = "invalid credentials",
-                    user = model.UserName,
-                    clientId = failedEvent.ClientId
-                });
-                ModelState.AddModelError("", S["Invalid username or password"]);
-                _authenticationFailureHandlingService.HandleAuthenticationFailure(model.UserName);
-            }
-            var (buildError, buildViewModel) = await _viewModelFactory.BuildLoginViewModelAsync(model.ReturnUrl, model.EnvironmentId, false);
-            if (!string.IsNullOrEmpty(buildError))
-            {
-                ModelState.AddModelError("", S["Unable to retrieve environments."]);
-            }
-            return View("Login", buildViewModel);
-        }
-        [HttpGet]
-        public async Task<IActionResult> Mapping(MappingInputViewModel model)
-        {
-            string repositoryId = null;
-            string environmentId = null;
-            string profileId = null;
-            bool requireValidation = false;
-            var queryIndex = model.ReturnUrl?.IndexOf('?') ?? -1;
-            if (queryIndex > 0)
-            {
-                var queryString = model.ReturnUrl.Substring(queryIndex);
-                var queryParams = QueryHelpers.ParseNullableQuery(queryString);
-                if (queryParams.TryGetValue("Env", out var envValue))
-                {
-                    environmentId = envValue.ToString();
-                }
-                if (queryParams.TryGetValue("Db", out var dbValue))
-                {
-                    repositoryId = dbValue.ToString();
-                }
-                else if (!string.IsNullOrEmpty(_settings.DefaultDb))
-                {
-                    repositoryId = _settings.DefaultDb;
-                    requireValidation = true;
-                }
-                if (queryParams.TryGetValue("Profile", out var profileValue))
-                {
-                    profileId = profileValue.ToString();
-                }
-                else if (!string.IsNullOrEmpty(_settings.DefaultProfile))
-                {
-                    profileId = _settings.DefaultProfile;
-                    requireValidation = true;
-                }
-                if (!MappingHelper.AssertUsernameInReturnUrlHasNotBeenChanged(model))
-                {
-                    return View("Error", new ErrorViewModel
-                    {
-                        Error = "Correlation failed"
-                    });
-                }
-            }
-            ModelState.Clear();
-            var environments = await _hopex.GetEnvironments();
-            var vm = new MappingViewModel
-            {
-                PersonGroups = model.PersonGroups,
-                RepositoryId = repositoryId,
-                ReturnUrl = model.ReturnUrl,
-                PolicyAccepted = false,
-                EnvironmentId = model.EnvironmentId ?? environmentId,
-                UserName = model.UserName,
-                Environments = environments.Select(e => new SelectListItem(e.Name, e.Id)),
-                ProfileId = profileId,
-                RequireValidation = requireValidation,
-                Provider = model.Provider,
-                ModuleFriendlyName = await ModuleHelper.GetModuleFriendlyName(_clusterAdminClient, model.ReturnUrl),
-                ClaimForRoles = model.ClaimForRoles
-            };
-            if (vm.EnvironmentId == null && vm.Environments.Count() == 1)
-            {
-                vm.EnvironmentId = vm.Environments.First().Value;
-            }
-            if (vm.RepositoryId == null)
-            {
-                Log.Logger.Error("Login is not possible. Data repository cannot be found");
-            }
-            if (vm.EnvironmentId != null)
-            {
-                try
-                {
-                    if (vm.PersonGroups == null)
-                    {
-                        vm.PersonGroups = await _hopex.GetPersonGroups(new GetPersonGroupsArgs
-                        {
-                            EnvironmentId = vm.EnvironmentId,
-                            UserName = vm.UserName,
-                            Provider = model.Provider,
-                            Db = repositoryId,
-                            Profile = profileId,
-                            ClaimForRoles = model.ClaimForRoles
-                        }, User.Claims);
-                    }
-                    if (vm.PersonGroups?.PersonGroups == null || vm.PersonGroups.PersonGroups.Count() == 0)
-                    {
-                        var environment = environments.FirstOrDefault(env => env.Id == vm.EnvironmentId);
-                        var repositories = environment?.Repositories;
-                        if (repositories == null || repositories.Count() == 0)
-                        {
-                            vm.NoRepository = true;
-                            Log.Logger.Error("Login is not possible. Data repository cannot be found");
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                    // Ignore exceptions
-                }
-            }
-            return View("Mapping", vm);
-        }
-        [HttpPost]
-        public async Task<IActionResult> MappingSubmit(MappingInputViewModel model)
-        {
-            bool success = false;
-            var claims = User.Claims;
-            try
-            {
-                try
-                {
-                    if (ModelState.IsValid)
-                    {
-                        if (!await MappingHelper.TryValidateUserData(_hopex, model, claims))
-                        {
-                            return View("Error", new ErrorViewModel
-                            {
-                                Error = "Invalid user data. Please contact your administrator."
-                            });
-                        }
-                        if (!model.WasAcceptedPolicy)
-                        {
-                            await _hopex.GetRoles(new GetRolesArgs
-                            {
-                                EnvironmentId = model.EnvironmentId,
-                                PrivacyLogin = model.Login
-                            }, null);
-                        }
-                        claims = model.CreateClaims();
-                        if (_interaction.IsValidReturnUrl(model.ReturnUrl) || Url.IsLocalUrl(model.ReturnUrl))
-                        {
-                            await SignInAsync(model.UserName, claims.ToArray(), model.ReturnUrl, model.Provider);
-                            success = true;
-                            return Redirect(model.ReturnUrl);
-                        }
-                        return Redirect("/");
-                    }
-                    claims = model.CreateClaims();
-                    return View("Mapping", await _viewModelFactory.BuildMappingViewModelAsync(
-                        model.EnvironmentId, model.UserName, model.ReturnUrl, model.Provider, model.ClaimForRoles, claims));
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, ex.Message);
-                    var errorViewModel = new ErrorViewModel
-                    {
-                        Error = (ex as InvalidJsonException)?.Content ?? ex.Message
-                    };
-                    return View("Error", errorViewModel);
-                }
-            }
-            finally
-            {
-                if (success)
-                {
-                    await HttpContext.SignOutAsync("idsrv.external");
-                }
-            }
-        }
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> MappingCancel(MappingInputViewModel model)
-        {
-            var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
-            if (context != null)
-            {
-                await _interaction.GrantConsentAsync(context, new ConsentResponse
-                {
-                    Error = AuthorizationError.AccessDenied
-                }, null);
-            }
-            if (!string.IsNullOrEmpty(model.ReturnUrl) && IsValidReturnUrl(model.ReturnUrl))
-            {
-                var redirectParam = model.ReturnUrl.Split('&').FirstOrDefault(p => p.StartsWith("redirect_uri", StringComparison.OrdinalIgnoreCase));
-                var parts = redirectParam.Split('=');
-                if (parts.Length == 2)
-                {
-                    redirectParam = WebUtility.UrlDecode(parts[1]).Replace("/signin-oidc", "");
-                }
-                return Redirect(redirectParam);
-            }
-            return Redirect("/");
-        }
-        private async Task<bool> SignInAsync(string userName, IEnumerable<Claim> userClaims, string returnUrl, string provider)
-        {
-            var authenticationSuccessEvent = _supervisionServices.CreateHasSupervisionEvent("UASAuthenticationSuccess", 0);
-            var props = new AuthenticationProperties
-            {
-                IsPersistent = true,
-                AllowRefresh = true
-            };
-            var claims = new List<Claim>(userClaims)
-            {
-                new Claim("has.sessionGuid", Guid.NewGuid().ToString("N"))
-            };
-            var authenticateResult = await HttpContext.AuthenticateAsync("idsrv");
-            var principal = authenticateResult.Principal;
-            if (authenticateResult.Principal != null && !authenticateResult.Succeeded)
-            {
-                return false;
-            }
-            if (principal == null)
-            {
-                var identity = new ClaimsIdentity(claims, "BasicAuthScheme");
-                if (claims.FirstOrDefault(x => x.Type == "name") == null)
-                {
-                    identity.AddClaim(new Claim("name", userName));
-                }
-                identity.AddClaim(new Claim("sub", userName));
-                principal = new ClaimsPrincipal(identity);
-            }
-            else
-            {
-                for (int i = 0; i < claims.Count; i++)
-                {
-                    principal.Claims.Append(claims[i]);
-                }
-            }
-            await HttpContext.SignInAsync(principal, props);
-            var subjectId = principal.Identity.GetSubjectId();
-            var clientId = ModuleHelper.GetCurrentModuleId(returnUrl);
-            var successEvent = new UserLoginSuccessEvent(provider, provider, subjectId, userName, true, clientId);
-            await _events.RaiseAsync(successEvent);
-            authenticationSuccessEvent.SetEventData(new
-            {
-                clientId,
-                provider = successEvent.Provider,
-                providerUserId = successEvent.ProviderUserId,
-                subjectId = successEvent.SubjectId,
-                user = successEvent.DisplayName,
-                endpoint = successEvent.Endpoint,
-                Login = userClaims.FirstOrDefault(c => c.Type == "has.login")?.Value,
-                UserId = userClaims.FirstOrDefault(c => c.Type == "has.userId")?.Value,
-                RepositoryId = userClaims.FirstOrDefault(c => c.Type == "has.repositoryid")?.Value,
-                ProfileId = userClaims.FirstOrDefault(c => c.Type == "has.profileId")?.Value,
-                GuiLanguageId = userClaims.FirstOrDefault(c => c.Type == "has.guiLanguageId")?.Value,
-                DataLanguageId = userClaims.FirstOrDefault(c => c.Type == "has.dataLanguageId")?.Value,
-                SessionMode = userClaims.FirstOrDefault(c => c.Type == "has.sessionMode")?.Value,
-                ConnectionMode = userClaims.FirstOrDefault(c => c.Type == "has.connectionMode")?.Value
-            });
-            await _supervisionServices.SendSupervisionEvent(authenticationSuccessEvent);
-            _logger.LogInformation("Signing user {DisplayName} with claims {Claims}",
-                principal.GetDisplayName(), principal.Claims);
-            return true;
-        }
-        [HttpGet]
-        public async Task<IActionResult> ExternalLogin(string provider, string returnUrl, string env)
-        {
-            if (!IsValidReturnUrl(returnUrl))
-            {
-                return BadRequest();
-            }
-            var externalProvider = _externalProviderService.GetExternalProviders()
-                .FirstOrDefault(x => x.DisplayName == provider);
-            if (externalProvider.AuthenticationScheme == "Windows")
-            {
-                return await ProcessWindowsLoginAsync(returnUrl, env);
-            }
-            var configuration = externalProvider.GetConfiguration<ProviderConfigBase>();
-            return Challenge(new AuthenticationProperties
-            {
-                RedirectUri = Url.Action("ExternalLoginCallback"),
-                Items =
-                {
-                    { "returnUrl", returnUrl },
-                    { "scheme", provider },
-                    { "env", env },
-                    { "ClaimForRoles", configuration.ClaimForRoles }
-                }
-            }, provider);
-        }
-        public async Task<IActionResult> ExternalLoginCallback()
-        {
-            var authenticationSuccessEvent = _supervisionServices.CreateHasSupervisionEvent("UASAuthenticationSuccess", 0);
-            var externalResult = await HttpContext.AuthenticateAsync("idsrv.external");
-            if (externalResult == null || !externalResult.Succeeded)
-            {
-                throw new Exception(S["External authentication error"]);
-            }
-            var localClaims = new List<Claim>();
-            localClaims.AddRange(FindClaimsFromExternalProvider(externalResult));
-            var localSignInProps = new AuthenticationProperties();
-            ProcessLoginCallbackForOidc(externalResult, localClaims, localSignInProps);
-            var returnUrl = externalResult.Properties.Items["returnUrl"];
-            var provider = externalResult.Properties.Items["scheme"];
-            var envId = externalResult.Properties.Items["env"];
-            var claimForRoles = externalResult.Properties.Items["ClaimForRoles"];
-            var externalUser = externalResult.Principal;
-            if (!IsValidReturnUrl(returnUrl))
-            {
-                return BadRequest();
-            }
-            var userIdClaim = externalUser.FindFirst("sub")
-                ?? externalUser.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
-                ?? externalUser.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
-                ?? externalUser.FindFirst("email");
-            if (userIdClaim == null)
-            {
-                throw new Exception(S["Unknown userid"]);
-            }
-            var userNameClaim = externalUser.FindFirst("name")
-                ?? externalUser.FindFirst("sub")
-                ?? externalUser.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
-                ?? externalUser.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")
-                ?? externalUser.FindFirst("email");
-            if (userNameClaim == null)
-            {
-                throw new Exception(S["Unknown userid"]);
-            }
-            if (!Request.IsHopexLogin(returnUrl))
-            {
-                localClaims.RemoveAll(x => x.Type == claimForRoles);
-            }
-            _logger.LogInformation($"Claims and Roles From External Provider {provider} - [ {localClaims.SerializeToString()} ]");
-            var id = new ClaimsIdentity(provider);
-            if (externalResult.Principal.Claims.FirstOrDefault(x => x.Type == "name") == null)
-            {
-                id.AddClaim(new Claim("name", userIdClaim.Value));
-            }
-            id.AddClaim(new Claim("sub", userIdClaim.Value));
-            id.AddClaims(localClaims);
-            var principal = new ClaimsPrincipal(id);
-            await HttpContext.SignInAsync(principal, localSignInProps);
-            await HttpContext.SignOutAsync("idsrv.external");
-            if (Request.IsHopexLogin(returnUrl))
-            {
-                var userName = userNameClaim.Value;
-                if (externalUser.FindFirst("UseSubAsLogin") != null)
-                {
-                    userName = userIdClaim.Value;
-                }
-                returnUrl += MappingHelper.GetQueryState(userName);
-                return RedirectToAction("Mapping", "Account", new EnvironmentInputViewModel
-                {
-                    ReturnUrl = returnUrl,
-                    Provider = provider,
-                    UserName = userName,
-                    EnvironmentId = envId,
-                    ClaimForRoles = claimForRoles
-                });
-            }
-            var subjectId = principal.Identity.GetSubjectId();
-            var clientId = ModuleHelper.GetCurrentModuleId(returnUrl);
-            var successEvent = new UserLoginSuccessEvent(provider, provider, subjectId, userNameClaim.Value, true, clientId);
-            await _events.RaiseAsync(successEvent);
-            authenticationSuccessEvent.EventInfos.EventData = JsonSerializer.Serialize(successEvent, JsonSerialization.Options);
-            authenticationSuccessEvent.SetEventData(new
-            {
-                clientId,
-                provider = successEvent.Provider,
-                providerUserId = successEvent.ProviderUserId,
-                subjectId = successEvent.SubjectId,
-                user = successEvent.DisplayName,
-                endpoint = successEvent.Endpoint,
-                Login = id.Claims.FirstOrDefault(c => c.Type == "has.login")?.Value,
-                UserId = id.Claims.FirstOrDefault(c => c.Type == "has.userId")?.Value,
-                RepositoryId = id.Claims.FirstOrDefault(c => c.Type == "has.repositoryid")?.Value,
-                ProfileId = id.Claims.FirstOrDefault(c => c.Type == "has.profileId")?.Value,
-                GuiLanguageId = id.Claims.FirstOrDefault(c => c.Type == "has.guiLanguageId")?.Value,
-                DataLanguageId = id.Claims.FirstOrDefault(c => c.Type == "has.dataLanguageId")?.Value,
-                SessionMode = id.Claims.FirstOrDefault(c => c.Type == "has.sessionMode")?.Value,
-                ConnectionMode = id.Claims.FirstOrDefault(c => c.Type == "has.connectionMode")?.Value
-            });
-            await _supervisionServices.SendSupervisionEvent(authenticationSuccessEvent);
-            if (_interaction.IsValidReturnUrl(returnUrl) || Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-            return BadRequest();
-        }
-        private IEnumerable<Claim> FindClaimsFromExternalProvider(AuthenticateResult result)
-        {
-            var principal = result.Principal;
-            var userIdClaim = principal.FindFirst("sub")
-                ?? principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier")
-                ?? principal.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
-            if (userIdClaim == null)
-            {
-                throw new Exception(S["Unknown userid"]);
-            }
-            var claims = principal.Claims.ToList();
-            claims.Remove(userIdClaim);
-            return claims;
-        }
-        [HttpGet]
-        public async Task<IActionResult> LogoutAndCloseSession([FromQuery] string returnUrl)
-        {
-            if (!IsValidReturnUrl(returnUrl))
-            {
-                return BadRequest();
-            }
-            await SignoutAsync();
-            return Redirect(returnUrl ?? "/portal");
-        }
-        private async Task SignoutAsync()
-        {
-            var hopexSession = HttpContext.Features.Get<IHopexSessionFeature>();
-            if (hopexSession != null)
-            {
-                await hopexSession.SignoutAsync("DispatchTransaction");
-            }
-        }
-        [HttpGet]
-        public async Task<IActionResult> Logout(string logoutId, string returnUrl = null)
-        {
-            var vm = await _viewModelFactory.BuildLoggedOutViewModelAsync(logoutId);
-            var user = HttpContext.User;
-            if (user?.Identity.IsAuthenticated == true)
-            {
-                await HttpContext.SignOutAsync();
-                var userName = user.Identity.Name;
-                var displayName = user.GetDisplayName() ?? user.Identity.Name;
-                var logoutEvent = new UserLogoutSuccessEvent(userName, displayName);
-                await _events.RaiseAsync(logoutEvent);
-            }
-            if (!IsValidReturnUrl(returnUrl))
-            {
-                return BadRequest();
-            }
-            if (vm.TriggerExternalSignout)
-            {
-                var url = Url.Action("Logout", new
-                {
-                    logoutId = vm.LogoutId,
-                    returnUrl
-                });
-                return SignOut(new AuthenticationProperties
-                {
-                    RedirectUri = url
-                }, vm.ExternalAuthenticationScheme);
-            }
-            if (returnUrl != null)
-            {
-                return Redirect(returnUrl);
-            }
-            return View("LoggedOut", vm);
-        }
-        internal static string ConvertGropupWindows(string oldFormat)
-        {
-            var parts = oldFormat.Split('\\');
-            if (parts.Length != 1)
-            {
-                return parts[1] + "@" + parts[0];
-            }
-            return oldFormat;
-        }
-        internal static string ConvertGroupWindows(string oldFormat)
-        {
-            var parts = oldFormat.Split('\\');
-            if (parts.Length != 1)
-            {
-                return parts[1] + "@" + parts[0];
-            }
-            return oldFormat;
-        }
-        private async Task<IActionResult> ProcessWindowsLoginAsync(string returnUrl, string environmentId)
-        {
-            var windowsResult = await HttpContext.AuthenticateAsync(AccountOptions.WindowsAuthenticationSchemeName);
-            var windowsPrincipal = windowsResult?.Principal as WindowsPrincipal;
-            if (windowsPrincipal != null)
-            {
-                var windowsIdentity = windowsPrincipal.Identity as WindowsIdentity;
-                if (windowsIdentity != null)
-                {
-                    var subject = ConvertGroupWindows(windowsIdentity.Name);
-                    var id = new ClaimsIdentity(AccountOptions.WindowsAuthenticationSchemeName);
-                    using (var context = new PrincipalContext(ContextType.Domain))
-                    {
-                        var userPrincipal = UserPrincipal.FindByIdentity(context, windowsIdentity.Name);
-                        if (userPrincipal != null)
-                        {
-                            try
-                            {
-                                id.AddClaim(new Claim("email", userPrincipal.EmailAddress));
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex.Message + " : [claim email]");
-                            }
-                            try
-                            {
-                                id.AddClaim(new Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/homephone", userPrincipal.VoiceTelephoneNumber));
-                                id.AddClaim(new Claim("phone_number", userPrincipal.VoiceTelephoneNumber));
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex.Message + " : [claim phone_number]");
-                            }
-                            try
-                            {
-                                id.AddClaim(new Claim("displayname", userPrincipal.DisplayName));
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex.Message + "  [claim : displayname] ");
-                            }
-                        }
-                        if (string.IsNullOrEmpty(AccountOptions.WindowsSourceIdentifier) ||
-                            AccountOptions.WindowsSourceIdentifier.Equals("Standard"))
-                        {
-                            id.AddClaim(new Claim("name", subject));
-                        }
-                        else if (AccountOptions.WindowsSourceIdentifier.Equals("sAMAccountName"))
-                        {
-                            if (userPrincipal == null || string.IsNullOrEmpty(userPrincipal.SamAccountName))
-                            {
-                                throw new Exception(S[$"User '{subject}' has no 'sAMAccountName' value"]);
-                            }
-                            id.AddClaim(new Claim("name", userPrincipal.SamAccountName));
-                            subject = userPrincipal.SamAccountName;
-                        }
-                        else
-                        {
-                            throw new Exception(S[$"Unknown WindowsSourceIdentifier value : {AccountOptions.WindowsSourceIdentifier}"]);
-                        }
-                        id.AddClaim(new Claim("sub", subject));
-                        var groups = new List<Claim>();
-                        if (windowsIdentity.Groups != null)
-                        {
-                            foreach (var group in windowsIdentity.Groups)
-                            {
-                                try
-                                {
-                                    var groupName = group.Translate(typeof(NTAccount)).ToString();
-                                    groups.Add(new Claim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
-                                        ConvertGroupWindows(groupName)));
-                                }
-                                catch (Exception ex)
-                                {
-                                    _logger.LogError(ex.Message + "  SID : " + group.Value + " ");
-                                }
-                            }
-                            id.AddClaims(groups);
-                        }
-                        if (Request.IsHopexLogin(returnUrl))
-                        {
-                            returnUrl += MappingHelper.GetQueryState(subject);
-                            await SignInAsync(subject, id.Claims, returnUrl, AccountOptions.WindowsAuthenticationSchemeName);
-                            if (Response.StatusCode >= 300 && Response.StatusCode < 400)
-                            {
-                                Response.StatusCode = 200;
-                            }
-                            return await Mapping(await _viewModelFactory.BuildMappingViewModelAsync(
-                                environmentId, subject, returnUrl, AccountOptions.WindowsAuthenticationSchemeName,
-                                "http://schemas.microsoft.com/ws/2008/06/identity/claims/role", id.Claims));
-                        }
-                        if (_interaction.IsValidReturnUrl(returnUrl) || Url.IsLocalUrl(returnUrl))
-                        {
-                            return Redirect(returnUrl);
-                        }
-                        return BadRequest();
-                    }
-                }
-                return StatusCode(401);
-            }
-            return Challenge(AccountOptions.WindowsAuthenticationSchemeName);
-        }
-        private void ProcessLoginCallbackForOidc(
-            AuthenticateResult externalResult,
-            List<Claim> localClaims,
-            AuthenticationProperties localSignInProps)
-        {
-            var sid = externalResult.Principal.Claims.FirstOrDefault(x => x.Type == "sid");
-            if (sid != null)
-            {
-                localClaims.Add(new Claim("sid", sid.Value));
-            }
-            var idToken = externalResult.Properties.GetTokenValue("id_token");
-            if (idToken != null)
-            {
-                localSignInProps.StoreTokens(new[]
-                {
-                    new AuthenticationToken
-                    {
-                        Name = "id_token",
-                        Value = idToken
-                    }
-                });
-            }
-        }
-        [HttpGet]
-        [AllowAnonymous]
-        public async Task<IActionResult> AccessDenied(string returnUrl)
-        {
-            if (User.Identity.IsAuthenticated)
-            {
-                var hopexSession = HttpContext.Features.Get<IHopexSessionFeature>();
-                await hopexSession.SignoutAsync("DispatchTransaction");
-            }
-            returnUrl ??= "/";
-            if (!IsValidReturnUrl(returnUrl))
-            {
-                return BadRequest();
-            }
-            var separator = returnUrl.IndexOf("?") < 0 ? "?" : "&";
-            returnUrl = $"{returnUrl}{separator}error={S["Access denied"]}";
-            ViewBag.ReturnUrl = returnUrl;
-            return View();
-        }
-        [HttpGet]
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        [AllowAnonymous]
-        public async Task<IActionResult> TimedOut(string returnUrl)
-        {
-            returnUrl ??= "/";
-            if (!IsValidReturnUrl(returnUrl))
-            {
-                return BadRequest();
-            }
-            if (User.Identity.IsAuthenticated)
-            {
-                try
-                {
-                    await HttpContext.SignOutAsync("Cookies");
-                }
-                catch
-                {
-                    // Ignore errors
-                }
-            }
-            ViewBag.ReturnUrl = returnUrl;
-            return View();
-        }
-        private bool IsValidReturnUrl(string url)
-        {
-            if (string.IsNullOrEmpty(url))
-            {
-                return true;
-            }
-            if (url[0] == '/')
-            {
-                if (url.Length == 1)
-                {
-                    return true;
-                }
-                if (Uri.TryCreate(url, UriKind.Relative, out _))
-                {
-                    return true;
-                }
-            }
-            if (Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri != null)
-            {
-                try
-                {
-                    var publicAddress = _clusterConfiguration.RuntimeClusterSettings.PublicAddress;
-                    var urlAuthority = uri.Scheme + "://" + uri.Authority;
-                    if (string.Compare(publicAddress, urlAuthority, StringComparison.OrdinalIgnoreCase) == 0)
-                    {
-                        return true;
-                    }
-                }
-                catch
-                {
-                    // Ignore errors
-                }
-                return false;
-            }
-            return false;
-        }
-        private static string FormatMessage(MaintenanceModeSettings settings)
-        {
-            var message = settings.Message;
-            var startDate = (settings.StartAt ?? DateTime.UtcNow).ToString("r");
-            var endDate = settings.EndAt?.ToString("r") ?? "unknown";
-            message = message.Replace("{startdate}", startDate, StringComparison.OrdinalIgnoreCase);
-            message = message.Replace("{enddate}", endDate, StringComparison.OrdinalIgnoreCase);
-            return message;
         }
     }
 }

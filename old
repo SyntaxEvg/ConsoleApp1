@@ -57,10 +57,140 @@ namespace Mega.Has.Modules.UAS
             Log.Error("==========================================");
         }
 
+        /// <summary>
+        /// Проверяет существует ли таблица в базе данных
+        /// </summary>
+        private static bool TableExists(SqlConnection connection, string tableName)
+        {
+            try
+            {
+                var result = connection.ExecuteScalar<int>(
+                    @"SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES 
+                      WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = @TableName",
+                    new { TableName = tableName });
+                return result > 0;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"TableExists({tableName}): Ошибка проверки - {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Проверяет нужно ли применять миграции или таблицы уже существуют
+        /// </summary>
+        private static bool ShouldSkipMigration(DatabaseFacade database, string keyTableName)
+        {
+            try
+            {
+                var connectionString = database.GetConnectionString();
+                if (string.IsNullOrEmpty(connectionString))
+                    return false;
+
+                var pendingMigrations = database.GetPendingMigrations().ToList();
+                var appliedMigrations = database.GetAppliedMigrations().ToList();
+
+                Log.Information($"ShouldSkipMigration: Pending={pendingMigrations.Count}, Applied={appliedMigrations.Count}");
+
+                // Если нет pending миграций - всё ок, не пропускаем
+                if (pendingMigrations.Count == 0)
+                {
+                    Log.Information("ShouldSkipMigration: Нет pending миграций, пропуск не требуется");
+                    return false;
+                }
+
+                // Если есть applied миграции - всё ок, не пропускаем
+                if (appliedMigrations.Count > 0)
+                {
+                    Log.Information("ShouldSkipMigration: Есть applied миграции, пропуск не требуется");
+                    return false;
+                }
+
+                // Есть pending, нет applied - проверяем существуют ли таблицы
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    bool tableExists = TableExists(connection, keyTableName);
+                    Log.Information($"ShouldSkipMigration: Таблица '{keyTableName}' существует = {tableExists}");
+
+                    if (tableExists)
+                    {
+                        Log.Warning($"ShouldSkipMigration: Таблицы уже существуют, но __EFMigrationsHistory пустая!");
+                        Log.Warning("ShouldSkipMigration: Пропускаем Migrate() чтобы избежать ошибки 'object already exists'");
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"ShouldSkipMigration: Ошибка - {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Заполняет __EFMigrationsHistory записями о pending миграциях
+        /// </summary>
+        private static void MarkMigrationsAsApplied(DatabaseFacade database)
+        {
+            try
+            {
+                var connectionString = database.GetConnectionString();
+                if (string.IsNullOrEmpty(connectionString))
+                    return;
+
+                var pendingMigrations = database.GetPendingMigrations().ToList();
+                if (pendingMigrations.Count == 0)
+                    return;
+
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Создаём таблицу __EFMigrationsHistory если её нет
+                    connection.Execute(@"
+                        IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '__EFMigrationsHistory')
+                        BEGIN
+                            CREATE TABLE [__EFMigrationsHistory] (
+                                [MigrationId] nvarchar(150) NOT NULL,
+                                [ProductVersion] nvarchar(32) NOT NULL,
+                                CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+                            );
+                        END");
+
+                    // Добавляем записи о миграциях
+                    foreach (var migration in pendingMigrations)
+                    {
+                        try
+                        {
+                            connection.Execute(
+                                @"IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = @MigrationId)
+                                  INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion]) 
+                                  VALUES (@MigrationId, @ProductVersion)",
+                                new { MigrationId = migration, ProductVersion = "6.0.27" });
+
+                            Log.Information($"MarkMigrationsAsApplied: Добавлена запись для '{migration}'");
+                        }
+                        catch (Exception insertEx)
+                        {
+                            Log.Warning($"MarkMigrationsAsApplied: Не удалось добавить '{migration}': {insertEx.Message}");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Warning($"MarkMigrationsAsApplied: Ошибка - {ex.Message}");
+            }
+        }
+
         public static void EnsureSeedData(IServiceCollection serviceCollection, IClusterConfiguration serverConfigurations, AuthenticationBuilder authenticationBuilder)
         {
             Log.Information("##################################################");
-            Log.Information("!!! НОВАЯ ВЕРСИЯ КОДА v5 !!!");
+            Log.Information("!!! НОВАЯ ВЕРСИЯ КОДА v6 - С ПРОВЕРКОЙ ТАБЛИЦ !!!");
             Log.Information("##################################################");
             Log.Information("=== EnsureSeedData: НАЧАЛО ===");
 
@@ -222,7 +352,7 @@ namespace Mega.Has.Modules.UAS
         private static void MigrateDatabase(Microsoft.Extensions.Logging.ILogger logger, IServiceProvider services, ICryptoService cryptoService)
         {
             Log.Information("##################################################");
-            Log.Information("!!! MigrateDatabase НАЧАЛО v5 !!!");
+            Log.Information("!!! MigrateDatabase НАЧАЛО v6 - С ПРОВЕРКОЙ !!!");
             Log.Information("##################################################");
             Log.Information("=== MigrateDatabase: НАЧАЛО ===");
 
@@ -244,149 +374,23 @@ namespace Mega.Has.Modules.UAS
                     {
                         Log.Information("Миграция 1: Получение ApplicationDbContext...");
                         var appDbContext = services.GetRequiredService<ApplicationDbContext>();
-                        Log.Information($"Миграция 1: ApplicationDbContext = {(appDbContext != null ? "OK" : "NULL")}");
-
-                        Log.Information("Миграция 1: Проверка Database...");
                         var database = appDbContext.Database;
-                        Log.Information($"Миграция 1: Database = {(database != null ? "OK" : "NULL")}");
 
-                        Log.Information("Миграция 1: Проверка ProviderName...");
-                        var providerName = database.ProviderName;
-                        Log.Information($"Миграция 1: ProviderName = {providerName}");
+                        Log.Information("Миграция 1: Проверка нужна ли миграция...");
 
-                        Log.Information("Миграция 1: Проверка ConnectionString...");
-                        var connectionString = database.GetConnectionString();
-                        Log.Information($"Миграция 1: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
-
-                        // Выводим connection string (маскируем пароль)
-                        if (!string.IsNullOrEmpty(connectionString))
+                        // НОВАЯ ЛОГИКА: Проверяем существуют ли таблицы
+                        if (ShouldSkipMigration(database, "AccessTokens"))
                         {
-                            var maskedCs = Regex.Replace(
-                                connectionString,
-                                @"(Password|Pwd)\s*=\s*[^;]+",
-                                "$1=***",
-                                RegexOptions.IgnoreCase);
-                            Log.Information($"ConnectionString (masked): {maskedCs}");
+                            Log.Warning("Миграция 1: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!");
+                            Log.Information("Миграция 1: Помечаем миграции как применённые...");
+                            MarkMigrationsAsApplied(database);
                         }
-
-                        // Диагностика Microsoft.Data.SqlClient
-                        try
+                        else
                         {
-                            var sqlClientAssembly = typeof(SqlConnection).Assembly;
-                            Log.Information($"Microsoft.Data.SqlClient Version: {sqlClientAssembly.GetName().Version}");
-                            Log.Information($"Microsoft.Data.SqlClient Location: {sqlClientAssembly.Location}");
+                            Log.Information("Миграция 1: Вызов Migrate()...");
+                            database.Migrate();
+                            Log.Information("Миграция 1: ApplicationDbContext.Migrate() - OK");
                         }
-                        catch (Exception verEx)
-                        {
-                            Log.Warning($"Не удалось получить версию SqlClient: {verEx.Message}");
-                        }
-
-                        // Проверка ConnectionString через SqlConnectionStringBuilder
-                        try
-                        {
-                            Log.Information(">>> Проверка ConnectionString через SqlConnectionStringBuilder...");
-                            var builder = new SqlConnectionStringBuilder(connectionString);
-                            Log.Information($"  Server: {builder.DataSource}");
-                            Log.Information($"  Database: {builder.InitialCatalog}");
-                            Log.Information($"  IntegratedSecurity: {builder.IntegratedSecurity}");
-                            Log.Information($"  UserID: {builder.UserID}");
-                            Log.Information($"  TrustServerCertificate: {builder.TrustServerCertificate}");
-                            Log.Information($"  Encrypt: {builder.Encrypt}");
-                            Log.Information("SqlConnectionStringBuilder - OK");
-                        }
-                        catch (Exception builderEx)
-                        {
-                            LogException("SqlConnectionStringBuilder", builderEx);
-                            throw;
-                        }
-
-                        // Тест соединения
-                        try
-                        {
-                            Log.Information(">>> Создание SqlConnection...");
-                            var conn = new SqlConnection();
-                            Log.Information("SqlConnection создан (пустой)");
-
-                            Log.Information(">>> Установка ConnectionString...");
-                            conn.ConnectionString = connectionString;
-                            Log.Information("ConnectionString установлен");
-
-                            Log.Information(">>> Проверка State...");
-                            var state = conn.State;
-                            Log.Information($"State = {state}");
-
-                            Log.Information(">>> Вызов Open()...");
-                            conn.Open();
-                            Log.Information($"Open() - OK, State = {conn.State}");
-
-                            // Проверим версию SQL Server
-                            try
-                            {
-                                using (var cmd = conn.CreateCommand())
-                                {
-                                    cmd.CommandText = "SELECT @@VERSION";
-                                    var version = cmd.ExecuteScalar()?.ToString();
-                                    if (version != null && version.Length > 100)
-                                    {
-                                        version = version.Substring(0, 100) + "...";
-                                    }
-                                    Log.Information($"SQL Server Version: {version}");
-                                }
-                            }
-                            catch (Exception sqlVerEx)
-                            {
-                                Log.Warning($"Не удалось получить версию SQL Server: {sqlVerEx.Message}");
-                            }
-
-                            conn.Close();
-                            conn.Dispose();
-                            Log.Information("Соединение закрыто и disposed");
-                        }
-                        catch (Exception connEx)
-                        {
-                            LogException("Тест соединения SqlConnection", connEx);
-                            throw;
-                        }
-
-                        // Проверка pending миграций
-                        try
-                        {
-                            Log.Information(">>> Проверка pending миграций...");
-                            var pendingMigrations = database.GetPendingMigrations().ToList();
-                            Log.Information($"Pending миграций: {pendingMigrations.Count}");
-                            foreach (var m in pendingMigrations)
-                            {
-                                Log.Information($"  - {m}");
-                            }
-                        }
-                        catch (Exception migEx)
-                        {
-                            Log.Warning($"ОШИБКА при проверке pending миграций: {migEx.Message}");
-                        }
-
-                        // Проверка applied миграций
-                        try
-                        {
-                            Log.Information(">>> Проверка applied миграций...");
-                            var appliedMigrations = database.GetAppliedMigrations().ToList();
-                            Log.Information($"Applied миграций: {appliedMigrations.Count}");
-                            foreach (var m in appliedMigrations)
-                            {
-                                Log.Information($"  - {m}");
-                            }
-                        }
-                        catch (Exception migEx)
-                        {
-                            Log.Warning($"ОШИБКА при проверке applied миграций: {migEx.Message}");
-                        }
-
-                        Log.Information("Миграция 1: Вызов Migrate()...");
-                        Log.Information(">>> Перед вызовом database.Migrate() <<<");
-
-                        database.Migrate();
-
-                        Log.Information(">>> После вызова database.Migrate() <<<");
-                        Log.Information("Миграция 1: ApplicationDbContext.Migrate() - OK");
                     }
                     catch (Exception ex)
                     {
@@ -399,40 +403,23 @@ namespace Mega.Has.Modules.UAS
                     {
                         Log.Information("Миграция 2: Получение ConfigurationDbContext...");
                         var configDbContext = services.GetRequiredService<ConfigurationDbContext>();
-                        Log.Information($"Миграция 2: ConfigurationDbContext = {(configDbContext != null ? "OK" : "NULL")}");
+                        var database = configDbContext.Database;
 
-                        Log.Information("Миграция 2: Проверка ConnectionString...");
-                        var connectionString = configDbContext.Database.GetConnectionString();
-                        Log.Information($"Миграция 2: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+                        Log.Information("Миграция 2: Проверка нужна ли миграция...");
 
-                        if (!string.IsNullOrEmpty(connectionString))
+                        // НОВАЯ ЛОГИКА: Проверяем существуют ли таблицы
+                        if (ShouldSkipMigration(database, "Clients"))
                         {
-                            var maskedCs = Regex.Replace(
-                                connectionString,
-                                @"(Password|Pwd)\s*=\s*[^;]+",
-                                "$1=***",
-                                RegexOptions.IgnoreCase);
-                            Log.Information($"ConnectionString 2 (masked): {maskedCs}");
+                            Log.Warning("Миграция 2: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!");
+                            Log.Information("Миграция 2: Помечаем миграции как применённые...");
+                            MarkMigrationsAsApplied(database);
                         }
-
-                        try
+                        else
                         {
-                            Log.Information(">>> Проверка pending миграций ConfigurationDbContext...");
-                            var pendingMigrations = configDbContext.Database.GetPendingMigrations().ToList();
-                            Log.Information($"Pending миграций: {pendingMigrations.Count}");
+                            Log.Information("Миграция 2: Вызов Migrate()...");
+                            database.Migrate();
+                            Log.Information("Миграция 2: ConfigurationDbContext.Migrate() - OK");
                         }
-                        catch (Exception migEx)
-                        {
-                            Log.Warning($"ОШИБКА: {migEx.Message}");
-                        }
-
-                        Log.Information("Миграция 2: Вызов Migrate()...");
-                        Log.Information(">>> Перед вызовом ConfigurationDbContext.Migrate() <<<");
-
-                        configDbContext.Database.Migrate();
-
-                        Log.Information(">>> После вызова ConfigurationDbContext.Migrate() <<<");
-                        Log.Information("Миграция 2: ConfigurationDbContext.Migrate() - OK");
                     }
                     catch (Exception ex)
                     {
@@ -445,40 +432,23 @@ namespace Mega.Has.Modules.UAS
                     {
                         Log.Information("Миграция 3: Получение PersistedGrantDbContext...");
                         var grantDbContext = services.GetRequiredService<PersistedGrantDbContext>();
-                        Log.Information($"Миграция 3: PersistedGrantDbContext = {(grantDbContext != null ? "OK" : "NULL")}");
+                        var database = grantDbContext.Database;
 
-                        Log.Information("Миграция 3: Проверка ConnectionString...");
-                        var connectionString = grantDbContext.Database.GetConnectionString();
-                        Log.Information($"Миграция 3: ConnectionString = {(string.IsNullOrEmpty(connectionString) ? "ПУСТАЯ или NULL!" : "OK (длина: " + connectionString.Length + ")")}");
+                        Log.Information("Миграция 3: Проверка нужна ли миграция...");
 
-                        if (!string.IsNullOrEmpty(connectionString))
+                        // НОВАЯ ЛОГИКА: Проверяем существуют ли таблицы
+                        if (ShouldSkipMigration(database, "PersistedGrants"))
                         {
-                            var maskedCs = Regex.Replace(
-                                connectionString,
-                                @"(Password|Pwd)\s*=\s*[^;]+",
-                                "$1=***",
-                                RegexOptions.IgnoreCase);
-                            Log.Information($"ConnectionString 3 (masked): {maskedCs}");
+                            Log.Warning("Миграция 3: ПРОПУСКАЕМ Migrate() - таблицы уже существуют!");
+                            Log.Information("Миграция 3: Помечаем миграции как применённые...");
+                            MarkMigrationsAsApplied(database);
                         }
-
-                        try
+                        else
                         {
-                            Log.Information(">>> Проверка pending миграций PersistedGrantDbContext...");
-                            var pendingMigrations = grantDbContext.Database.GetPendingMigrations().ToList();
-                            Log.Information($"Pending миграций: {pendingMigrations.Count}");
+                            Log.Information("Миграция 3: Вызов Migrate()...");
+                            database.Migrate();
+                            Log.Information("Миграция 3: PersistedGrantDbContext.Migrate() - OK");
                         }
-                        catch (Exception migEx)
-                        {
-                            Log.Warning($"ОШИБКА: {migEx.Message}");
-                        }
-
-                        Log.Information("Миграция 3: Вызов Migrate()...");
-                        Log.Information(">>> Перед вызовом PersistedGrantDbContext.Migrate() <<<");
-
-                        grantDbContext.Database.Migrate();
-
-                        Log.Information(">>> После вызова PersistedGrantDbContext.Migrate() <<<");
-                        Log.Information("Миграция 3: PersistedGrantDbContext.Migrate() - OK");
                     }
                     catch (Exception ex)
                     {

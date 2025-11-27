@@ -1,105 +1,12 @@
-using System;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
-using HAS.Server.SiteModule.Razor;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Razor.Internal;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.AspNetCore.Razor.Hosting;
-
-namespace AspNetCoreGeneratedDocument
-{
-	// Token: 0x02000040 RID: 64
-	[Dynamic(new bool[] { false, true })]
-	[RazorSourceChecksum("SHA256", "db49990b83873bd0a8dae29a49b6e41d4630ea6887575f6d3f94faa3480b8c7e", "/Areas/Admin/Views/_ViewImports.cshtml")]
-	[RazorCompiledItemMetadata("Identifier", "/Areas/Admin/Views/_ViewImports.cshtml")]
-	[CreateNewOnMetadataUpdate]
-	internal sealed class Areas_Admin_Views__ViewImports : BaseRazorPage<object>
-	{
-		// Token: 0x060002BE RID: 702 RVA: 0x0000BE94 File Offset: 0x0000A094
-		public override Task ExecuteAsync()
-		{
-			Areas_Admin_Views__ViewImports.ExecuteAsync_StateMachine_0 <ExecuteAsync>d__;
-			<ExecuteAsync>d__.taskBuilder = AsyncTaskMethodBuilder.Create();
-			<ExecuteAsync>d__.compilerState = -1;
-			<ExecuteAsync>d__.taskBuilder.Start<Areas_Admin_Views__ViewImports.ExecuteAsync_StateMachine_0>(ref <ExecuteAsync>d__);
-			return <ExecuteAsync>d__.taskBuilder.Task;
-		}
-
-		// Token: 0x1700014A RID: 330
-		// (get) Token: 0x060002BF RID: 703 RVA: 0x0000BECF File Offset: 0x0000A0CF
-		// (set) Token: 0x060002C0 RID: 704 RVA: 0x0000BED7 File Offset: 0x0000A0D7
-		[RazorInject]
-		public IModelExpressionProvider ModelExpressionProvider { get; private set; }
-
-		// Token: 0x1700014B RID: 331
-		// (get) Token: 0x060002C1 RID: 705 RVA: 0x0000BEE0 File Offset: 0x0000A0E0
-		// (set) Token: 0x060002C2 RID: 706 RVA: 0x0000BEE8 File Offset: 0x0000A0E8
-		[RazorInject]
-		public IUrlHelper Url { get; private set; }
-
-		// Token: 0x1700014C RID: 332
-		// (get) Token: 0x060002C3 RID: 707 RVA: 0x0000BEF1 File Offset: 0x0000A0F1
-		// (set) Token: 0x060002C4 RID: 708 RVA: 0x0000BEF9 File Offset: 0x0000A0F9
-		[RazorInject]
-		public IViewComponentHelper Component { get; private set; }
-
-		// Token: 0x1700014D RID: 333
-		// (get) Token: 0x060002C5 RID: 709 RVA: 0x0000BF02 File Offset: 0x0000A102
-		// (set) Token: 0x060002C6 RID: 710 RVA: 0x0000BF0A File Offset: 0x0000A10A
-		[RazorInject]
-		public IJsonHelper Json { get; private set; }
-
-		// Token: 0x1700014E RID: 334
-		// (get) Token: 0x060002C7 RID: 711 RVA: 0x0000BF13 File Offset: 0x0000A113
-		// (set) Token: 0x060002C8 RID: 712 RVA: 0x0000BF1B File Offset: 0x0000A11B
-		[Dynamic(new bool[] { false, true })]
-		[RazorInject]
-		public IHtmlHelper<dynamic> Html
-		{
-			[return: Dynamic(new bool[] { false, true })]
-			get;
-			[param: Dynamic(new bool[] { false, true })]
-			private set;
-		}
-
-		// Token: 0x0200014D RID: 333
-		[CompilerGenerated]
-		[StructLayout(LayoutKind.Auto)]
-		private struct ExecuteAsync_StateMachine_0 : IAsyncStateMachine
-		{
-			// Token: 0x06000A4A RID: 2634 RVA: 0x00045508 File Offset: 0x00043708
-			void IAsyncStateMachine.MoveNext()
-			{
-				int num = this.compilerState;
-				try
-				{
-				}
-				catch (Exception ex)
-				{
-					this.compilerState = -2;
-					this.taskBuilder.SetException(ex);
-					return;
-				}
-				this.compilerState = -2;
-				this.taskBuilder.SetResult();
-			}
-
-			// Token: 0x06000A4B RID: 2635 RVA: 0x00045558 File Offset: 0x00043758
-			[DebuggerHidden]
-			void IAsyncStateMachine.SetStateMachine([global::System.Runtime.CompilerServices.Nullable(1)] IAsyncStateMachine stateMachine)
-			{
-				this.taskBuilder.SetStateMachine(stateMachine);
-			}
-
-			// Token: 0x040007FA RID: 2042
-			public int compilerState;
-
-			// Token: 0x040007FB RID: 2043
-			public AsyncTaskMethodBuilder taskBuilder;
-		}
-	}
-}
+Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.
+The non-generic type 'Areas_Admin_Views__ViewImports.ExecuteAsync_StateMachine_0' cannot be used with type arguments
+The type or namespace name 'ExecuteAsync' could not be found (are you missing a using directive or an assembly reference?)
+Invalid expression term '<'
+Invalid expression term '<'
+Invalid expression term '<'
+Invalid expression term '<'
+Invalid expression term '<'
+Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.
+Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.
+Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.
+Explicit application of 'System.Runtime.CompilerServices.NullableAttribute' is not allowed.

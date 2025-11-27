@@ -1,3 +1,15 @@
+
+
+сможешь решить еще такие проблемы 
+1 .cshtml  - @model AccessTokenViewModel  ,сверху еще нужен @using 
+например так:
+@using Mega.Has.Modules.UAS.Areas.Admin.ViewModels
+Ошибка: Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	CS0246	The type or namespace name 'AccessTokenViewModel' could not be found (are you missing a using directive or an assembly reference?)	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS-CSHTML no job\Areas\Admin\Views\AccessToken\Edit.cshtml	1	
+
+Вторая проблема убирать этот код помеченный комментариями от dnspy
+// Token,// (get),// (set)
+Пример
 // Token: 0x170000EB RID: 235
 // (get) Token: 0x060001A5 RID: 421 RVA: 0x00009227 File Offset: 0x00007427
 // (set) Token: 0x060001A6 RID: 422 RVA: 0x0000922F File Offset: 0x0000742F

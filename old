@@ -1,12 +1,13 @@
-Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.
-The non-generic type 'Areas_Admin_Views__ViewImports.ExecuteAsync_StateMachine_0' cannot be used with type arguments
-The type or namespace name 'ExecuteAsync' could not be found (are you missing a using directive or an assembly reference?)
-Invalid expression term '<'
-Invalid expression term '<'
-Invalid expression term '<'
-Invalid expression term '<'
-Invalid expression term '<'
-Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.
-Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.
-Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.
-Explicit application of 'System.Runtime.CompilerServices.NullableAttribute' is not allowed.
+Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	CS0308	The non-generic type 'Areas_Admin_Views__ViewImports.ExecuteAsync_StateMachine_0' cannot be used with type arguments	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	25	
+Error (active)	CS1970	Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	16	
+Error (active)	CS0246	The type or namespace name 'ExecuteAsync' could not be found (are you missing a using directive or an assembly reference?)	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	25	
+Error (active)	CS1525	Invalid expression term '<'	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	25	
+Error (active)	CS1525	Invalid expression term '<'	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	26	
+Error (active)	CS1525	Invalid expression term '<'	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	27	
+Error (active)	CS1525	Invalid expression term '<'	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	28	
+Error (active)	CS1525	Invalid expression term '<'	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	29	
+Error (active)	CS1970	Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	59	
+Error (active)	CS1970	Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	63	
+Error (active)	CS1970	Do not use 'System.Runtime.CompilerServices.DynamicAttribute'. Use the 'dynamic' keyword instead.	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	65	
+Error (active)	CS8623	Explicit application of 'System.Runtime.CompilerServices.NullableAttribute' is not allowed.	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS\AspNetCoreGeneratedDocument\Areas_Admin_Views__ViewImports.cs	93	

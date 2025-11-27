@@ -1,49 +1,8 @@
-📁 Areas/
-└── 📁 Admin/
-    └── 📁 Views/
-        ├── 📁 AccessToken/
-        │   ├── Create.cshtml
-        │   ├── Edit.cshtml
-        │   └── Index.cshtml
-        ├── 📁 ApiKey/
-        │   ├── Create.cshtml
-        │   └── Index.cshtml
-        ├── 📁 Client/
-        │   ├── Create.cshtml
-        │   ├── Edit.cshtml
-        │   └── Index.cshtml
-        ├── 📁 Hopex/
-        │   └── Index.cshtml
-        ├── 📁 OpenId/
-        │   ├── Edit.cshtml
-        │   └── Index.cshtml
-        ├── 📁 SAML2/
-        │   ├── Edit.cshtml
-        │   └── Index.cshtml
-        ├── 📁 Shared/
-        │   ├── Error.cshtml
-        │   ├── _AdminLayout.cshtml
-        │   └── _ValidationSummary.cshtml
-        ├── 📁 Windows/
-        │   └── Index.cshtml
-        ├── _ViewImports.cshtml
-        └── _ViewStart.cshtml
-
-📁 Views/
-├── 📁 Account/
-│   ├── AccessDenied.cshtml
-│   ├── ChangePassword.cshtml
-│   ├── Error.cshtml
-│   ├── LoggedOut.cshtml
-│   ├── Login.cshtml
-│   ├── Logout.cshtml
-│   ├── Mapping.cshtml
-│   └── TimedOut.cshtml
-├── 📁 Password/
-│   └── LostPassword.cshtml
-├── 📁 Shared/
-│   ├── _Layout.cshtml
-│   ├── _Layout.account.cshtml
-│   └── _ValidationSummary.cshtml
-├── _ViewImports.cshtml
-└── _ViewStart.cshtml
+    var content = $@"The password must:<br/>
+        <ul>
+        <li>include at least {Model.Settings.RequiredLength} characters{(Model.Settings.RequireUppercase ? ", one uppercase" : "")}{(Model.Settings.RequireLowercase ? ", one lowercase" : "")}{(Model.Settings.RequireDigit ? ", one digit" : "")}{(Model.Settings.RequireNonAlphanumeric ? ", one special character" : "")}</li>
+        <li>not use any sequence of characters (e.g; 12345, qwert) nor contextual words (e.g.: hopex, mega)</li>
+        <li>be complex enough to meet your enterprise security requirements</li>
+        </ul>
+        ";
+            <p class="text-center">@T["Use the form below to change password for"] @Model.UserName.</p>

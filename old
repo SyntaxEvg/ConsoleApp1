@@ -1,30 +1,3 @@
-private Task ExecuteAsync_Lambda_55_0()
-{
-	Areas_Admin_Views_AccessToken_Edit.ExecuteAsync_Lambda_55_0_StateMachine ExecuteAsync_Lambda_55_0_StateMachine;
-	ExecuteAsync_Lambda_55_0_StateMachine.taskBuilder = AsyncTaskMethodBuilder.Create();
-	ExecuteAsync_Lambda_55_0_StateMachine.capturedThis = this;
-	ExecuteAsync_Lambda_55_0_StateMachine.stateMachineState = -1;
-	ExecuteAsync_Lambda_55_0_StateMachine.taskBuilder.Start<Areas_Admin_Views_AccessToken_Edit.ExecuteAsync_Lambda_55_0_StateMachine>(ref ExecuteAsync_Lambda_55_0_StateMachine);
-	return ExecuteAsync_Lambda_55_0_StateMachine.taskBuilder.Task;
-}
-Такая ошибка почему 
-Use of unassigned local variable 'executeAsync_d__'
-
-и такая ошибка почему
-в  этой строке почему _Microsoft_AspNetCore_Mvc_TagHelpers_InputTagHelper.For = modelExpressionProvider.CreateModelExpression<AccessTokenViewModel, string>(viewData, Expression.Lambda<Func<AccessTokenViewModel, string>>(Expression.Property(Expression.Call(Expression.Property(Expression.Property(Expression.Property(Expression.Constant(areas_Admin_Views_AccessToken_Edit, typeof(Areas_Admin_Views_AccessToken_Edit)), methodof(RazorPage<AccessTokenViewModel>.get_Model())), methodof(InputAccessTokenViewModel.get_Roles())), methodof(RolesViewModel.get_Items())), methodof(List<RoleViewModel>.get_Item(int)), new Expression[] { Expression.Field(Expression.Constant(this.compiler_8_1, typeof(Areas_Admin_Views_AccessToken_Edit.DisplayClass55_0)), fieldof(Areas_Admin_Views_AccessToken_Edit.DisplayClass55_0.ix)) }), methodof(RoleViewModel.get_Name())), new ParameterExpression[] { parameterExpression }));
-The name 'methodof' does not exist in the current context
-'RazorPage<AccessTokenViewModel>.Model.get': cannot explicitly call operator or accessor
-The name 'methodof' does not exist in the current context
-'InputAccessTokenViewModel.Roles.get': cannot explicitly call operator or accessor
-The name 'methodof' does not exist in the current context
-'RolesViewModel.Items.get': cannot explicitly call operator or accessor
-The name 'methodof' does not exist in the current context
-'List<RoleViewModel>.this[int].get': cannot explicitly call operator or accessor
-Invalid expression term 'int'
-The name 'fieldof' does not exist in the current context
-An object reference is required for the non-static field, method, or property 'Areas_Admin_Views_AccessToken_Edit.DisplayClass55_0.ix'
-The name 'methodof' does not exist in the current context
-'RoleViewModel.Name.get': cannot explicitly call operator or accessor
-
-ЭТО МОЖНО ИСПРАВИТЬ ?
-
+// Token: 0x170000EB RID: 235
+// (get) Token: 0x060001A5 RID: 421 RVA: 0x00009227 File Offset: 0x00007427
+// (set) Token: 0x060001A6 RID: 422 RVA: 0x0000922F File Offset: 0x0000742F

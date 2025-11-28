@@ -1,2 +1,11 @@
-var cleanTypeName = ShortNameMap.TryGetValue(type.Name, out var clean) ? clean : type.Name.String;
-var cleanTypeName = ShortNameMap.TryGetValue(type.Name, out var clean) ? clean : (string)type.Name;
+Pass2_GenerateIL                        1         2574    2574.00
+ProcessType_Single                    220         2401      10.91
+ApplyReplacements                     220         1629       7.40
+WriteType                             220          423       1.92
+Pass1_CollectNames                      1          151     151.00
+WriteFile                             220          148       0.67
+LoadAssembly                            1           87      87.00
+SaveNameMappings                        1           37      37.00
+BuildRegex                              1           36      36.00
+SaveUserStrings                         1           15      15.00
+SaveAssemblyInfo                        1            2       2.00

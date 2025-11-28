@@ -1,85 +1,11 @@
-using dnlib.DotNet;
-using dnlib.DotNet.Emit;
+---------------------------
+Microsoft Visual Studio
+---------------------------
+A project with an Output Type of Class Library cannot be started directly.
 
-if (args.Length == 0)
-{
-    Console.WriteLine("Использование: ILExtractor <сборка.dll> [папка_вывода]");
-    return;
-}
 
-var assemblyPath = args[0];
-var outputDir = args.Length > 1 ? args[1] : "IL_Output";
 
-var module = ModuleDefMD.Load(assemblyPath);
-
-foreach (var type in module.GetTypes())
-{
-    if (type.Name == "<Module>") continue;
-    
-    // Создаём путь: namespace/ClassName
-    var ns = string.IsNullOrEmpty(type.Namespace) ? "_Global" : type.Namespace.ToString().Replace('.', Path.DirectorySeparatorChar);
-    var typeName = SanitizeName(type.Name);
-    var typePath = Path.Combine(outputDir, ns, typeName);
-    
-    Directory.CreateDirectory(typePath);
-    
-    foreach (var method in type.Methods)
-    {
-        if (!method.HasBody) continue;
-        
-        var methodName = SanitizeName(method.Name);
-        
-        // Для перегрузок добавляем параметры
-        if (type.Methods.Count(m => m.Name == method.Name) > 1)
-        {
-            var paramTypes = string.Join("_", method.Parameters
-                .Where(p => !p.IsHiddenThisParameter)
-                .Select(p => SanitizeName(p.Type?.Name ?? "obj")));
-            if (!string.IsNullOrEmpty(paramTypes))
-                methodName += $"_{paramTypes}";
-        }
-        
-        var filePath = Path.Combine(typePath, $"{methodName}.il");
-        
-        using var writer = new StreamWriter(filePath);
-        
-        foreach (var instr in method.Body.Instructions)
-        {
-            var operand = FormatOperand(instr);
-            writer.WriteLine($"IL_{instr.Offset:X4}: {instr.OpCode.Name,-12} {operand}");
-        }
-    }
-    
-    Console.WriteLine($"Обработан: {type.FullName}");
-}
-
-Console.WriteLine($"\nГотово: {outputDir}");
-
-string SanitizeName(string name)
-{
-    var invalid = Path.GetInvalidFileNameChars();
-    foreach (var c in invalid)
-        name = name.Replace(c, '_');
-    
-    name = name.Replace('<', '_').Replace('>', '_').Replace('`', '_');
-    
-    return name;
-}
-
-string FormatOperand(Instruction instr)
-{
-    if (instr.Operand == null) return "";
-    
-    return instr.Operand switch
-    {
-        Instruction target => $"IL_{target.Offset:X4}",
-        Instruction[] targets => string.Join(", ", targets.Select(t => $"IL_{t.Offset:X4}")),
-        string s => $"\"{s.Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r")}\"",
-        IField f => f.FullName,
-        IMethod m => m.FullName,
-        ITypeDefOrRef t => t.FullName,
-        Local l => $"V_{l.Index}",
-        Parameter p => $"A_{p.Index}",
-        _ => instr.Operand.ToString() ?? ""
-    };
-}
+In order to debug this project, add an executable project to this solution which references the library project. Set the executable project as the startup project.
+---------------------------
+OK   
+---------------------------

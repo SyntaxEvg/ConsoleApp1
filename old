@@ -17,14 +17,10 @@ class Program
     {
         if (args.Length == 0)
         {
-            Console.WriteLine("IL Code Extractor");
-            Console.WriteLine("=================");
+            Console.WriteLine("IL Code Extractor with Full Metadata");
+            Console.WriteLine("====================================");
             Console.WriteLine();
             Console.WriteLine("Использование: ILExtractor <сборка.dll> [папка_вывода]");
-            Console.WriteLine();
-            Console.WriteLine("Примеры:");
-            Console.WriteLine("  ILExtractor MyApp.dll");
-            Console.WriteLine("  ILExtractor MyApp.dll ./output");
             return;
         }
         
@@ -47,13 +43,17 @@ class Program
             
             Directory.CreateDirectory(outputDir);
             
+            // 1. Assembly manifest
             SaveAssemblyInfo(module, outputDir);
             
-            // Обрабатываем только типы верхнего уровня (не вложенные)
+            // 2. User Strings heap — все строковые константы
+            SaveUserStrings(module, outputDir);
+            
+            // 3. Все типы
             foreach (var type in module.Types)
             {
                 if (type.Name == "<Module>") continue;
-                if (type.IsNested) continue; // Вложенные будут внутри родителя
+                if (type.IsNested) continue;
                 
                 ProcessType(type, outputDir);
             }
@@ -68,12 +68,70 @@ class Program
         }
     }
     
+    // ==================== USER STRINGS HEAP ====================
+    
+    static void SaveUserStrings(ModuleDefMD mod, string outDir)
+    {
+        var sb = new StringBuilder();
+        
+        sb.AppendLine("// ==============================================================");
+        sb.AppendLine("// USER STRINGS HEAP — все строковые константы сборки");
+        sb.AppendLine("// ==============================================================");
+        sb.AppendLine();
+        
+        var usHeap = mod.USStream;
+        if (usHeap != null)
+        {
+            uint offset = 1; // Начинаем с 1, 0 — пустая строка
+            int count = 0;
+            
+            while (offset < usHeap.StreamLength)
+            {
+                try
+                {
+                    var str = mod.ReadUserString(offset);
+                    if (!string.IsNullOrEmpty(str))
+                    {
+                        sb.AppendLine($"// [0x{offset:X8}] Length: {str.Length}");
+                        sb.AppendLine($"\"{EscapeString(str)}\"");
+                        sb.AppendLine();
+                        count++;
+                    }
+                    
+                    // Вычисляем следующий offset
+                    // Формат: compressed length + UTF-16 chars + terminal byte
+                    uint len = (uint)str.Length * 2 + 1;
+                    if (str.Length < 0x80)
+                        offset += len + 1;
+                    else if (str.Length < 0x4000)
+                        offset += len + 2;
+                    else
+                        offset += len + 4;
+                }
+                catch
+                {
+                    offset++;
+                }
+                
+                // Защита от бесконечного цикла
+                if (count > 100000) break;
+            }
+            
+            sb.AppendLine($"// Всего строк: {count}");
+        }
+        else
+        {
+            sb.AppendLine("// User Strings heap не найден или пуст");
+        }
+        
+        File.WriteAllText(Path.Combine(outDir, "_UserStrings.il"), sb.ToString());
+    }
+    
     static void ProcessType(TypeDef type, string outputDir)
     {
         if (processedTypes.Contains(type)) return;
         processedTypes.Add(type);
         
-        // Путь по namespace
         var ns = string.IsNullOrEmpty(type.Namespace) 
             ? "_Global" 
             : type.Namespace.ToString().Replace('.', Path.DirectorySeparatorChar);
@@ -163,7 +221,6 @@ class Program
             return;
         }
         
-        // Защита от циклов
         if (typeStack.Contains(type))
         {
             writer.WriteLine($"// ЦИКЛ: {type.FullName}");
@@ -175,9 +232,26 @@ class Program
         {
             var indent = new string(' ', depth * 4);
             
+            // Определяем тип класса для комментария
+            string typeKind = GetTypeKind(type);
+            
             writer.WriteLine($"{indent}// ==============================================================");
-            writer.WriteLine($"{indent}// TYPE: {type.FullName}");
+            writer.WriteLine($"{indent}// {typeKind}: {type.FullName}");
             writer.WriteLine($"{indent}// Token: 0x{type.MDToken.Raw:X8}");
+            
+            // Для async state machine добавляем пояснение
+            if (IsAsyncStateMachine(type))
+            {
+                writer.WriteLine($"{indent}// NOTE: Это async state machine. Метод MoveNext содержит логику async метода.");
+                writer.WriteLine($"{indent}// Поля <>1__state, <>t__builder, <>u__N — служебные для async/await.");
+            }
+            
+            // Для compiler-generated типов
+            if (IsCompilerGenerated(type))
+            {
+                writer.WriteLine($"{indent}// NOTE: Compiler-generated type");
+            }
+            
             writer.WriteLine($"{indent}// ==============================================================");
             writer.WriteLine();
             
@@ -263,6 +337,15 @@ class Program
                 writer.WriteLine();
             }
             
+            // STATIC CONSTRUCTOR (.cctor) — выводим первым для инициализации полей
+            var cctor = type.FindStaticConstructor();
+            if (cctor != null)
+            {
+                writer.WriteLine($"{indent}    // ==== STATIC CONSTRUCTOR (field initializers) ====");
+                writer.WriteLine();
+                WriteMethod(writer, cctor, depth + 1);
+            }
+            
             if (type.HasFields)
             {
                 writer.WriteLine($"{indent}    // ==== FIELDS ====");
@@ -302,11 +385,13 @@ class Program
                 writer.WriteLine();
                 foreach (var method in type.Methods)
                 {
+                    // .cctor уже вывели выше
+                    if (method.IsStaticConstructor) continue;
+                    
                     WriteMethod(writer, method, depth + 1);
                 }
             }
             
-            // Вложенные типы — пишем внутри этого же файла
             if (type.HasNestedTypes)
             {
                 writer.WriteLine($"{indent}    // ==== NESTED TYPES ====");
@@ -326,11 +411,65 @@ class Program
         }
     }
     
+    // ==================== HELPERS ====================
+    
+    static string GetTypeKind(TypeDef type)
+    {
+        if (type.IsInterface) return "INTERFACE";
+        if (type.IsEnum) return "ENUM";
+        if (type.IsValueType) return "STRUCT";
+        if (type.IsDelegate) return "DELEGATE";
+        if (IsAsyncStateMachine(type)) return "ASYNC STATE MACHINE";
+        if (IsCompilerGenerated(type)) return "COMPILER-GENERATED CLASS";
+        return "TYPE";
+    }
+    
+    static bool IsAsyncStateMachine(TypeDef type)
+    {
+        // Проверяем интерфейс IAsyncStateMachine
+        foreach (var iface in type.Interfaces)
+        {
+            if (iface.Interface.FullName == "System.Runtime.CompilerServices.IAsyncStateMachine")
+                return true;
+        }
+        
+        // Или по имени (d__N)
+        if (type.Name.Contains("<") && type.Name.Contains(">d__"))
+            return true;
+            
+        return false;
+    }
+    
+    static bool IsCompilerGenerated(TypeDef type)
+    {
+        foreach (var attr in type.CustomAttributes)
+        {
+            if (attr.TypeFullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
+                return true;
+        }
+        return false;
+    }
+    
     // ==================== FIELD ====================
     
     static void WriteField(StreamWriter writer, FieldDef field, int depth)
     {
         var indent = new string(' ', depth * 4);
+        
+        // Комментарий для служебных полей async
+        if (field.Name.StartsWith("<>"))
+        {
+            string hint = field.Name switch
+            {
+                "<>1__state" => "// async state: -1=initial, 0+=awaiting, -2=completed",
+                "<>t__builder" => "// async method builder",
+                _ when field.Name.Contains("<>u__") => "// awaiter storage",
+                _ when field.Name.Contains("<>s__") => "// spilled local",
+                _ => ""
+            };
+            if (!string.IsNullOrEmpty(hint))
+                writer.WriteLine($"{indent}{hint}");
+        }
         
         writer.Write($"{indent}.field ");
         
@@ -363,6 +502,23 @@ class Program
         if (field.HasFieldRVA)
         {
             writer.Write($" at D_{(uint)field.RVA:X8}");
+            
+            // Попробуем прочитать данные
+            var initValue = field.InitialValue;
+            if (initValue != null && initValue.Length > 0)
+            {
+                writer.WriteLine();
+                writer.Write($"{indent}    // Initial data ({initValue.Length} bytes): ");
+                if (initValue.Length <= 64)
+                {
+                    writer.Write(BitConverter.ToString(initValue).Replace("-", " "));
+                }
+                else
+                {
+                    writer.Write(BitConverter.ToString(initValue, 0, 64).Replace("-", " "));
+                    writer.Write($" ... ({initValue.Length - 64} more bytes)");
+                }
+            }
         }
         
         writer.WriteLine();
@@ -451,6 +607,14 @@ class Program
     static void WriteMethod(StreamWriter writer, MethodDef method, int depth)
     {
         var indent = new string(' ', depth * 4);
+        
+        // Комментарии для специальных методов
+        if (method.Name == "MoveNext" && IsAsyncStateMachine(method.DeclaringType))
+        {
+            writer.WriteLine($"{indent}// *** ASYNC METHOD BODY ***");
+            writer.WriteLine($"{indent}// Этот метод содержит основную логику async метода.");
+            writer.WriteLine($"{indent}// switch(<>1__state) определяет точку возобновления после await.");
+        }
         
         writer.WriteLine($"{indent}// Token: 0x{method.MDToken.Raw:X8}");
         writer.WriteLine($"{indent}// RVA: 0x{(uint)method.RVA:X8}");
@@ -596,11 +760,23 @@ class Program
             
             writer.WriteLine();
             
+            // IL инструкции с улучшенными комментариями
             foreach (var instr in body.Instructions)
             {
                 var label = $"IL_{instr.Offset:X4}";
                 var operand = FormatOperand(instr);
-                writer.WriteLine($"{indent}    {label}: {instr.OpCode.Name,-12} {operand}");
+                
+                // Добавляем комментарии для ключевых инструкций
+                string comment = GetInstructionComment(instr);
+                
+                if (!string.IsNullOrEmpty(comment))
+                {
+                    writer.WriteLine($"{indent}    {label}: {instr.OpCode.Name,-12} {operand,-50} // {comment}");
+                }
+                else
+                {
+                    writer.WriteLine($"{indent}    {label}: {instr.OpCode.Name,-12} {operand}");
+                }
             }
             
             if (body.HasExceptionHandlers)
@@ -635,6 +811,47 @@ class Program
         
         writer.WriteLine($"{indent}}} // end of method {method.DeclaringType?.Name}::{method.Name}");
         writer.WriteLine();
+    }
+    
+    // ==================== INSTRUCTION COMMENTS ====================
+    
+    static string GetInstructionComment(Instruction instr)
+    {
+        // Комментарии для async state machine
+        if (instr.Operand is IField field)
+        {
+            if (field.Name == "<>1__state")
+                return "load/store async state";
+            if (field.Name.Contains("<>t__builder"))
+                return "async builder";
+            if (field.Name.Contains("<>u__"))
+                return "awaiter";
+        }
+        
+        // Комментарии для вызовов
+        if (instr.Operand is IMethod method)
+        {
+            var methodName = method.Name;
+            
+            if (methodName == "GetAwaiter")
+                return "начало await";
+            if (methodName == "get_IsCompleted")
+                return "проверка завершения await";
+            if (methodName == "GetResult")
+                return "получение результата await";
+            if (methodName == "AwaitUnsafeOnCompleted" || methodName == "AwaitOnCompleted")
+                return "регистрация continuation";
+            if (methodName == "SetResult")
+                return "завершение async метода";
+            if (methodName == "SetException")
+                return "исключение в async методе";
+            if (methodName == "WriteLiteral")
+                return "вывод HTML";
+            if (methodName == "Write")
+                return "вывод значения";
+        }
+        
+        return "";
     }
     
     // ==================== GENERIC CONSTRAINTS ====================
@@ -999,14 +1216,3 @@ class Program
         return name;
     }
 }
-```
-
-**Структура теперь как в dnSpy:**
-```
-IL_Output/
-├── _AssemblyManifest.il
-├── MyNamespace/
-│   ├── MyClass.il           ← содержит все вложенные типы внутри
-│   └── AnotherClass.il
-└── _Global/
-    └── SomeClass.il

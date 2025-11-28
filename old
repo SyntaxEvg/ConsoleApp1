@@ -1,25 +1,85 @@
-Error request /uas/Account/Login
-System.InvalidOperationException: The following sections have been defined but have not been rendered by the page at '/Views/Shared/_Layout.cshtml': 'Scripts'. To ignore an unrendered section call IgnoreSection("sectionName").
-   at void Microsoft.AspNetCore.Mvc.Razor.RazorPage.EnsureRenderedBodyOrSections()
-   at async Task Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderLayoutAsync(ViewContext context, ViewBufferTextWriter bodyWriter)
-   at async Task Microsoft.AspNetCore.Mvc.Razor.RazorView.RenderAsync(ViewContext context)
-   at async Task Microsoft.AspNetCore.Mvc.ViewFeatures.ViewExecutor.ExecuteAsync(ViewContext viewContext, string contentType, int? statusCode) x 3
-   at async Task Microsoft.AspNetCore.Mvc.ViewFeatures.ViewResultExecutor.ExecuteAsync(ActionContext context, ViewResult result)
-   at async Task Microsoft.AspNetCore.Mvc.ViewResult.ExecuteResultAsync(ActionContext context)
-   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeNextResultFilterAsync<TFilter, TFilterAsync>()+Awaited(?)
-   at void Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResultExecutedContextSealed context)
-   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.ResultNext<TFilter, TFilterAsync>(ref State next, ref Scope scope, ref object state, ref bool isCompleted)
-   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeResultFilters()
-   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeNextResourceFilter()+Awaited(?)
-   at void Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Rethrow(ResourceExecutedContextSealed context)
-   at Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.Next(ref State next, ref Scope scope, ref object state, ref bool isCompleted)
-   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeFilterPipelineAsync()+Awaited(?)
-   at async Task Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.InvokeAsync()+Awaited(?) x 2
-   at async Task Microsoft.AspNetCore.Routing.EndpointMiddleware.Invoke(HttpContext httpContext)+AwaitRequestTask(?)
-   at async Task Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
-   at async Task IdentityServer4.Hosting.IdentityServerMiddleware.Invoke(HttpContext context, IEndpointRouter router, IUserSession session, IEventService events, IBackChannelLogoutService backChannelLogoutService)
-   at async Task IdentityServer4.Hosting.MutualTlsEndpointMiddleware.Invoke(HttpContext context, IAuthenticationSchemeProvider schemes)
-   at async Task Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
-   at async Task IdentityServer4.Hosting.BaseUrlMiddleware.Invoke(HttpContext context)
-   at async Task Microsoft.AspNetCore.Builder.Extensions.UsePathBaseMiddleware.InvokeCore(HttpContext context, PathString matchedPath, PathString remainingPath)
-   at async Task Microsoft.AspNetCore.Builder.ApplicationBuilderExtension.ModuleMiddleware(ITraceInstrumentation traceInstrumentation, IModuleConfiguration moduleConfiguration, HttpContext context, Func<Task> next) in C:/build-agents/agent1/_work/1/s/Server/src/HAS.Server.SiteModule/Extensions/ApplicationBuilderExtension.cs:line 150
+using dnlib.DotNet;
+using dnlib.DotNet.Emit;
+
+if (args.Length == 0)
+{
+    Console.WriteLine("Использование: ILExtractor <сборка.dll> [папка_вывода]");
+    return;
+}
+
+var assemblyPath = args[0];
+var outputDir = args.Length > 1 ? args[1] : "IL_Output";
+
+var module = ModuleDefMD.Load(assemblyPath);
+
+foreach (var type in module.GetTypes())
+{
+    if (type.Name == "<Module>") continue;
+    
+    // Создаём путь: namespace/ClassName
+    var ns = string.IsNullOrEmpty(type.Namespace) ? "_Global" : type.Namespace.ToString().Replace('.', Path.DirectorySeparatorChar);
+    var typeName = SanitizeName(type.Name);
+    var typePath = Path.Combine(outputDir, ns, typeName);
+    
+    Directory.CreateDirectory(typePath);
+    
+    foreach (var method in type.Methods)
+    {
+        if (!method.HasBody) continue;
+        
+        var methodName = SanitizeName(method.Name);
+        
+        // Для перегрузок добавляем параметры
+        if (type.Methods.Count(m => m.Name == method.Name) > 1)
+        {
+            var paramTypes = string.Join("_", method.Parameters
+                .Where(p => !p.IsHiddenThisParameter)
+                .Select(p => SanitizeName(p.Type?.Name ?? "obj")));
+            if (!string.IsNullOrEmpty(paramTypes))
+                methodName += $"_{paramTypes}";
+        }
+        
+        var filePath = Path.Combine(typePath, $"{methodName}.il");
+        
+        using var writer = new StreamWriter(filePath);
+        
+        foreach (var instr in method.Body.Instructions)
+        {
+            var operand = FormatOperand(instr);
+            writer.WriteLine($"IL_{instr.Offset:X4}: {instr.OpCode.Name,-12} {operand}");
+        }
+    }
+    
+    Console.WriteLine($"Обработан: {type.FullName}");
+}
+
+Console.WriteLine($"\nГотово: {outputDir}");
+
+string SanitizeName(string name)
+{
+    var invalid = Path.GetInvalidFileNameChars();
+    foreach (var c in invalid)
+        name = name.Replace(c, '_');
+    
+    name = name.Replace('<', '_').Replace('>', '_').Replace('`', '_');
+    
+    return name;
+}
+
+string FormatOperand(Instruction instr)
+{
+    if (instr.Operand == null) return "";
+    
+    return instr.Operand switch
+    {
+        Instruction target => $"IL_{target.Offset:X4}",
+        Instruction[] targets => string.Join(", ", targets.Select(t => $"IL_{t.Offset:X4}")),
+        string s => $"\"{s.Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r")}\"",
+        IField f => f.FullName,
+        IMethod m => m.FullName,
+        ITypeDefOrRef t => t.FullName,
+        Local l => $"V_{l.Index}",
+        Parameter p => $"A_{p.Index}",
+        _ => instr.Operand.ToString() ?? ""
+    };
+}

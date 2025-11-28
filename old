@@ -32,7 +32,7 @@ foreach (var type in module.GetTypes())
         if (!method.HasBody) continue;
         
         // Заголовок метода
-        writer.WriteLine($"//{method.Name}");
+        writer.WriteLine($"// ===== {method.Name} =====");
         writer.WriteLine($"// {method.FullName}");
         writer.WriteLine();
         

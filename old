@@ -48,7 +48,15 @@ class Program
             Directory.CreateDirectory(outputDir);
             
             SaveAssemblyInfo(module, outputDir);
-            ProcessTypes(module.Types, outputDir, 0);
+            
+            // Обрабатываем только типы верхнего уровня (не вложенные)
+            foreach (var type in module.Types)
+            {
+                if (type.Name == "<Module>") continue;
+                if (type.IsNested) continue; // Вложенные будут внутри родителя
+                
+                ProcessType(type, outputDir);
+            }
             
             Console.WriteLine();
             Console.WriteLine($"Готово! IL-код сохранён в: {outputDir}");
@@ -60,72 +68,25 @@ class Program
         }
     }
     
-    // ==================== РЕКУРСИВНАЯ ОБРАБОТКА ТИПОВ ====================
-    
-    static void ProcessTypes(IEnumerable<TypeDef> types, string currentPath, int depth)
+    static void ProcessType(TypeDef type, string outputDir)
     {
-        if (depth > MAX_DEPTH)
-        {
-            Console.WriteLine($"ПРЕДУПРЕЖДЕНИЕ: Достигнута максимальная глубина вложенности ({MAX_DEPTH})");
-            return;
-        }
+        if (processedTypes.Contains(type)) return;
+        processedTypes.Add(type);
         
-        foreach (var type in types)
-        {
-            if (type.Name == "<Module>") continue;
-            
-            if (processedTypes.Contains(type))
-            {
-                Console.WriteLine($"Пропущен (уже обработан): {type.FullName}");
-                continue;
-            }
-            
-            if (typeStack.Contains(type))
-            {
-                Console.WriteLine($"ПРЕДУПРЕЖДЕНИЕ: Обнаружена циклическая ссылка: {type.FullName}");
-                continue;
-            }
-            
-            processedTypes.Add(type);
-            typeStack.Add(type);
-            
-            try
-            {
-                string typePath;
-                if (type.IsNested)
-                {
-                    typePath = currentPath;
-                }
-                else
-                {
-                    var ns = string.IsNullOrEmpty(type.Namespace) 
-                        ? "_Global" 
-                        : type.Namespace.ToString().Replace('.', Path.DirectorySeparatorChar);
-                    typePath = Path.Combine(currentPath, ns);
-                }
-                
-                Directory.CreateDirectory(typePath);
-                
-                var typeName = SanitizeName(type.Name);
-                var filePath = Path.Combine(typePath, $"{typeName}.il");
-                
-                using var writer = new StreamWriter(filePath, false, Encoding.UTF8);
-                WriteType(writer, type, 0);
-                
-                Console.WriteLine($"Обработан: {type.FullName}");
-                
-                if (type.HasNestedTypes)
-                {
-                    var nestedPath = Path.Combine(typePath, typeName + "_Nested");
-                    Directory.CreateDirectory(nestedPath);
-                    ProcessTypes(type.NestedTypes, nestedPath, depth + 1);
-                }
-            }
-            finally
-            {
-                typeStack.Remove(type);
-            }
-        }
+        // Путь по namespace
+        var ns = string.IsNullOrEmpty(type.Namespace) 
+            ? "_Global" 
+            : type.Namespace.ToString().Replace('.', Path.DirectorySeparatorChar);
+        var nsPath = Path.Combine(outputDir, ns);
+        Directory.CreateDirectory(nsPath);
+        
+        var typeName = SanitizeName(type.Name);
+        var filePath = Path.Combine(nsPath, $"{typeName}.il");
+        
+        using var writer = new StreamWriter(filePath, false, Encoding.UTF8);
+        WriteType(writer, type, 0);
+        
+        Console.WriteLine($"Обработан: {type.FullName}");
     }
     
     // ==================== ASSEMBLY INFO ====================
@@ -202,157 +163,167 @@ class Program
             return;
         }
         
-        var indent = new string(' ', depth * 4);
-        
-        writer.WriteLine($"{indent}// ==============================================================");
-        writer.WriteLine($"{indent}// TYPE: {type.FullName}");
-        writer.WriteLine($"{indent}// Token: 0x{type.MDToken.Raw:X8}");
-        writer.WriteLine($"{indent}// ==============================================================");
-        writer.WriteLine();
-        
-        writer.Write($"{indent}.class ");
-        
-        if (type.IsNested)
+        // Защита от циклов
+        if (typeStack.Contains(type))
         {
-            switch (type.Visibility)
+            writer.WriteLine($"// ЦИКЛ: {type.FullName}");
+            return;
+        }
+        typeStack.Add(type);
+        
+        try
+        {
+            var indent = new string(' ', depth * 4);
+            
+            writer.WriteLine($"{indent}// ==============================================================");
+            writer.WriteLine($"{indent}// TYPE: {type.FullName}");
+            writer.WriteLine($"{indent}// Token: 0x{type.MDToken.Raw:X8}");
+            writer.WriteLine($"{indent}// ==============================================================");
+            writer.WriteLine();
+            
+            writer.Write($"{indent}.class ");
+            
+            if (type.IsNested)
             {
-                case TypeAttributes.NestedPublic: writer.Write("nested public "); break;
-                case TypeAttributes.NestedPrivate: writer.Write("nested private "); break;
-                case TypeAttributes.NestedFamily: writer.Write("nested family "); break;
-                case TypeAttributes.NestedAssembly: writer.Write("nested assembly "); break;
-                case TypeAttributes.NestedFamORAssem: writer.Write("nested famorassem "); break;
-                case TypeAttributes.NestedFamANDAssem: writer.Write("nested famandassem "); break;
-            }
-        }
-        else
-        {
-            if (type.IsPublic) writer.Write("public ");
-            else writer.Write("private ");
-        }
-        
-        if (type.IsInterface) writer.Write("interface ");
-        if (type.IsAbstract) writer.Write("abstract ");
-        if (type.IsSealed) writer.Write("sealed ");
-        if (type.IsAutoLayout) writer.Write("auto ");
-        if (type.IsSequentialLayout) writer.Write("sequential ");
-        if (type.IsExplicitLayout) writer.Write("explicit ");
-        if (type.IsAnsiClass) writer.Write("ansi ");
-        if (type.IsUnicodeClass) writer.Write("unicode ");
-        if (type.IsBeforeFieldInit) writer.Write("beforefieldinit ");
-        if (type.IsSerializable) writer.Write("serializable ");
-        if (type.IsSpecialName) writer.Write("specialname ");
-        if (type.IsRuntimeSpecialName) writer.Write("rtspecialname ");
-        
-        writer.Write(type.Name);
-        
-        if (type.HasGenericParameters)
-        {
-            writer.Write("<");
-            for (int i = 0; i < type.GenericParameters.Count; i++)
-            {
-                if (i > 0) writer.Write(", ");
-                var gp = type.GenericParameters[i];
-                WriteGenericParamConstraints(writer, gp);
-                writer.Write(gp.Name);
-            }
-            writer.Write(">");
-        }
-        
-        writer.WriteLine();
-        
-        if (type.BaseType != null)
-        {
-            writer.WriteLine($"{indent}    extends {FormatTypeRef(type.BaseType, 0)}");
-        }
-        
-        if (type.HasInterfaces)
-        {
-            writer.WriteLine($"{indent}    implements");
-            for (int i = 0; i < type.Interfaces.Count; i++)
-            {
-                var comma = i < type.Interfaces.Count - 1 ? "," : "";
-                writer.WriteLine($"{indent}        {FormatTypeRef(type.Interfaces[i].Interface, 0)}{comma}");
-            }
-        }
-        
-        writer.WriteLine($"{indent}{{");
-        
-        foreach (var attr in type.CustomAttributes)
-        {
-            writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-        }
-        
-        if (type.HasCustomAttributes)
-            writer.WriteLine();
-        
-        if (type.ClassLayout != null)
-        {
-            writer.WriteLine($"{indent}    .pack {type.ClassLayout.PackingSize}");
-            writer.WriteLine($"{indent}    .size {type.ClassLayout.ClassSize}");
-            writer.WriteLine();
-        }
-        
-        if (type.HasFields)
-        {
-            writer.WriteLine($"{indent}    // ==== FIELDS ====");
-            writer.WriteLine();
-            foreach (var field in type.Fields)
-            {
-                WriteField(writer, field, depth + 1);
-            }
-            writer.WriteLine();
-        }
-        
-        if (type.HasProperties)
-        {
-            writer.WriteLine($"{indent}    // ==== PROPERTIES ====");
-            writer.WriteLine();
-            foreach (var prop in type.Properties)
-            {
-                WriteProperty(writer, prop, depth + 1);
-            }
-            writer.WriteLine();
-        }
-        
-        if (type.HasEvents)
-        {
-            writer.WriteLine($"{indent}    // ==== EVENTS ====");
-            writer.WriteLine();
-            foreach (var evt in type.Events)
-            {
-                WriteEvent(writer, evt, depth + 1);
-            }
-            writer.WriteLine();
-        }
-        
-        if (type.HasMethods)
-        {
-            writer.WriteLine($"{indent}    // ==== METHODS ====");
-            writer.WriteLine();
-            foreach (var method in type.Methods)
-            {
-                WriteMethod(writer, method, depth + 1);
-            }
-        }
-        
-        if (type.HasNestedTypes)
-        {
-            writer.WriteLine($"{indent}    // ==== NESTED TYPES ====");
-            writer.WriteLine();
-            foreach (var nested in type.NestedTypes)
-            {
-                if (typeStack.Contains(nested))
+                switch (type.Visibility)
                 {
-                    writer.WriteLine($"{indent}    // ЦИКЛ: {nested.FullName} (см. отдельный файл)");
-                    continue;
+                    case TypeAttributes.NestedPublic: writer.Write("nested public "); break;
+                    case TypeAttributes.NestedPrivate: writer.Write("nested private "); break;
+                    case TypeAttributes.NestedFamily: writer.Write("nested family "); break;
+                    case TypeAttributes.NestedAssembly: writer.Write("nested assembly "); break;
+                    case TypeAttributes.NestedFamORAssem: writer.Write("nested famorassem "); break;
+                    case TypeAttributes.NestedFamANDAssem: writer.Write("nested famandassem "); break;
                 }
-                
-                WriteType(writer, nested, depth + 1);
+            }
+            else
+            {
+                if (type.IsPublic) writer.Write("public ");
+                else writer.Write("private ");
+            }
+            
+            if (type.IsInterface) writer.Write("interface ");
+            if (type.IsAbstract) writer.Write("abstract ");
+            if (type.IsSealed) writer.Write("sealed ");
+            if (type.IsAutoLayout) writer.Write("auto ");
+            if (type.IsSequentialLayout) writer.Write("sequential ");
+            if (type.IsExplicitLayout) writer.Write("explicit ");
+            if (type.IsAnsiClass) writer.Write("ansi ");
+            if (type.IsUnicodeClass) writer.Write("unicode ");
+            if (type.IsBeforeFieldInit) writer.Write("beforefieldinit ");
+            if (type.IsSerializable) writer.Write("serializable ");
+            if (type.IsSpecialName) writer.Write("specialname ");
+            if (type.IsRuntimeSpecialName) writer.Write("rtspecialname ");
+            
+            writer.Write(type.Name);
+            
+            if (type.HasGenericParameters)
+            {
+                writer.Write("<");
+                for (int i = 0; i < type.GenericParameters.Count; i++)
+                {
+                    if (i > 0) writer.Write(", ");
+                    var gp = type.GenericParameters[i];
+                    WriteGenericParamConstraints(writer, gp);
+                    writer.Write(gp.Name);
+                }
+                writer.Write(">");
+            }
+            
+            writer.WriteLine();
+            
+            if (type.BaseType != null)
+            {
+                writer.WriteLine($"{indent}    extends {FormatTypeRef(type.BaseType, 0)}");
+            }
+            
+            if (type.HasInterfaces)
+            {
+                writer.WriteLine($"{indent}    implements");
+                for (int i = 0; i < type.Interfaces.Count; i++)
+                {
+                    var comma = i < type.Interfaces.Count - 1 ? "," : "";
+                    writer.WriteLine($"{indent}        {FormatTypeRef(type.Interfaces[i].Interface, 0)}{comma}");
+                }
+            }
+            
+            writer.WriteLine($"{indent}{{");
+            
+            foreach (var attr in type.CustomAttributes)
+            {
+                writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
+            }
+            
+            if (type.HasCustomAttributes)
+                writer.WriteLine();
+            
+            if (type.ClassLayout != null)
+            {
+                writer.WriteLine($"{indent}    .pack {type.ClassLayout.PackingSize}");
+                writer.WriteLine($"{indent}    .size {type.ClassLayout.ClassSize}");
                 writer.WriteLine();
             }
+            
+            if (type.HasFields)
+            {
+                writer.WriteLine($"{indent}    // ==== FIELDS ====");
+                writer.WriteLine();
+                foreach (var field in type.Fields)
+                {
+                    WriteField(writer, field, depth + 1);
+                }
+                writer.WriteLine();
+            }
+            
+            if (type.HasProperties)
+            {
+                writer.WriteLine($"{indent}    // ==== PROPERTIES ====");
+                writer.WriteLine();
+                foreach (var prop in type.Properties)
+                {
+                    WriteProperty(writer, prop, depth + 1);
+                }
+                writer.WriteLine();
+            }
+            
+            if (type.HasEvents)
+            {
+                writer.WriteLine($"{indent}    // ==== EVENTS ====");
+                writer.WriteLine();
+                foreach (var evt in type.Events)
+                {
+                    WriteEvent(writer, evt, depth + 1);
+                }
+                writer.WriteLine();
+            }
+            
+            if (type.HasMethods)
+            {
+                writer.WriteLine($"{indent}    // ==== METHODS ====");
+                writer.WriteLine();
+                foreach (var method in type.Methods)
+                {
+                    WriteMethod(writer, method, depth + 1);
+                }
+            }
+            
+            // Вложенные типы — пишем внутри этого же файла
+            if (type.HasNestedTypes)
+            {
+                writer.WriteLine($"{indent}    // ==== NESTED TYPES ====");
+                writer.WriteLine();
+                foreach (var nested in type.NestedTypes)
+                {
+                    WriteType(writer, nested, depth + 1);
+                    writer.WriteLine();
+                }
+            }
+            
+            writer.WriteLine($"{indent}}} // end of class {type.Name}");
         }
-        
-        writer.WriteLine($"{indent}}} // end of class {type.Name}");
+        finally
+        {
+            typeStack.Remove(type);
+        }
     }
     
     // ==================== FIELD ====================
@@ -695,7 +666,7 @@ class Program
         
         if (depth > MAX_GENERIC_DEPTH)
         {
-            return $"/* СЛИШКОМ ГЛУБОКАЯ ВЛОЖЕННОСТЬ */ {sig.FullName}";
+            return $"/* TOO DEEP */ {sig.FullName}";
         }
         
         return sig switch
@@ -723,7 +694,7 @@ class Program
     {
         if (depth > MAX_GENERIC_DEPTH)
         {
-            return $"/* СЛИШКОМ ГЛУБОКАЯ ВЛОЖЕННОСТЬ */ {genInst.FullName}";
+            return $"/* TOO DEEP */ {genInst.FullName}";
         }
         
         var sb = new StringBuilder();
@@ -744,7 +715,7 @@ class Program
     {
         if (depth > MAX_GENERIC_DEPTH)
         {
-            return $"/* СЛИШКОМ ГЛУБОКАЯ ВЛОЖЕННОСТЬ */ {array.FullName}";
+            return $"/* TOO DEEP */ {array.FullName}";
         }
         
         var sb = new StringBuilder();
@@ -778,7 +749,7 @@ class Program
     {
         if (depth > MAX_GENERIC_DEPTH)
         {
-            return "/* СЛИШКОМ ГЛУБОКАЯ ВЛОЖЕННОСТЬ */ method ...";
+            return "/* TOO DEEP */ method ...";
         }
         
         var sb = new StringBuilder();
@@ -806,7 +777,7 @@ class Program
         
         if (depth > MAX_GENERIC_DEPTH)
         {
-            return $"/* СЛИШКОМ ГЛУБОКАЯ ВЛОЖЕННОСТЬ */ {type.FullName}";
+            return $"/* TOO DEEP */ {type.FullName}";
         }
         
         if (type is TypeSpec ts && ts.TypeSig != null)
@@ -823,7 +794,7 @@ class Program
         
         if (depth > MAX_GENERIC_DEPTH)
         {
-            return $"/* СЛИШКОМ ГЛУБОКАЯ ВЛОЖЕННОСТЬ */ {method.FullName}";
+            return $"/* TOO DEEP */ {method.FullName}";
         }
         
         var sb = new StringBuilder();
@@ -954,7 +925,7 @@ class Program
         
         if (depth > MAX_GENERIC_DEPTH)
         {
-            return "/* СЛИШКОМ ГЛУБОКАЯ ВЛОЖЕННОСТЬ */";
+            return "/* TOO DEEP */";
         }
         
         return arg.Value switch
@@ -1028,3 +999,14 @@ class Program
         return name;
     }
 }
+```
+
+**Структура теперь как в dnSpy:**
+```
+IL_Output/
+├── _AssemblyManifest.il
+├── MyNamespace/
+│   ├── MyClass.il           ← содержит все вложенные типы внутри
+│   └── AnotherClass.il
+└── _Global/
+    └── SomeClass.il

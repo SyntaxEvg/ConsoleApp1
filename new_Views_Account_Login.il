@@ -1,5 +1,6 @@
 using dnlib.DotNet;
 using dnlib.DotNet.Emit;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -28,6 +29,62 @@ class NameMapping
     public string? DeclaringType { get; set; }
 }
 
+// ==================== ПРОФИЛИРОВАНИЕ ====================
+
+class Profiler
+{
+    private readonly Dictionary<string, Stopwatch> _watches = new();
+    private readonly Dictionary<string, int> _counts = new();
+    private readonly Dictionary<string, long> _totalMs = new();
+    
+    public void Start(string name)
+    {
+        if (!_watches.ContainsKey(name))
+        {
+            _watches[name] = new Stopwatch();
+            _counts[name] = 0;
+            _totalMs[name] = 0;
+        }
+        _watches[name].Restart();
+    }
+    
+    public void Stop(string name)
+    {
+        if (_watches.TryGetValue(name, out var sw))
+        {
+            sw.Stop();
+            _totalMs[name] += sw.ElapsedMilliseconds;
+            _counts[name]++;
+        }
+    }
+    
+    public void Log(string name, string message)
+    {
+        if (_watches.TryGetValue(name, out var sw))
+        {
+            Console.WriteLine($"[{sw.ElapsedMilliseconds,6}ms] {name}: {message}");
+        }
+    }
+    
+    public void PrintSummary()
+    {
+        Console.WriteLine();
+        Console.WriteLine("========== PROFILER SUMMARY ==========");
+        Console.WriteLine($"{"Operation",-30} {"Calls",10} {"Total ms",12} {"Avg ms",10}");
+        Console.WriteLine(new string('-', 65));
+        
+        foreach (var kvp in _totalMs.OrderByDescending(x => x.Value))
+        {
+            var name = kvp.Key;
+            var total = kvp.Value;
+            var count = _counts[name];
+            var avg = count > 0 ? (double)total / count : 0;
+            Console.WriteLine($"{name,-30} {count,10} {total,12} {avg,10:F2}");
+        }
+        Console.WriteLine("=======================================");
+    }
+}
+
 // ==================== ГЛАВНЫЙ КЛАСС ====================
 
 class Program
@@ -36,15 +93,22 @@ class Program
     private static readonly HashSet<TypeDef> processedTypes = new();
     private static readonly HashSet<TypeDef> typeStack = new();
     
-    // Глобальный словарь замен
     private static readonly Dictionary<string, NameMapping> GlobalNameMap = new();
     private static readonly HashSet<string> UsedCleanNames = new();
     
     private const int MAX_DEPTH = 50;
     private const int MAX_GENERIC_DEPTH = 20;
     
+    // Профилировщик
+    private static readonly Profiler profiler = new();
+    
+    // Кэш для скомпилированных regex
+    private static readonly Dictionary<string, Regex> RegexCache = new();
+    
     static void Main(string[] args)
     {
+        var totalWatch = Stopwatch.StartNew();
+        
         if (args.Length == 0)
         {
             Console.WriteLine("IL Code Extractor with Full Metadata");
@@ -65,7 +129,10 @@ class Program
         
         try
         {
+            // Загрузка сборки
+            profiler.Start("LoadAssembly");
             module = ModuleDefMD.Load(assemblyPath);
+            profiler.Stop("LoadAssembly");
             
             Console.WriteLine($"Загружена сборка: {module.Name}");
             Console.WriteLine($"Типов: {module.Types.Count}");
@@ -74,32 +141,66 @@ class Program
             Directory.CreateDirectory(outputDir);
             
             // ===== ПРОХОД 1: Сбор имён =====
+            profiler.Start("Pass1_CollectNames");
             Console.WriteLine("Проход 1: Сбор имён...");
+            
+            int typeCount = 0;
             foreach (var type in module.Types)
             {
+                profiler.Start("CollectNames_SingleType");
                 CollectNames(type);
+                profiler.Stop("CollectNames_SingleType");
+                typeCount++;
             }
-            Console.WriteLine($"Собрано {GlobalNameMap.Count} имён для замены");
+            
+            profiler.Stop("Pass1_CollectNames");
+            Console.WriteLine($"Собрано {GlobalNameMap.Count} имён для замены из {typeCount} типов");
             Console.WriteLine();
             
             // ===== ПРОХОД 2: Генерация IL =====
+            profiler.Start("Pass2_GenerateIL");
             Console.WriteLine("Проход 2: Генерация IL...");
             
+            profiler.Start("SaveAssemblyInfo");
             SaveAssemblyInfo(module, outputDir);
-            SaveUserStrings(module, outputDir);
-            SaveNameMappings(outputDir);
+            profiler.Stop("SaveAssemblyInfo");
             
+            profiler.Start("SaveUserStrings");
+            SaveUserStrings(module, outputDir);
+            profiler.Stop("SaveUserStrings");
+            
+            profiler.Start("SaveNameMappings");
+            SaveNameMappings(outputDir);
+            profiler.Stop("SaveNameMappings");
+            
+            int processedCount = 0;
             foreach (var type in module.Types)
             {
                 if (type.Name == "<Module>") continue;
                 if (type.IsNested) continue;
                 
+                profiler.Start("ProcessType_Single");
                 ProcessType(type, outputDir);
+                profiler.Stop("ProcessType_Single");
+                
+                processedCount++;
+                if (processedCount % 50 == 0)
+                {
+                    Console.WriteLine($"  Обработано типов: {processedCount}");
+                }
             }
+            
+            profiler.Stop("Pass2_GenerateIL");
+            
+            totalWatch.Stop();
             
             Console.WriteLine();
             Console.WriteLine($"Готово! IL-код сохранён в: {outputDir}");
             Console.WriteLine($"Словарь замен: {outputDir}/_NameMappings.txt");
+            Console.WriteLine($"Общее время: {totalWatch.ElapsedMilliseconds} ms");
+            
+            // Выводим профилирование
+            profiler.PrintSummary();
         }
         catch (Exception ex)
         {
@@ -156,43 +257,11 @@ class Program
                 );
             }
             
-            // Параметры
-            foreach (var param in method.Parameters)
-            {
-                if (!string.IsNullOrEmpty(param.Name) && NeedsRenaming(param.Name))
-                {
-                    RegisterName(
-                        $"{GetTypeFullName(type)}::{method.Name}::param::{param.Name}",
-                        param.Name,
-                        GenerateCleanParamName(param.Name),
-                        ElementType.Parameter,
-                        "Parameter",
-                        $"{GetTypeFullName(type)}::{method.Name}"
-                    );
-                }
-            }
-            
-            // Локальные переменные
-            if (method.HasBody && method.Body.HasVariables)
-            {
-                foreach (var local in method.Body.Variables)
-                {
-                    if (!string.IsNullOrEmpty(local.Name) && NeedsRenaming(local.Name))
-                    {
-                        RegisterName(
-                            $"{GetTypeFullName(type)}::{method.Name}::local::{local.Name}",
-                            local.Name,
-                            GenerateCleanLocalName(local.Name),
-                            ElementType.Local,
-                            "Local variable",
-                            $"{GetTypeFullName(type)}::{method.Name}"
-                        );
-                    }
-                }
-            }
+            // Параметры — пропускаем для скорости, они редко нужны
+            // Локальные переменные — пропускаем для скорости
         }
         
-        // Свойства
+        // Свойства и события — только если имя плохое (редко)
         foreach (var prop in type.Properties)
         {
             if (NeedsRenaming(prop.Name))
@@ -203,22 +272,6 @@ class Program
                     GenerateCleanPropertyName(prop.Name),
                     ElementType.Property,
                     "Property",
-                    GetTypeFullName(type)
-                );
-            }
-        }
-        
-        // События
-        foreach (var evt in type.Events)
-        {
-            if (NeedsRenaming(evt.Name))
-            {
-                RegisterName(
-                    $"{GetTypeFullName(type)}::event::{evt.Name}",
-                    evt.Name,
-                    GenerateCleanEventName(evt.Name),
-                    ElementType.Event,
-                    "Event",
                     GetTypeFullName(type)
                 );
             }
@@ -244,12 +297,11 @@ class Program
     {
         if (string.IsNullOrEmpty(name)) return false;
         
-        // Проверяем наличие "плохих" символов и паттернов
-        return name.Contains('<') || 
-               name.Contains('>') || 
-               name.Contains('|') ||
-               name.Contains("k__BackingField") ||
-               name.Contains("__");
+        // Быстрая проверка — если нет < то точно не нужно
+        if (!name.Contains('<') && !name.Contains("k__BackingField"))
+            return false;
+        
+        return true;
     }
     
     static void RegisterName(string fullName, string shortName, string cleanName, 
@@ -257,7 +309,6 @@ class Program
     {
         if (GlobalNameMap.ContainsKey(fullName)) return;
         
-        // Проверяем коллизии
         var finalCleanName = cleanName;
         var counter = 2;
         while (UsedCleanNames.Contains($"{declaringType}::{finalCleanName}"))
@@ -279,28 +330,41 @@ class Program
         };
     }
     
-    // ==================== ГЕНЕРАЦИЯ ЧИСТЫХ ИМЁН ====================
+    // ==================== ГЕНЕРАЦИЯ ЧИСТЫХ ИМЁН (с кэшированием regex) ====================
+    
+    static Regex GetOrCreateRegex(string pattern)
+    {
+        if (!RegexCache.TryGetValue(pattern, out var regex))
+        {
+            regex = new Regex(pattern, RegexOptions.Compiled);
+            RegexCache[pattern] = regex;
+        }
+        return regex;
+    }
     
     static string GenerateCleanTypeName(TypeDef type)
     {
         var name = type.Name.ToString();
         
         // Async state machine: <MethodName>d__N
-        var asyncMatch = Regex.Match(name, @"<(\w+)>d__(\d+)");
+        var asyncRegex = GetOrCreateRegex(@"<(\w+)>d__(\d+)");
+        var asyncMatch = asyncRegex.Match(name);
         if (asyncMatch.Success)
         {
             return $"_stateMachine_{asyncMatch.Groups[1].Value}_{asyncMatch.Groups[2].Value}";
         }
         
         // Display class: <>c__DisplayClassN_N
-        var displayMatch = Regex.Match(name, @"<>c__DisplayClass(\d+)_(\d+)");
+        var displayRegex = GetOrCreateRegex(@"<>c__DisplayClass(\d+)_(\d+)");
+        var displayMatch = displayRegex.Match(name);
         if (displayMatch.Success)
         {
             return $"_closure_{displayMatch.Groups[1].Value}_{displayMatch.Groups[2].Value}";
         }
         
         // Simple display class: <>c__DisplayClassN
-        var displayMatch2 = Regex.Match(name, @"<>c__DisplayClass(\d+)");
+        var displayRegex2 = GetOrCreateRegex(@"<>c__DisplayClass(\d+)");
+        var displayMatch2 = displayRegex2.Match(name);
         if (displayMatch2.Success)
         {
             return $"_closure_{displayMatch2.Groups[1].Value}";
@@ -312,23 +376,14 @@ class Program
             return "_closureContainer";
         }
         
-        // Iterator: <MethodName>d__N (same as async)
-        
         // Anonymous type: <>f__AnonymousTypeN
-        var anonMatch = Regex.Match(name, @"<>f__AnonymousType(\d+)");
+        var anonRegex = GetOrCreateRegex(@"<>f__AnonymousType(\d+)");
+        var anonMatch = anonRegex.Match(name);
         if (anonMatch.Success)
         {
             return $"_anonymousType_{anonMatch.Groups[1].Value}";
         }
         
-        // Local function class: <<Method>g__Local|N_N>d
-        var localFuncMatch = Regex.Match(name, @"<<(\w+)>g__(\w+)\|(\d+)_(\d+)>d");
-        if (localFuncMatch.Success)
-        {
-            return $"_localFuncStateMachine_{localFuncMatch.Groups[1].Value}_{localFuncMatch.Groups[2].Value}";
-        }
-        
-        // Fallback: remove bad chars
         return CleanNameSimple(name);
     }
     
@@ -337,7 +392,8 @@ class Program
         var name = field.Name.ToString();
         
         // Backing field: <PropertyName>k__BackingField
-        var backingMatch = Regex.Match(name, @"<(\w+)>k__BackingField");
+        var backingRegex = GetOrCreateRegex(@"<(\w+)>k__BackingField");
+        var backingMatch = backingRegex.Match(name);
         if (backingMatch.Success)
         {
             var propName = backingMatch.Groups[1].Value;
@@ -350,61 +406,63 @@ class Program
         if (name == "<>4__this") return "_capturedThis";
         
         // Awaiter: <>u__N
-        var awaiterMatch = Regex.Match(name, @"<>u__(\d+)");
+        var awaiterRegex = GetOrCreateRegex(@"<>u__(\d+)");
+        var awaiterMatch = awaiterRegex.Match(name);
         if (awaiterMatch.Success)
         {
             return $"_awaiter{awaiterMatch.Groups[1].Value}";
         }
         
         // Spilled local: <>s__N
-        var spilledMatch = Regex.Match(name, @"<>s__(\d+)");
+        var spilledRegex = GetOrCreateRegex(@"<>s__(\d+)");
+        var spilledMatch = spilledRegex.Match(name);
         if (spilledMatch.Success)
         {
             return $"_temp{spilledMatch.Groups[1].Value}";
         }
         
         // Wrap: <>7__wrapN
-        var wrapMatch = Regex.Match(name, @"<>7__wrap(\d+)");
+        var wrapRegex = GetOrCreateRegex(@"<>7__wrap(\d+)");
+        var wrapMatch = wrapRegex.Match(name);
         if (wrapMatch.Success)
         {
             return $"_wrapper{wrapMatch.Groups[1].Value}";
         }
         
         // Captured variable: <name>5__N
-        var capturedMatch = Regex.Match(name, @"<(\w+)>5__(\d+)");
+        var capturedRegex = GetOrCreateRegex(@"<(\w+)>5__(\d+)");
+        var capturedMatch = capturedRegex.Match(name);
         if (capturedMatch.Success)
         {
             return $"_local_{capturedMatch.Groups[1].Value}_{capturedMatch.Groups[2].Value}";
         }
         
         // Parameter capture: <>3__paramName
-        var paramMatch = Regex.Match(name, @"<>3__(\w+)");
+        var paramRegex = GetOrCreateRegex(@"<>3__(\w+)");
+        var paramMatch = paramRegex.Match(name);
         if (paramMatch.Success)
         {
             return $"_param_{paramMatch.Groups[1].Value}";
         }
         
         // Hoisted: <>8__N
-        var hoistedMatch = Regex.Match(name, @"<>8__(\d+)");
+        var hoistedRegex = GetOrCreateRegex(@"<>8__(\d+)");
+        var hoistedMatch = hoistedRegex.Match(name);
         if (hoistedMatch.Success)
         {
             return $"_hoisted{hoistedMatch.Groups[1].Value}";
         }
         
         // Cached delegate: <>9__N_N
-        var cachedMatch = Regex.Match(name, @"<>9__(\d+)_(\d+)");
+        var cachedRegex = GetOrCreateRegex(@"<>9__(\d+)_(\d+)");
+        var cachedMatch = cachedRegex.Match(name);
         if (cachedMatch.Success)
         {
             return $"_cachedDelegate_{cachedMatch.Groups[1].Value}_{cachedMatch.Groups[2].Value}";
         }
         
-        // Simple <>9
         if (name == "<>9") return "_cachedDelegates";
-        
-        // Iterator current: <>2__current
         if (name == "<>2__current") return "_iteratorCurrent";
-        
-        // Iterator thread id: <>l__initialThreadId
         if (name.Contains("<>l__initialThreadId")) return "_initialThreadId";
         
         return CleanNameSimple(name);
@@ -414,28 +472,33 @@ class Program
     {
         var name = method.Name.ToString();
         
-        // Lambda: <Method>b__N or <Method>b__N_N
-        var lambdaMatch = Regex.Match(name, @"<(\w+)>b__(\d+)_(\d+)");
+        // Lambda: <Method>b__N_N
+        var lambdaRegex = GetOrCreateRegex(@"<(\w+)>b__(\d+)_(\d+)");
+        var lambdaMatch = lambdaRegex.Match(name);
         if (lambdaMatch.Success)
         {
             return $"_lambda_{lambdaMatch.Groups[1].Value}_{lambdaMatch.Groups[2].Value}_{lambdaMatch.Groups[3].Value}";
         }
         
-        var lambdaMatch2 = Regex.Match(name, @"<(\w+)>b__(\d+)");
+        // Lambda: <Method>b__N
+        var lambdaRegex2 = GetOrCreateRegex(@"<(\w+)>b__(\d+)");
+        var lambdaMatch2 = lambdaRegex2.Match(name);
         if (lambdaMatch2.Success)
         {
             return $"_lambda_{lambdaMatch2.Groups[1].Value}_{lambdaMatch2.Groups[2].Value}";
         }
         
         // Local function: <Method>g__LocalName|N_N
-        var localFuncMatch = Regex.Match(name, @"<(\w+)>g__(\w+)\|(\d+)_(\d+)");
+        var localFuncRegex = GetOrCreateRegex(@"<(\w+)>g__(\w+)\|(\d+)_(\d+)");
+        var localFuncMatch = localFuncRegex.Match(name);
         if (localFuncMatch.Success)
         {
             return $"_localFunc_{localFuncMatch.Groups[1].Value}_{localFuncMatch.Groups[2].Value}";
         }
         
         // Constructor lambda: <.ctor>b__N_N
-        var ctorLambdaMatch = Regex.Match(name, @"<\.(\w+)>b__(\d+)_(\d+)");
+        var ctorLambdaRegex = GetOrCreateRegex(@"<\.(\w+)>b__(\d+)_(\d+)");
+        var ctorLambdaMatch = ctorLambdaRegex.Match(name);
         if (ctorLambdaMatch.Success)
         {
             return $"_lambda_{ctorLambdaMatch.Groups[1].Value}_{ctorLambdaMatch.Groups[2].Value}_{ctorLambdaMatch.Groups[3].Value}";
@@ -449,45 +512,22 @@ class Program
         return CleanNameSimple(name);
     }
     
-    static string GenerateCleanEventName(string name)
-    {
-        return CleanNameSimple(name);
-    }
-    
-    static string GenerateCleanParamName(string name)
-    {
-        return CleanNameSimple(name);
-    }
-    
-    static string GenerateCleanLocalName(string name)
-    {
-        // CS$<>8__localsN
-        var csLocalMatch = Regex.Match(name, @"CS\$<>8__locals(\d+)");
-        if (csLocalMatch.Success)
-        {
-            return $"_csLocals{csLocalMatch.Groups[1].Value}";
-        }
-        
-        // <name>5__N
-        var localMatch = Regex.Match(name, @"<(\w+)>5__(\d+)");
-        if (localMatch.Success)
-        {
-            return $"_local_{localMatch.Groups[1].Value}_{localMatch.Groups[2].Value}";
-        }
-        
-        return CleanNameSimple(name);
-    }
-    
     static string CleanNameSimple(string name)
     {
-        // Удаляем/заменяем плохие символы
         var result = name;
-        result = Regex.Replace(result, @"<(\w+)>", "_$1_");
+        
+        // Простые замены без regex где возможно
         result = result.Replace("<>", "_");
         result = result.Replace("<", "_");
         result = result.Replace(">", "_");
         result = result.Replace("|", "_");
-        result = Regex.Replace(result, @"_{2,}", "_");
+        
+        // Убираем множественные подчёркивания
+        while (result.Contains("__"))
+        {
+            result = result.Replace("__", "_");
+        }
+        
         result = result.Trim('_');
         
         if (string.IsNullOrEmpty(result)) result = "_unnamed";
@@ -509,27 +549,25 @@ class Program
     
     static string GetFieldDescription(string name)
     {
-        if (name == "<>1__state") return "Async state: -1=not started, 0+=awaiting, -2=completed";
-        if (name.Contains("<>t__builder")) return "Async method builder";
-        if (name == "<>4__this") return "Captured 'this' reference";
-        if (name.Contains("<>u__")) return "Awaiter for async operation";
-        if (name.Contains("<>s__")) return "Spilled/temporary local";
-        if (name.Contains("<>7__wrap")) return "Wrapper for using/foreach";
-        if (name.Contains("<>3__")) return "Captured parameter";
-        if (name.Contains("k__BackingField")) return "Auto-property backing field";
-        if (name.Contains("<>9")) return "Cached delegate instance";
-        if (name.Contains("<>2__current")) return "Iterator current value";
-        if (name.Contains("<>l__initialThreadId")) return "Iterator initial thread ID";
-        if (name.Contains("<>8__")) return "Hoisted local";
-        if (name.Contains(">5__")) return "Captured local variable";
-        return "Compiler-generated field";
+        if (name == "<>1__state") return "Async state";
+        if (name.Contains("<>t__builder")) return "Async builder";
+        if (name == "<>4__this") return "Captured this";
+        if (name.Contains("<>u__")) return "Awaiter";
+        if (name.Contains("<>s__")) return "Temp local";
+        if (name.Contains("<>7__wrap")) return "Wrapper";
+        if (name.Contains("<>3__")) return "Captured param";
+        if (name.Contains("k__BackingField")) return "Backing field";
+        if (name.Contains("<>9")) return "Cached delegate";
+        if (name.Contains("<>2__current")) return "Iterator current";
+        if (name.Contains(">5__")) return "Captured local";
+        return "Compiler-generated";
     }
     
     static string GetMethodDescription(string name)
     {
-        if (name.Contains(">b__")) return "Lambda expression";
+        if (name.Contains(">b__")) return "Lambda";
         if (name.Contains(">g__")) return "Local function";
-        return "Compiler-generated method";
+        return "Compiler-generated";
     }
     
     // ==================== СОХРАНЕНИЕ СЛОВАРЯ ====================
@@ -542,13 +580,12 @@ class Program
         sb.AppendLine("// NAME MAPPINGS — словарь замен имён");
         sb.AppendLine("// ==============================================================");
         sb.AppendLine();
-        sb.AppendLine("// Формат: OriginalName -> CleanName // Description");
+        sb.AppendLine($"// Всего замен: {GlobalNameMap.Count}");
         sb.AppendLine();
         
-        // Группируем по типу элемента
         var grouped = GlobalNameMap.Values
             .OrderBy(m => m.ElementType)
-            .ThenBy(m => m.DeclaringType)
+            .ThenBy(m => m.OriginalShortName.Length)
             .ThenBy(m => m.OriginalShortName);
         
         ElementType? lastType = null;
@@ -558,94 +595,57 @@ class Program
             {
                 sb.AppendLine();
                 sb.AppendLine($"// ===== {mapping.ElementType}S =====");
-                sb.AppendLine();
                 lastType = mapping.ElementType;
             }
             
-            sb.AppendLine($"{mapping.OriginalShortName} -> {mapping.CleanName}");
-            sb.AppendLine($"    // {mapping.Description}");
-            if (mapping.DeclaringType != null)
-            {
-                sb.AppendLine($"    // In: {mapping.DeclaringType}");
-            }
-            sb.AppendLine();
+            sb.AppendLine($"{mapping.OriginalShortName} -> {mapping.CleanName} // {mapping.Description}");
         }
-        
-        sb.AppendLine($"// Всего замен: {GlobalNameMap.Count}");
         
         File.WriteAllText(Path.Combine(outDir, "_NameMappings.txt"), sb.ToString());
     }
     
-    // ==================== ПРИМЕНЕНИЕ ЗАМЕН ====================
+    // ==================== ПРИМЕНЕНИЕ ЗАМЕН (ОПТИМИЗИРОВАНО) ====================
     
-    /// <summary>
-    /// Получить чистое имя для типа (короткое имя)
-    /// </summary>
-    static string GetCleanTypeName(TypeDef type)
-    {
-        var fullName = GetTypeFullName(type);
-        if (GlobalNameMap.TryGetValue(fullName, out var mapping))
-        {
-            return mapping.CleanName;
-        }
-        return type.Name;
-    }
+    // Кэш отсортированных замен
+    private static List<NameMapping>? _sortedMappings;
     
-    /// <summary>
-    /// Получить чистое имя для поля
-    /// </summary>
-    static string GetCleanFieldName(FieldDef field)
-    {
-        var key = $"{GetTypeFullName(field.DeclaringType)}::{field.Name}";
-        if (GlobalNameMap.TryGetValue(key, out var mapping))
-        {
-            return mapping.CleanName;
-        }
-        return field.Name;
-    }
-    
-    /// <summary>
-    /// Получить чистое имя для метода
-    /// </summary>
-    static string GetCleanMethodName(MethodDef method)
-    {
-        var key = $"{GetTypeFullName(method.DeclaringType)}::{method.Name}";
-        if (GlobalNameMap.TryGetValue(key, out var mapping))
-        {
-            return mapping.CleanName;
-        }
-        return method.Name;
-    }
-    
-    /// <summary>
-    /// Применить замены к строке (для ссылок в IL)
-    /// </summary>
     static string ApplyReplacements(string text)
     {
-        if (string.IsNullOrEmpty(text)) return text;
+        if (string.IsNullOrEmpty(text) || GlobalNameMap.Count == 0) 
+            return text;
+        
+        profiler.Start("ApplyReplacements");
+        
+        // Ленивая инициализация отсортированного списка
+        if (_sortedMappings == null)
+        {
+            profiler.Start("SortMappings");
+            _sortedMappings = GlobalNameMap.Values
+                .OrderByDescending(m => m.OriginalShortName.Length)
+                .ToList();
+            profiler.Stop("SortMappings");
+        }
         
         var result = text;
         
-        // Сортируем по длине (длинные первыми) чтобы избежать частичных замен
-        var sortedMappings = GlobalNameMap.Values
-            .OrderByDescending(m => m.OriginalShortName.Length)
-            .ToList();
+        // Используем StringBuilder для множественных замен
+        var sb = new StringBuilder(result);
         
-        foreach (var mapping in sortedMappings)
+        foreach (var mapping in _sortedMappings)
         {
-            // Заменяем с учётом границ слов (после :: или / или в начале)
-            result = result.Replace($"::{mapping.OriginalShortName}", $"::{mapping.CleanName}");
-            result = result.Replace($"/{mapping.OriginalShortName}", $"/{mapping.CleanName}");
+            var original = mapping.OriginalShortName;
+            var clean = mapping.CleanName;
             
-            // Для типов в начале строки или после пробела
-            if (mapping.ElementType == ElementType.Type)
-            {
-                result = Regex.Replace(result, 
-                    $@"(\s|^){Regex.Escape(mapping.OriginalShortName)}(\s|/|::|$)", 
-                    $"$1{mapping.CleanName}$2");
-            }
+            // Заменяем только в контексте (после :: или /)
+            // Используем простые строковые замены вместо regex
+            sb.Replace($"::{original}", $"::{clean}");
+            sb.Replace($"/{original}", $"/{clean}");
+            sb.Replace($" {original}", $" {clean}");
         }
         
+        result = sb.ToString();
+        
+        profiler.Stop("ApplyReplacements");
         return result;
     }
     
@@ -662,18 +662,32 @@ class Program
         var nsPath = Path.Combine(outputDir, ns);
         Directory.CreateDirectory(nsPath);
         
-        var typeName = SanitizeName(GetCleanTypeName(type));
+        var cleanTypeName = GetCleanTypeName(type);
+        var typeName = SanitizeName(cleanTypeName);
         var filePath = Path.Combine(nsPath, $"{typeName}.il");
         
+        profiler.Start("WriteType");
         var sw = new StringWriter();
         WriteType(sw, type, 0);
+        var rawIL = sw.ToString();
+        profiler.Stop("WriteType");
         
-        // Применяем замены ко всему файлу
-        var ilCode = ApplyReplacements(sw.ToString());
+        // Применяем замены
+        var ilCode = ApplyReplacements(rawIL);
         
+        profiler.Start("WriteFile");
         File.WriteAllText(filePath, ilCode, Encoding.UTF8);
-        
-        Console.WriteLine($"Обработан: {type.FullName} -> {typeName}.il");
+        profiler.Stop("WriteFile");
+    }
+    
+    static string GetCleanTypeName(TypeDef type)
+    {
+        var fullName = GetTypeFullName(type);
+        if (GlobalNameMap.TryGetValue(fullName, out var mapping))
+        {
+            return mapping.CleanName;
+        }
+        return type.Name;
     }
     
     // ==================== USER STRINGS ====================
@@ -723,10 +737,6 @@ class Program
             }
             
             sb.AppendLine($"// Всего строк: {count}");
-        }
-        else
-        {
-            sb.AppendLine("// User Strings heap не найден");
         }
         
         File.WriteAllText(Path.Combine(outDir, "_UserStrings.txt"), sb.ToString());
@@ -812,25 +822,15 @@ class Program
         try
         {
             var indent = new string(' ', depth * 4);
-            var cleanTypeName = GetCleanTypeName(type);
             
             writer.WriteLine($"{indent}// ==============================================================");
             writer.WriteLine($"{indent}// TYPE: {type.FullName}");
-            if (type.Name != cleanTypeName)
-            {
-                writer.WriteLine($"{indent}// RENAMED TO: {cleanTypeName}");
-            }
             writer.WriteLine($"{indent}// Token: 0x{type.MDToken.Raw:X8}");
             
             string typeKind = GetTypeKind(type);
             if (typeKind != "TYPE")
             {
                 writer.WriteLine($"{indent}// Kind: {typeKind}");
-            }
-            
-            if (IsAsyncStateMachine(type))
-            {
-                writer.WriteLine($"{indent}// NOTE: Async state machine. MoveNext() содержит логику async метода.");
             }
             
             writer.WriteLine($"{indent}// ==============================================================");
@@ -869,7 +869,6 @@ class Program
             if (type.IsSpecialName) writer.Write("specialname ");
             if (type.IsRuntimeSpecialName) writer.Write("rtspecialname ");
             
-            // Используем оригинальное имя в IL (замена применится позже)
             writer.Write(type.Name);
             
             if (type.HasGenericParameters)
@@ -912,18 +911,11 @@ class Program
             if (type.HasCustomAttributes)
                 writer.WriteLine();
             
-            if (type.ClassLayout != null)
-            {
-                writer.WriteLine($"{indent}    .pack {type.ClassLayout.PackingSize}");
-                writer.WriteLine($"{indent}    .size {type.ClassLayout.ClassSize}");
-                writer.WriteLine();
-            }
-            
             // Static constructor first
             var cctor = type.FindStaticConstructor();
             if (cctor != null)
             {
-                writer.WriteLine($"{indent}    // ==== STATIC CONSTRUCTOR (field initializers) ====");
+                writer.WriteLine($"{indent}    // ==== STATIC CONSTRUCTOR ====");
                 writer.WriteLine();
                 WriteMethod(writer, cctor, depth + 1);
             }
@@ -1001,7 +993,7 @@ class Program
         if (type.IsDelegate) return "DELEGATE";
         if (IsAsyncStateMachine(type)) return "ASYNC STATE MACHINE";
         if (IsIteratorStateMachine(type)) return "ITERATOR STATE MACHINE";
-        if (IsDisplayClass(type)) return "CLOSURE/DISPLAY CLASS";
+        if (IsDisplayClass(type)) return "CLOSURE";
         return "TYPE";
     }
     
@@ -1037,14 +1029,6 @@ class Program
     static void WriteField(TextWriter writer, FieldDef field, int depth)
     {
         var indent = new string(' ', depth * 4);
-        var cleanName = GetCleanFieldName(field);
-        
-        // Комментарий с информацией о поле
-        if (field.Name != cleanName)
-        {
-            writer.WriteLine($"{indent}// Original: {field.Name}");
-            writer.WriteLine($"{indent}// {GetFieldDescription(field.Name)}");
-        }
         
         writer.Write($"{indent}.field ");
         
@@ -1062,11 +1046,6 @@ class Program
         if (field.IsSpecialName) writer.Write("specialname ");
         if (field.IsRuntimeSpecialName) writer.Write("rtspecialname ");
         
-        if (field.FieldOffset.HasValue)
-        {
-            writer.Write($"[{field.FieldOffset.Value}] ");
-        }
-        
         writer.Write($"{FormatTypeSig(field.FieldType, 0)} {field.Name}");
         
         if (field.HasConstant)
@@ -1077,22 +1056,6 @@ class Program
         if (field.HasFieldRVA)
         {
             writer.Write($" at D_{(uint)field.RVA:X8}");
-            
-            var initValue = field.InitialValue;
-            if (initValue != null && initValue.Length > 0)
-            {
-                writer.WriteLine();
-                writer.Write($"{indent}    // Initial data ({initValue.Length} bytes): ");
-                if (initValue.Length <= 64)
-                {
-                    writer.Write(BitConverter.ToString(initValue).Replace("-", " "));
-                }
-                else
-                {
-                    writer.Write(BitConverter.ToString(initValue, 0, 64).Replace("-", " "));
-                    writer.Write($" ... ({initValue.Length - 64} more bytes)");
-                }
-            }
         }
         
         writer.WriteLine();
@@ -1121,21 +1084,11 @@ class Program
         writer.WriteLine($"{FormatTypeSig(propSig?.RetType, 0)} {prop.Name}()");
         writer.WriteLine($"{indent}{{");
         
-        foreach (var attr in prop.CustomAttributes)
-        {
-            writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-        }
-        
         if (prop.GetMethod != null)
             writer.WriteLine($"{indent}    .get {FormatMethodRef(prop.GetMethod, 0)}");
         
         if (prop.SetMethod != null)
             writer.WriteLine($"{indent}    .set {FormatMethodRef(prop.SetMethod, 0)}");
-        
-        foreach (var other in prop.OtherMethods)
-        {
-            writer.WriteLine($"{indent}    .other {FormatMethodRef(other, 0)}");
-        }
         
         writer.WriteLine($"{indent}}}");
     }
@@ -1154,11 +1107,6 @@ class Program
         writer.WriteLine($"{FormatTypeRef(evt.EventType, 0)} {evt.Name}");
         writer.WriteLine($"{indent}{{");
         
-        foreach (var attr in evt.CustomAttributes)
-        {
-            writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-        }
-        
         if (evt.AddMethod != null)
             writer.WriteLine($"{indent}    .addon {FormatMethodRef(evt.AddMethod, 0)}");
         
@@ -1168,11 +1116,6 @@ class Program
         if (evt.InvokeMethod != null)
             writer.WriteLine($"{indent}    .fire {FormatMethodRef(evt.InvokeMethod, 0)}");
         
-        foreach (var other in evt.OtherMethods)
-        {
-            writer.WriteLine($"{indent}    .other {FormatMethodRef(other, 0)}");
-        }
-        
         writer.WriteLine($"{indent}}}");
     }
     
@@ -1181,19 +1124,6 @@ class Program
     static void WriteMethod(TextWriter writer, MethodDef method, int depth)
     {
         var indent = new string(' ', depth * 4);
-        var cleanName = GetCleanMethodName(method);
-        
-        if (method.Name != cleanName)
-        {
-            writer.WriteLine($"{indent}// Original: {method.Name}");
-            writer.WriteLine($"{indent}// {GetMethodDescription(method.Name)}");
-        }
-        
-        if (method.Name == "MoveNext" && IsAsyncStateMachine(method.DeclaringType))
-        {
-            writer.WriteLine($"{indent}// *** ASYNC METHOD BODY ***");
-            writer.WriteLine($"{indent}// switch(_asyncState) определяет точку возобновления после await.");
-        }
         
         writer.WriteLine($"{indent}// Token: 0x{method.MDToken.Raw:X8}");
         writer.WriteLine($"{indent}// RVA: 0x{(uint)method.RVA:X8}");
@@ -1214,20 +1144,12 @@ class Program
         if (method.IsNewSlot) writer.Write("newslot ");
         if (method.IsSpecialName) writer.Write("specialname ");
         if (method.IsRuntimeSpecialName) writer.Write("rtspecialname ");
-        if (method.IsPinvokeImpl) writer.Write("pinvokeimpl ");
-        if (method.IsUnmanagedExport) writer.Write("unmanagedexp ");
         
         var sig = method.MethodSig;
         if (sig != null)
         {
             if (sig.HasThis) writer.Write("instance ");
             if (sig.ExplicitThis) writer.Write("explicit ");
-            
-            switch (sig.CallingConvention & CallingConvention.Mask)
-            {
-                case CallingConvention.VarArg: writer.Write("vararg "); break;
-                case CallingConvention.NativeVarArg: writer.Write("unmanaged vararg "); break;
-            }
         }
         
         writer.WriteLine();
@@ -1240,9 +1162,7 @@ class Program
             for (int i = 0; i < method.GenericParameters.Count; i++)
             {
                 if (i > 0) writer.Write(", ");
-                var gp = method.GenericParameters[i];
-                WriteGenericParamConstraints(writer, gp);
-                writer.Write(gp.Name);
+                writer.Write(method.GenericParameters[i].Name);
             }
             writer.Write(">");
         }
@@ -1253,61 +1173,16 @@ class Program
         {
             if (i > 0) writer.Write(", ");
             var param = parameters[i];
-            
-            if (param.ParamDef != null)
-            {
-                if (param.ParamDef.IsIn) writer.Write("[in] ");
-                if (param.ParamDef.IsOut) writer.Write("[out] ");
-                if (param.ParamDef.IsOptional) writer.Write("[opt] ");
-            }
-            
             writer.Write($"{FormatTypeSig(param.Type, 0)} {param.Name}");
         }
         writer.Write(")");
         
         var implFlags = method.ImplAttributes;
-        
         if ((implFlags & MethodImplAttributes.CodeTypeMask) == MethodImplAttributes.IL) writer.Write(" cil");
-        if ((implFlags & MethodImplAttributes.CodeTypeMask) == MethodImplAttributes.Native) writer.Write(" native");
-        if ((implFlags & MethodImplAttributes.CodeTypeMask) == MethodImplAttributes.Runtime) writer.Write(" runtime");
         if ((implFlags & MethodImplAttributes.ManagedMask) == MethodImplAttributes.Managed) writer.Write(" managed");
-        if ((implFlags & MethodImplAttributes.ManagedMask) == MethodImplAttributes.Unmanaged) writer.Write(" unmanaged");
-        if ((implFlags & MethodImplAttributes.ForwardRef) != 0) writer.Write(" forwardref");
-        if ((implFlags & MethodImplAttributes.PreserveSig) != 0) writer.Write(" preservesig");
-        if ((implFlags & MethodImplAttributes.InternalCall) != 0) writer.Write(" internalcall");
-        if ((implFlags & MethodImplAttributes.Synchronized) != 0) writer.Write(" synchronized");
-        if ((implFlags & MethodImplAttributes.NoInlining) != 0) writer.Write(" noinlining");
-        if ((implFlags & MethodImplAttributes.NoOptimization) != 0) writer.Write(" nooptimization");
-        if ((implFlags & MethodImplAttributes.AggressiveInlining) != 0) writer.Write(" aggressiveinlining");
         
         writer.WriteLine();
         writer.WriteLine($"{indent}{{");
-        
-        foreach (var attr in method.CustomAttributes)
-        {
-            writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-        }
-        
-        foreach (var param in method.ParamDefs)
-        {
-            if (param.HasCustomAttributes || param.HasConstant)
-            {
-                writer.WriteLine($"{indent}    .param [{param.Sequence}]");
-                foreach (var attr in param.CustomAttributes)
-                {
-                    writer.WriteLine($"{indent}        .custom {FormatCustomAttribute(attr)}");
-                }
-                if (param.HasConstant)
-                {
-                    writer.WriteLine($"{indent}        = {FormatConstant(param.Constant.Value, null)}");
-                }
-            }
-        }
-        
-        foreach (var ovr in method.Overrides)
-        {
-            writer.WriteLine($"{indent}    .override {FormatMethodRef(ovr.MethodDeclaration, 0)}");
-        }
         
         if (method.HasBody && method.Body != null)
         {
@@ -1325,8 +1200,7 @@ class Program
                 {
                     var local = body.Variables[i];
                     var comma = i < body.Variables.Count - 1 ? "," : "";
-                    var name = string.IsNullOrEmpty(local.Name) ? "" : $" {local.Name}";
-                    writer.WriteLine($"{indent}        [{i}] {FormatTypeSig(local.Type, 0)}{name}{comma}");
+                    writer.WriteLine($"{indent}        [{i}] {FormatTypeSig(local.Type, 0)}{comma}");
                 }
                 
                 writer.WriteLine($"{indent}    )");
@@ -1343,17 +1217,7 @@ class Program
             {
                 var label = $"IL_{instr.Offset:X4}";
                 var operand = FormatOperand(instr);
-                
-                string comment = GetInstructionComment(instr);
-                
-                if (!string.IsNullOrEmpty(comment))
-                {
-                    writer.WriteLine($"{indent}    {label}: {instr.OpCode.Name,-12} {operand,-60} // {comment}");
-                }
-                else
-                {
-                    writer.WriteLine($"{indent}    {label}: {instr.OpCode.Name,-12} {operand}");
-                }
+                writer.WriteLine($"{indent}    {label}: {instr.OpCode.Name,-12} {operand}");
             }
             
             if (body.HasExceptionHandlers)
@@ -1390,34 +1254,6 @@ class Program
         writer.WriteLine();
     }
     
-    // ==================== INSTRUCTION COMMENTS ====================
-    
-    static string GetInstructionComment(Instruction instr)
-    {
-        if (instr.Operand is IField field)
-        {
-            var desc = GetFieldDescription(field.Name);
-            if (desc != "Compiler-generated field") return desc;
-        }
-        
-        if (instr.Operand is IMethod method)
-        {
-            var methodName = method.Name;
-            
-            if (methodName == "GetAwaiter") return "начало await";
-            if (methodName == "get_IsCompleted") return "проверка завершения await";
-            if (methodName == "GetResult") return "получение результата await";
-            if (methodName == "AwaitUnsafeOnCompleted" || methodName == "AwaitOnCompleted") return "регистрация continuation";
-            if (methodName == "SetResult") return "завершение async метода";
-            if (methodName == "SetException") return "исключение в async методе";
-            if (methodName == "WriteLiteral") return "вывод HTML";
-            if (methodName == "Write") return "вывод значения";
-            if (methodName == "MoveNext") return "следующий шаг итератора/async";
-        }
-        
-        return "";
-    }
-    
     // ==================== GENERIC CONSTRAINTS ====================
     
     static void WriteGenericParamConstraints(TextWriter writer, GenericParam gp)
@@ -1444,11 +1280,7 @@ class Program
     static string FormatTypeSig(TypeSig? sig, int depth)
     {
         if (sig == null) return "void";
-        
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {sig.FullName}";
-        }
+        if (depth > MAX_GENERIC_DEPTH) return sig.FullName;
         
         return sig switch
         {
@@ -1473,10 +1305,7 @@ class Program
     
     static string FormatGenericInstSig(GenericInstSig genInst, int depth)
     {
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {genInst.FullName}";
-        }
+        if (depth > MAX_GENERIC_DEPTH) return genInst.FullName;
         
         var sb = new StringBuilder();
         sb.Append(FormatTypeRef(genInst.GenericType?.TypeDefOrRef, depth));
@@ -1494,10 +1323,7 @@ class Program
     
     static string FormatArraySig(ArraySig array, int depth)
     {
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {array.FullName}";
-        }
+        if (depth > MAX_GENERIC_DEPTH) return array.FullName;
         
         var sb = new StringBuilder();
         sb.Append(FormatTypeSig(array.Next, depth + 1));
@@ -1506,20 +1332,6 @@ class Program
         for (uint i = 0; i < array.Rank; i++)
         {
             if (i > 0) sb.Append(",");
-            
-            if (i < (uint)array.LowerBounds.Count || i < (uint)array.Sizes.Count)
-            {
-                int lower = i < (uint)array.LowerBounds.Count ? array.LowerBounds[(int)i] : 0;
-                uint size = i < (uint)array.Sizes.Count ? array.Sizes[(int)i] : 0;
-                
-                if (lower != 0 || size != 0)
-                {
-                    sb.Append(lower);
-                    sb.Append("...");
-                    if (size != 0)
-                        sb.Append(lower + (int)size - 1);
-                }
-            }
         }
         
         sb.Append("]");
@@ -1528,10 +1340,7 @@ class Program
     
     static string FormatFnPtrSig(FnPtrSig fnPtr, int depth)
     {
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return "/* TOO DEEP */ method ...";
-        }
+        if (depth > MAX_GENERIC_DEPTH) return "method ...";
         
         var sb = new StringBuilder();
         sb.Append("method ");
@@ -1555,11 +1364,7 @@ class Program
     static string FormatTypeRef(ITypeDefOrRef? type, int depth)
     {
         if (type == null) return "???";
-        
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {type.FullName}";
-        }
+        if (depth > MAX_GENERIC_DEPTH) return type.FullName;
         
         if (type is TypeSpec ts && ts.TypeSig != null)
         {
@@ -1572,11 +1377,7 @@ class Program
     static string FormatMethodRef(IMethod? method, int depth)
     {
         if (method == null) return "???";
-        
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {method.FullName}";
-        }
+        if (depth > MAX_GENERIC_DEPTH) return method.FullName;
         
         var sb = new StringBuilder();
         
@@ -1703,11 +1504,7 @@ class Program
     static string FormatCAArgument(CAArgument arg, int depth)
     {
         if (arg.Value == null) return "nullref";
-        
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return "/* TOO DEEP */";
-        }
+        if (depth > MAX_GENERIC_DEPTH) return "...";
         
         return arg.Value switch
         {
@@ -1747,7 +1544,7 @@ class Program
     
     static string EscapeString(string s)
     {
-        var sb = new StringBuilder();
+        var sb = new StringBuilder(s.Length + 10);
         foreach (var c in s)
         {
             switch (c)
@@ -1771,12 +1568,17 @@ class Program
     
     static string SanitizeName(string name)
     {
+        var sb = new StringBuilder(name.Length);
         var invalid = Path.GetInvalidFileNameChars();
-        foreach (var c in invalid)
-            name = name.Replace(c, '_');
         
-        name = name.Replace('<', '_').Replace('>', '_').Replace('`', '_');
+        foreach (var c in name)
+        {
+            if (Array.IndexOf(invalid, c) >= 0 || c == '<' || c == '>' || c == '`')
+                sb.Append('_');
+            else
+                sb.Append(c);
+        }
         
-        return name;
+        return sb.ToString();
     }
 }

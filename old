@@ -828,4 +828,203 @@ class Program
         
         var sb = new StringBuilder();
         
-        if (method.
+        if (method.MethodSig?.HasThis == true)
+            sb.Append("instance ");
+        
+        sb.Append($"{FormatTypeSig(method.MethodSig?.RetType, depth + 1)} ");
+        sb.Append($"{FormatTypeRef(method.DeclaringType, depth + 1)}::{method.Name}");
+        
+        if (method is MethodSpec ms && ms.GenericInstMethodSig != null)
+        {
+            sb.Append("<");
+            for (int i = 0; i < ms.GenericInstMethodSig.GenericArguments.Count; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append(FormatTypeSig(ms.GenericInstMethodSig.GenericArguments[i], depth + 1));
+            }
+            sb.Append(">");
+        }
+        
+        sb.Append("(");
+        var paramTypes = method.MethodSig?.Params;
+        if (paramTypes != null)
+        {
+            for (int i = 0; i < paramTypes.Count; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append(FormatTypeSig(paramTypes[i], depth + 1));
+            }
+        }
+        sb.Append(")");
+        
+        return sb.ToString();
+    }
+    
+    static string FormatOperand(Instruction instr)
+    {
+        if (instr.Operand == null) return "";
+        
+        return instr.Operand switch
+        {
+            Instruction target => $"IL_{target.Offset:X4}",
+            Instruction[] targets => "(" + string.Join(", ", targets.Select(t => $"IL_{t.Offset:X4}")) + ")",
+            string s => $"\"{EscapeString(s)}\"",
+            int i => i.ToString(),
+            long l => l.ToString(),
+            float f => $"{f:R}",
+            double d => $"{d:R}",
+            sbyte sb => sb.ToString(),
+            byte b => b.ToString(),
+            IField field => FormatFieldRef(field),
+            IMethod method => FormatMethodRef(method, 0),
+            ITypeDefOrRef type => FormatTypeRef(type, 0),
+            Local local => $"V_{local.Index}",
+            Parameter param => $"A_{param.Index}",
+            MethodSig msig => FormatMethodSig(msig),
+            _ => instr.Operand.ToString() ?? ""
+        };
+    }
+    
+    static string FormatFieldRef(IField? field)
+    {
+        if (field == null) return "???";
+        return $"{FormatTypeSig(field.FieldSig?.Type, 0)} {FormatTypeRef(field.DeclaringType, 0)}::{field.Name}";
+    }
+    
+    static string FormatMethodSig(MethodSig sig)
+    {
+        var sb = new StringBuilder();
+        if (sig.HasThis) sb.Append("instance ");
+        sb.Append(FormatTypeSig(sig.RetType, 0));
+        sb.Append(" *(");
+        
+        for (int i = 0; i < sig.Params.Count; i++)
+        {
+            if (i > 0) sb.Append(", ");
+            sb.Append(FormatTypeSig(sig.Params[i], 0));
+        }
+        
+        sb.Append(")");
+        return sb.ToString();
+    }
+    
+    static string FormatCustomAttribute(CustomAttribute attr)
+    {
+        var sb = new StringBuilder();
+        sb.Append($"instance void {attr.Constructor?.DeclaringType?.FullName ?? "???"}::.ctor(");
+        
+        if (attr.Constructor?.MethodSig?.Params != null)
+        {
+            for (int i = 0; i < attr.Constructor.MethodSig.Params.Count; i++)
+            {
+                if (i > 0) sb.Append(", ");
+                sb.Append(FormatTypeSig(attr.Constructor.MethodSig.Params[i], 0));
+            }
+        }
+        
+        sb.Append(")");
+        
+        if (attr.HasConstructorArguments || attr.HasNamedArguments)
+        {
+            sb.Append(" = { ");
+            
+            var parts = new List<string>();
+            
+            foreach (var arg in attr.ConstructorArguments)
+            {
+                parts.Add(FormatCAArgument(arg, 0));
+            }
+            
+            foreach (var arg in attr.NamedArguments)
+            {
+                var prefix = arg.IsField ? "field" : "property";
+                parts.Add($"{prefix} {FormatTypeSig(arg.Type, 0)} {arg.Name} = {FormatCAArgument(arg.Argument, 0)}");
+            }
+            
+            sb.Append(string.Join(", ", parts));
+            sb.Append(" }");
+        }
+        
+        return sb.ToString();
+    }
+    
+    static string FormatCAArgument(CAArgument arg, int depth)
+    {
+        if (arg.Value == null) return "nullref";
+        
+        if (depth > MAX_GENERIC_DEPTH)
+        {
+            return "/* СЛИШКОМ ГЛУБОКАЯ ВЛОЖЕННОСТЬ */";
+        }
+        
+        return arg.Value switch
+        {
+            string s => $"\"{EscapeString(s)}\"",
+            bool b => b ? "true" : "false",
+            UTF8String u => $"\"{EscapeString(u.String)}\"",
+            TypeSig t => $"typeof({FormatTypeSig(t, depth + 1)})",
+            IList<CAArgument> list => "{" + string.Join(", ", list.Select(a => FormatCAArgument(a, depth + 1))) + "}",
+            CAArgument nested => FormatCAArgument(nested, depth + 1),
+            _ => arg.Value.ToString() ?? "null"
+        };
+    }
+    
+    static string FormatConstant(object? value, TypeSig? type)
+    {
+        if (value == null) return "nullref";
+        
+        return value switch
+        {
+            string s => $"\"{EscapeString(s)}\"",
+            char c => $"char(0x{(int)c:X4})",
+            bool b => b ? "bool(true)" : "bool(false)",
+            float f => $"float32({f:R})",
+            double d => $"float64({d:R})",
+            sbyte sb => $"int8({sb})",
+            byte b => $"uint8({b})",
+            short sh => $"int16({sh})",
+            ushort us => $"uint16({us})",
+            int i => $"int32({i})",
+            uint u => $"uint32({u})",
+            long l => $"int64({l})",
+            ulong ul => $"uint64({ul})",
+            byte[] bytes => "(" + BitConverter.ToString(bytes).Replace("-", " ") + ")",
+            _ => value.ToString() ?? "null"
+        };
+    }
+    
+    static string EscapeString(string s)
+    {
+        var sb = new StringBuilder();
+        foreach (var c in s)
+        {
+            switch (c)
+            {
+                case '\\': sb.Append("\\\\"); break;
+                case '"': sb.Append("\\\""); break;
+                case '\n': sb.Append("\\n"); break;
+                case '\r': sb.Append("\\r"); break;
+                case '\t': sb.Append("\\t"); break;
+                case '\0': sb.Append("\\0"); break;
+                default:
+                    if (c < 32 || c > 126)
+                        sb.Append($"\\u{(int)c:X4}");
+                    else
+                        sb.Append(c);
+                    break;
+            }
+        }
+        return sb.ToString();
+    }
+    
+    static string SanitizeName(string name)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        foreach (var c in invalid)
+            name = name.Replace(c, '_');
+        
+        name = name.Replace('<', '_').Replace('>', '_').Replace('`', '_');
+        
+        return name;
+    }
+}

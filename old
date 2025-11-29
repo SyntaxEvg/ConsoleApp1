@@ -1,1218 +1,233 @@
-using dnlib.DotNet;
-using dnlib.DotNet.Emit;
-using System.Text;
+# Создаём папку для сертификатов
+sudo mkdir -p /etc/nginx/ssl
 
-namespace ILExtractor;
+# Копируем PFX файл на сервер (с вашего компьютера)
+# Используйте SCP, SFTP или USB
+scp /path/to/certificate.pfx root@10.13.20.51:/etc/nginx/ssl/
 
-class Program
-{
-    private static ModuleDefMD? module;
-    private static readonly HashSet<TypeDef> processedTypes = new();
-    private static readonly HashSet<TypeDef> typeStack = new();
+sudo mv /path/to/certificate.pfx /etc/nginx/ssl/
+
+cd /etc/nginx/ssl
+
+# 1. Извлекаем приватный ключ (потребуется пароль от PFX)
+sudo openssl pkcs12 -in certificate.pfx -nocerts -out server.key -nodes
+
+# 2. Извлекаем сертификат
+sudo openssl pkcs12 -in certificate.pfx -clcerts -nokeys -out server.crt
+
+# 3. Извлекаем цепочку CA сертификатов (если есть)
+sudo openssl pkcs12 -in certificate.pfx -cacerts -nokeys -out ca-bundle.crt
+
+# 4. Объединяем сертификат и цепочку CA
+sudo cat server.crt ca-bundle.crt > server-chain.crt
+
+sudo chmod 600 /etc/nginx/ssl/server.key
+sudo chmod 644 /etc/nginx/ssl/server.crt
+sudo chmod 644 /etc/nginx/ssl/server-chain.crt
+sudo chown root:root /etc/nginx/ssl/*
+
+# Проверяем
+ls -la /etc/nginx/ssl/
+
+# Проверяем, что сертификат корректный
+openssl x509 -in /etc/nginx/ssl/server.crt -text -noout | head -20
+
+# Проверяем домен в сертификате
+openssl x509 -in /etc/nginx/ssl/server.crt -noout -subject
+
+# Проверяем срок действия
+openssl x509 -in /etc/nginx/ssl/server.crt -noout -dates
+
+# Проверяем соответствие ключа и сертификата (хеши должны совпадать!)
+openssl x509 -noout -modulus -in /etc/nginx/ssl/server.crt | md5sum
+openssl rsa -noout -modulus -in /etc/nginx/ssl/server.key | md5sum
+```
+
+---
+
+## Этап 2: Настройка DNS (на стороне вашей сети)
+
+Вам нужно попросить администратора DNS добавить запись:
+```
+Тип: A
+Имя: ea.ty.ea
+IP: 10.13.20.51
+
+====
+sudo nano /etc/nginx/conf.d/wordpress-ssl.conf
+
+# Редирект с HTTP на HTTPS
+server {
+    listen 80;
+    server_name ea.ty.ea 10.13.20.51;
     
-    private const int MAX_DEPTH = 50;
-    private const int MAX_GENERIC_DEPTH = 20;
+    # Редирект на HTTPS
+    return 301 https://ea.ty.ea$request_uri;
+}
+
+# Основной HTTPS сервер
+server {
+    listen 443 ssl http2;
+    server_name ea.ty.ea 10.13.20.51;
     
-    static void Main(string[] args)
-    {
-        if (args.Length == 0)
-        {
-            Console.WriteLine("IL Code Extractor with Full Metadata");
-            Console.WriteLine("====================================");
-            Console.WriteLine();
-            Console.WriteLine("Использование: ILExtractor <сборка.dll> [папка_вывода]");
-            return;
-        }
-        
-        var assemblyPath = args[0];
-        var outputDir = args.Length > 1 ? args[1] : "IL_Output";
-        
-        if (!File.Exists(assemblyPath))
-        {
-            Console.WriteLine($"Ошибка: Файл не найден: {assemblyPath}");
-            return;
-        }
-        
-        try
-        {
-            module = ModuleDefMD.Load(assemblyPath);
-            
-            Console.WriteLine($"Загружена сборка: {module.Name}");
-            Console.WriteLine($"Типов: {module.Types.Count}");
-            Console.WriteLine();
-            
-            Directory.CreateDirectory(outputDir);
-            
-            // 1. Assembly manifest
-            SaveAssemblyInfo(module, outputDir);
-            
-            // 2. User Strings heap — все строковые константы
-            SaveUserStrings(module, outputDir);
-            
-            // 3. Все типы
-            foreach (var type in module.Types)
-            {
-                if (type.Name == "<Module>") continue;
-                if (type.IsNested) continue;
-                
-                ProcessType(type, outputDir);
-            }
-            
-            Console.WriteLine();
-            Console.WriteLine($"Готово! IL-код сохранён в: {outputDir}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка: {ex.Message}");
-            Console.WriteLine(ex.StackTrace);
-        }
+    root /var/www;
+    index index.php index.html;
+    
+    # SSL сертификаты
+    ssl_certificate /etc/nginx/ssl/server-chain.crt;
+    ssl_certificate_key /etc/nginx/ssl/server.key;
+    
+    # Современные SSL настройки
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    
+    # SSL сессии
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+    
+    # OCSP Stapling (если CA поддерживает)
+    # ssl_stapling on;
+    # ssl_stapling_verify on;
+    # ssl_trusted_certificate /etc/nginx/ssl/ca-bundle.crt;
+    
+    # Заголовки безопасности
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    
+    # HSTS (принудительный HTTPS) - раскомментируйте после проверки
+    # add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    
+    # Логи
+    access_log /var/log/nginx/ea.ty.ea-access.log;
+    error_log /var/log/nginx/ea.ty.ea-error.log;
+    
+    # Максимальный размер загружаемых файлов
+    client_max_body_size 64M;
+    
+    # WordPress permalinks
+    location / {
+        try_files $uri $uri/ /index.php?$args;
     }
     
-    // ==================== USER STRINGS HEAP ====================
-    
-    static void SaveUserStrings(ModuleDefMD mod, string outDir)
-    {
-        var sb = new StringBuilder();
+    # PHP обработка
+    location ~ \.php$ {
+        try_files $uri =404;
+        fastcgi_pass unix:/run/php-fpm/www.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param HTTPS on;
+        include fastcgi_params;
         
-        sb.AppendLine("// ==============================================================");
-        sb.AppendLine("// USER STRINGS HEAP — все строковые константы сборки");
-        sb.AppendLine("// ==============================================================");
-        sb.AppendLine();
-        
-        var usHeap = mod.USStream;
-        if (usHeap != null)
-        {
-            uint offset = 1; // Начинаем с 1, 0 — пустая строка
-            int count = 0;
-            
-            while (offset < usHeap.StreamLength)
-            {
-                try
-                {
-                    var str = mod.ReadUserString(offset);
-                    if (!string.IsNullOrEmpty(str))
-                    {
-                        sb.AppendLine($"// [0x{offset:X8}] Length: {str.Length}");
-                        sb.AppendLine($"\"{EscapeString(str)}\"");
-                        sb.AppendLine();
-                        count++;
-                    }
-                    
-                    // Вычисляем следующий offset
-                    // Формат: compressed length + UTF-16 chars + terminal byte
-                    uint len = (uint)str.Length * 2 + 1;
-                    if (str.Length < 0x80)
-                        offset += len + 1;
-                    else if (str.Length < 0x4000)
-                        offset += len + 2;
-                    else
-                        offset += len + 4;
-                }
-                catch
-                {
-                    offset++;
-                }
-                
-                // Защита от бесконечного цикла
-                if (count > 100000) break;
-            }
-            
-            sb.AppendLine($"// Всего строк: {count}");
-        }
-        else
-        {
-            sb.AppendLine("// User Strings heap не найден или пуст");
-        }
-        
-        File.WriteAllText(Path.Combine(outDir, "_UserStrings.il"), sb.ToString());
+        # Таймауты
+        fastcgi_read_timeout 300;
+        fastcgi_send_timeout 300;
+        fastcgi_connect_timeout 60;
     }
     
-    static void ProcessType(TypeDef type, string outputDir)
-    {
-        if (processedTypes.Contains(type)) return;
-        processedTypes.Add(type);
-        
-        var ns = string.IsNullOrEmpty(type.Namespace) 
-            ? "_Global" 
-            : type.Namespace.ToString().Replace('.', Path.DirectorySeparatorChar);
-        var nsPath = Path.Combine(outputDir, ns);
-        Directory.CreateDirectory(nsPath);
-        
-        var typeName = SanitizeName(type.Name);
-        var filePath = Path.Combine(nsPath, $"{typeName}.il");
-        
-        using var writer = new StreamWriter(filePath, false, Encoding.UTF8);
-        WriteType(writer, type, 0);
-        
-        Console.WriteLine($"Обработан: {type.FullName}");
+    # Запрет доступа к скрытым файлам
+    location ~ /\. {
+        deny all;
     }
     
-    // ==================== ASSEMBLY INFO ====================
-    
-    static void SaveAssemblyInfo(ModuleDefMD mod, string outDir)
-    {
-        var sb = new StringBuilder();
-        
-        sb.AppendLine("// ==============================================================");
-        sb.AppendLine("// ASSEMBLY MANIFEST");
-        sb.AppendLine("// ==============================================================");
-        sb.AppendLine();
-        
-        if (mod.Assembly != null)
-        {
-            sb.AppendLine($".assembly {mod.Assembly.Name}");
-            sb.AppendLine("{");
-            sb.AppendLine($"    .ver {mod.Assembly.Version.Major}:{mod.Assembly.Version.Minor}:{mod.Assembly.Version.Build}:{mod.Assembly.Version.Revision}");
-            
-            if (mod.Assembly.PublicKey != null && mod.Assembly.PublicKey.Data.Length > 0)
-                sb.AppendLine($"    .publickey = ({BitConverter.ToString(mod.Assembly.PublicKey.Data).Replace("-", " ")})");
-            
-            if (!string.IsNullOrEmpty(mod.Assembly.Culture))
-                sb.AppendLine($"    .culture \"{mod.Assembly.Culture}\"");
-            
-            foreach (var attr in mod.Assembly.CustomAttributes)
-            {
-                sb.AppendLine($"    .custom {FormatCustomAttribute(attr)}");
-            }
-            
-            sb.AppendLine("}");
-        }
-        
-        sb.AppendLine();
-        sb.AppendLine($".module {mod.Name}");
-        sb.AppendLine($"// MVID: {{{mod.Mvid}}}");
-        sb.AppendLine($"// Runtime: {mod.RuntimeVersion}");
-        sb.AppendLine($"// Kind: {mod.Kind}");
-        sb.AppendLine();
-        
-        sb.AppendLine("// ==============================================================");
-        sb.AppendLine("// ASSEMBLY REFERENCES");
-        sb.AppendLine("// ==============================================================");
-        sb.AppendLine();
-        
-        foreach (var asmRef in mod.GetAssemblyRefs())
-        {
-            sb.AppendLine($".assembly extern {asmRef.Name}");
-            sb.AppendLine("{");
-            sb.AppendLine($"    .ver {asmRef.Version.Major}:{asmRef.Version.Minor}:{asmRef.Version.Build}:{asmRef.Version.Revision}");
-            
-            if (asmRef.PublicKeyOrToken != null && asmRef.PublicKeyOrToken.Data.Length > 0)
-                sb.AppendLine($"    .publickeytoken = ({BitConverter.ToString(asmRef.PublicKeyOrToken.Data).Replace("-", " ")})");
-            
-            sb.AppendLine("}");
-            sb.AppendLine();
-        }
-        
-        foreach (var modRef in mod.GetModuleRefs())
-        {
-            sb.AppendLine($".module extern {modRef.Name}");
-        }
-        
-        File.WriteAllText(Path.Combine(outDir, "_AssemblyManifest.il"), sb.ToString());
+    # Защита wp-config.php
+    location ~* wp-config.php {
+        deny all;
     }
     
-    // ==================== TYPE ====================
-    
-    static void WriteType(StreamWriter writer, TypeDef type, int depth)
-    {
-        if (depth > MAX_DEPTH)
-        {
-            writer.WriteLine($"// ПРЕДУПРЕЖДЕНИЕ: Превышена максимальная глубина ({MAX_DEPTH})");
-            return;
-        }
-        
-        if (typeStack.Contains(type))
-        {
-            writer.WriteLine($"// ЦИКЛ: {type.FullName}");
-            return;
-        }
-        typeStack.Add(type);
-        
-        try
-        {
-            var indent = new string(' ', depth * 4);
-            
-            // Определяем тип класса для комментария
-            string typeKind = GetTypeKind(type);
-            
-            writer.WriteLine($"{indent}// ==============================================================");
-            writer.WriteLine($"{indent}// {typeKind}: {type.FullName}");
-            writer.WriteLine($"{indent}// Token: 0x{type.MDToken.Raw:X8}");
-            
-            // Для async state machine добавляем пояснение
-            if (IsAsyncStateMachine(type))
-            {
-                writer.WriteLine($"{indent}// NOTE: Это async state machine. Метод MoveNext содержит логику async метода.");
-                writer.WriteLine($"{indent}// Поля <>1__state, <>t__builder, <>u__N — служебные для async/await.");
-            }
-            
-            // Для compiler-generated типов
-            if (IsCompilerGenerated(type))
-            {
-                writer.WriteLine($"{indent}// NOTE: Compiler-generated type");
-            }
-            
-            writer.WriteLine($"{indent}// ==============================================================");
-            writer.WriteLine();
-            
-            writer.Write($"{indent}.class ");
-            
-            if (type.IsNested)
-            {
-                switch (type.Visibility)
-                {
-                    case TypeAttributes.NestedPublic: writer.Write("nested public "); break;
-                    case TypeAttributes.NestedPrivate: writer.Write("nested private "); break;
-                    case TypeAttributes.NestedFamily: writer.Write("nested family "); break;
-                    case TypeAttributes.NestedAssembly: writer.Write("nested assembly "); break;
-                    case TypeAttributes.NestedFamORAssem: writer.Write("nested famorassem "); break;
-                    case TypeAttributes.NestedFamANDAssem: writer.Write("nested famandassem "); break;
-                }
-            }
-            else
-            {
-                if (type.IsPublic) writer.Write("public ");
-                else writer.Write("private ");
-            }
-            
-            if (type.IsInterface) writer.Write("interface ");
-            if (type.IsAbstract) writer.Write("abstract ");
-            if (type.IsSealed) writer.Write("sealed ");
-            if (type.IsAutoLayout) writer.Write("auto ");
-            if (type.IsSequentialLayout) writer.Write("sequential ");
-            if (type.IsExplicitLayout) writer.Write("explicit ");
-            if (type.IsAnsiClass) writer.Write("ansi ");
-            if (type.IsUnicodeClass) writer.Write("unicode ");
-            if (type.IsBeforeFieldInit) writer.Write("beforefieldinit ");
-            if (type.IsSerializable) writer.Write("serializable ");
-            if (type.IsSpecialName) writer.Write("specialname ");
-            if (type.IsRuntimeSpecialName) writer.Write("rtspecialname ");
-            
-            writer.Write(type.Name);
-            
-            if (type.HasGenericParameters)
-            {
-                writer.Write("<");
-                for (int i = 0; i < type.GenericParameters.Count; i++)
-                {
-                    if (i > 0) writer.Write(", ");
-                    var gp = type.GenericParameters[i];
-                    WriteGenericParamConstraints(writer, gp);
-                    writer.Write(gp.Name);
-                }
-                writer.Write(">");
-            }
-            
-            writer.WriteLine();
-            
-            if (type.BaseType != null)
-            {
-                writer.WriteLine($"{indent}    extends {FormatTypeRef(type.BaseType, 0)}");
-            }
-            
-            if (type.HasInterfaces)
-            {
-                writer.WriteLine($"{indent}    implements");
-                for (int i = 0; i < type.Interfaces.Count; i++)
-                {
-                    var comma = i < type.Interfaces.Count - 1 ? "," : "";
-                    writer.WriteLine($"{indent}        {FormatTypeRef(type.Interfaces[i].Interface, 0)}{comma}");
-                }
-            }
-            
-            writer.WriteLine($"{indent}{{");
-            
-            foreach (var attr in type.CustomAttributes)
-            {
-                writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-            }
-            
-            if (type.HasCustomAttributes)
-                writer.WriteLine();
-            
-            if (type.ClassLayout != null)
-            {
-                writer.WriteLine($"{indent}    .pack {type.ClassLayout.PackingSize}");
-                writer.WriteLine($"{indent}    .size {type.ClassLayout.ClassSize}");
-                writer.WriteLine();
-            }
-            
-            // STATIC CONSTRUCTOR (.cctor) — выводим первым для инициализации полей
-            var cctor = type.FindStaticConstructor();
-            if (cctor != null)
-            {
-                writer.WriteLine($"{indent}    // ==== STATIC CONSTRUCTOR (field initializers) ====");
-                writer.WriteLine();
-                WriteMethod(writer, cctor, depth + 1);
-            }
-            
-            if (type.HasFields)
-            {
-                writer.WriteLine($"{indent}    // ==== FIELDS ====");
-                writer.WriteLine();
-                foreach (var field in type.Fields)
-                {
-                    WriteField(writer, field, depth + 1);
-                }
-                writer.WriteLine();
-            }
-            
-            if (type.HasProperties)
-            {
-                writer.WriteLine($"{indent}    // ==== PROPERTIES ====");
-                writer.WriteLine();
-                foreach (var prop in type.Properties)
-                {
-                    WriteProperty(writer, prop, depth + 1);
-                }
-                writer.WriteLine();
-            }
-            
-            if (type.HasEvents)
-            {
-                writer.WriteLine($"{indent}    // ==== EVENTS ====");
-                writer.WriteLine();
-                foreach (var evt in type.Events)
-                {
-                    WriteEvent(writer, evt, depth + 1);
-                }
-                writer.WriteLine();
-            }
-            
-            if (type.HasMethods)
-            {
-                writer.WriteLine($"{indent}    // ==== METHODS ====");
-                writer.WriteLine();
-                foreach (var method in type.Methods)
-                {
-                    // .cctor уже вывели выше
-                    if (method.IsStaticConstructor) continue;
-                    
-                    WriteMethod(writer, method, depth + 1);
-                }
-            }
-            
-            if (type.HasNestedTypes)
-            {
-                writer.WriteLine($"{indent}    // ==== NESTED TYPES ====");
-                writer.WriteLine();
-                foreach (var nested in type.NestedTypes)
-                {
-                    WriteType(writer, nested, depth + 1);
-                    writer.WriteLine();
-                }
-            }
-            
-            writer.WriteLine($"{indent}}} // end of class {type.Name}");
-        }
-        finally
-        {
-            typeStack.Remove(type);
-        }
+    # Защита xmlrpc.php (часто атакуют)
+    location = /xmlrpc.php {
+        deny all;
     }
     
-    // ==================== HELPERS ====================
-    
-    static string GetTypeKind(TypeDef type)
-    {
-        if (type.IsInterface) return "INTERFACE";
-        if (type.IsEnum) return "ENUM";
-        if (type.IsValueType) return "STRUCT";
-        if (type.IsDelegate) return "DELEGATE";
-        if (IsAsyncStateMachine(type)) return "ASYNC STATE MACHINE";
-        if (IsCompilerGenerated(type)) return "COMPILER-GENERATED CLASS";
-        return "TYPE";
+    # Кэширование статики
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp)$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+        access_log off;
     }
     
-    static bool IsAsyncStateMachine(TypeDef type)
-    {
-        // Проверяем интерфейс IAsyncStateMachine
-        foreach (var iface in type.Interfaces)
-        {
-            if (iface.Interface.FullName == "System.Runtime.CompilerServices.IAsyncStateMachine")
-                return true;
-        }
-        
-        // Или по имени (d__N)
-        if (type.Name.Contains("<") && type.Name.Contains(">d__"))
-            return true;
-            
-        return false;
+    # Favicon
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
     }
     
-    static bool IsCompilerGenerated(TypeDef type)
-    {
-        foreach (var attr in type.CustomAttributes)
-        {
-            if (attr.TypeFullName == "System.Runtime.CompilerServices.CompilerGeneratedAttribute")
-                return true;
-        }
-        return false;
-    }
-    
-    // ==================== FIELD ====================
-    
-    static void WriteField(StreamWriter writer, FieldDef field, int depth)
-    {
-        var indent = new string(' ', depth * 4);
-        
-        // Комментарий для служебных полей async
-        if (field.Name.StartsWith("<>"))
-        {
-            string hint = field.Name switch
-            {
-                "<>1__state" => "// async state: -1=initial, 0+=awaiting, -2=completed",
-                "<>t__builder" => "// async method builder",
-                _ when field.Name.Contains("<>u__") => "// awaiter storage",
-                _ when field.Name.Contains("<>s__") => "// spilled local",
-                _ => ""
-            };
-            if (!string.IsNullOrEmpty(hint))
-                writer.WriteLine($"{indent}{hint}");
-        }
-        
-        writer.Write($"{indent}.field ");
-        
-        if (field.IsPublic) writer.Write("public ");
-        else if (field.IsPrivate) writer.Write("private ");
-        else if (field.IsFamily) writer.Write("family ");
-        else if (field.IsAssembly) writer.Write("assembly ");
-        else if (field.IsFamilyOrAssembly) writer.Write("famorassem ");
-        else if (field.IsFamilyAndAssembly) writer.Write("famandassem ");
-        
-        if (field.IsStatic) writer.Write("static ");
-        if (field.IsInitOnly) writer.Write("initonly ");
-        if (field.IsLiteral) writer.Write("literal ");
-        if (field.IsNotSerialized) writer.Write("notserialized ");
-        if (field.IsSpecialName) writer.Write("specialname ");
-        if (field.IsRuntimeSpecialName) writer.Write("rtspecialname ");
-        
-        if (field.FieldOffset.HasValue)
-        {
-            writer.Write($"[{field.FieldOffset.Value}] ");
-        }
-        
-        writer.Write($"{FormatTypeSig(field.FieldType, 0)} {field.Name}");
-        
-        if (field.HasConstant)
-        {
-            writer.Write($" = {FormatConstant(field.Constant.Value, field.FieldType)}");
-        }
-        
-        if (field.HasFieldRVA)
-        {
-            writer.Write($" at D_{(uint)field.RVA:X8}");
-            
-            // Попробуем прочитать данные
-            var initValue = field.InitialValue;
-            if (initValue != null && initValue.Length > 0)
-            {
-                writer.WriteLine();
-                writer.Write($"{indent}    // Initial data ({initValue.Length} bytes): ");
-                if (initValue.Length <= 64)
-                {
-                    writer.Write(BitConverter.ToString(initValue).Replace("-", " "));
-                }
-                else
-                {
-                    writer.Write(BitConverter.ToString(initValue, 0, 64).Replace("-", " "));
-                    writer.Write($" ... ({initValue.Length - 64} more bytes)");
-                }
-            }
-        }
-        
-        writer.WriteLine();
-        
-        foreach (var attr in field.CustomAttributes)
-        {
-            writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-        }
-    }
-    
-    // ==================== PROPERTY ====================
-    
-    static void WriteProperty(StreamWriter writer, PropertyDef prop, int depth)
-    {
-        var indent = new string(' ', depth * 4);
-        
-        writer.Write($"{indent}.property ");
-        
-        if (prop.IsSpecialName) writer.Write("specialname ");
-        if (prop.IsRuntimeSpecialName) writer.Write("rtspecialname ");
-        
-        var propSig = prop.PropertySig;
-        if (propSig != null && propSig.HasThis)
-            writer.Write("instance ");
-        
-        writer.WriteLine($"{FormatTypeSig(propSig?.RetType, 0)} {prop.Name}()");
-        writer.WriteLine($"{indent}{{");
-        
-        foreach (var attr in prop.CustomAttributes)
-        {
-            writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-        }
-        
-        if (prop.GetMethod != null)
-            writer.WriteLine($"{indent}    .get {FormatMethodRef(prop.GetMethod, 0)}");
-        
-        if (prop.SetMethod != null)
-            writer.WriteLine($"{indent}    .set {FormatMethodRef(prop.SetMethod, 0)}");
-        
-        foreach (var other in prop.OtherMethods)
-        {
-            writer.WriteLine($"{indent}    .other {FormatMethodRef(other, 0)}");
-        }
-        
-        writer.WriteLine($"{indent}}}");
-    }
-    
-    // ==================== EVENT ====================
-    
-    static void WriteEvent(StreamWriter writer, EventDef evt, int depth)
-    {
-        var indent = new string(' ', depth * 4);
-        
-        writer.Write($"{indent}.event ");
-        
-        if (evt.IsSpecialName) writer.Write("specialname ");
-        if (evt.IsRuntimeSpecialName) writer.Write("rtspecialname ");
-        
-        writer.WriteLine($"{FormatTypeRef(evt.EventType, 0)} {evt.Name}");
-        writer.WriteLine($"{indent}{{");
-        
-        foreach (var attr in evt.CustomAttributes)
-        {
-            writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-        }
-        
-        if (evt.AddMethod != null)
-            writer.WriteLine($"{indent}    .addon {FormatMethodRef(evt.AddMethod, 0)}");
-        
-        if (evt.RemoveMethod != null)
-            writer.WriteLine($"{indent}    .removeon {FormatMethodRef(evt.RemoveMethod, 0)}");
-        
-        if (evt.InvokeMethod != null)
-            writer.WriteLine($"{indent}    .fire {FormatMethodRef(evt.InvokeMethod, 0)}");
-        
-        foreach (var other in evt.OtherMethods)
-        {
-            writer.WriteLine($"{indent}    .other {FormatMethodRef(other, 0)}");
-        }
-        
-        writer.WriteLine($"{indent}}}");
-    }
-    
-    // ==================== METHOD ====================
-    
-    static void WriteMethod(StreamWriter writer, MethodDef method, int depth)
-    {
-        var indent = new string(' ', depth * 4);
-        
-        // Комментарии для специальных методов
-        if (method.Name == "MoveNext" && IsAsyncStateMachine(method.DeclaringType))
-        {
-            writer.WriteLine($"{indent}// *** ASYNC METHOD BODY ***");
-            writer.WriteLine($"{indent}// Этот метод содержит основную логику async метода.");
-            writer.WriteLine($"{indent}// switch(<>1__state) определяет точку возобновления после await.");
-        }
-        
-        writer.WriteLine($"{indent}// Token: 0x{method.MDToken.Raw:X8}");
-        writer.WriteLine($"{indent}// RVA: 0x{(uint)method.RVA:X8}");
-        writer.Write($"{indent}.method ");
-        
-        if (method.IsPublic) writer.Write("public ");
-        else if (method.IsPrivate) writer.Write("private ");
-        else if (method.IsFamily) writer.Write("family ");
-        else if (method.IsAssembly) writer.Write("assembly ");
-        else if (method.IsFamilyOrAssembly) writer.Write("famorassem ");
-        else if (method.IsFamilyAndAssembly) writer.Write("famandassem ");
-        
-        if (method.IsStatic) writer.Write("static ");
-        if (method.IsFinal) writer.Write("final ");
-        if (method.IsVirtual) writer.Write("virtual ");
-        if (method.IsAbstract) writer.Write("abstract ");
-        if (method.IsHideBySig) writer.Write("hidebysig ");
-        if (method.IsNewSlot) writer.Write("newslot ");
-        if (method.IsSpecialName) writer.Write("specialname ");
-        if (method.IsRuntimeSpecialName) writer.Write("rtspecialname ");
-        if (method.IsPinvokeImpl) writer.Write("pinvokeimpl ");
-        if (method.IsUnmanagedExport) writer.Write("unmanagedexp ");
-        
-        var sig = method.MethodSig;
-        if (sig != null)
-        {
-            if (sig.HasThis) writer.Write("instance ");
-            if (sig.ExplicitThis) writer.Write("explicit ");
-            
-            switch (sig.CallingConvention & CallingConvention.Mask)
-            {
-                case CallingConvention.VarArg: writer.Write("vararg "); break;
-                case CallingConvention.NativeVarArg: writer.Write("unmanaged vararg "); break;
-            }
-        }
-        
-        writer.WriteLine();
-        writer.Write($"{indent}    {FormatTypeSig(method.ReturnType, 0)} ");
-        writer.Write(method.Name);
-        
-        if (method.HasGenericParameters)
-        {
-            writer.Write("<");
-            for (int i = 0; i < method.GenericParameters.Count; i++)
-            {
-                if (i > 0) writer.Write(", ");
-                var gp = method.GenericParameters[i];
-                WriteGenericParamConstraints(writer, gp);
-                writer.Write(gp.Name);
-            }
-            writer.Write(">");
-        }
-        
-        writer.Write("(");
-        var parameters = method.Parameters.Where(p => !p.IsHiddenThisParameter).ToList();
-        for (int i = 0; i < parameters.Count; i++)
-        {
-            if (i > 0) writer.Write(", ");
-            var param = parameters[i];
-            
-            if (param.ParamDef != null)
-            {
-                if (param.ParamDef.IsIn) writer.Write("[in] ");
-                if (param.ParamDef.IsOut) writer.Write("[out] ");
-                if (param.ParamDef.IsOptional) writer.Write("[opt] ");
-            }
-            
-            writer.Write($"{FormatTypeSig(param.Type, 0)} {param.Name}");
-        }
-        writer.Write(")");
-        
-        var implFlags = method.ImplAttributes;
-        
-        if ((implFlags & MethodImplAttributes.CodeTypeMask) == MethodImplAttributes.IL) writer.Write(" cil");
-        if ((implFlags & MethodImplAttributes.CodeTypeMask) == MethodImplAttributes.Native) writer.Write(" native");
-        if ((implFlags & MethodImplAttributes.CodeTypeMask) == MethodImplAttributes.Runtime) writer.Write(" runtime");
-        if ((implFlags & MethodImplAttributes.ManagedMask) == MethodImplAttributes.Managed) writer.Write(" managed");
-        if ((implFlags & MethodImplAttributes.ManagedMask) == MethodImplAttributes.Unmanaged) writer.Write(" unmanaged");
-        if ((implFlags & MethodImplAttributes.ForwardRef) != 0) writer.Write(" forwardref");
-        if ((implFlags & MethodImplAttributes.PreserveSig) != 0) writer.Write(" preservesig");
-        if ((implFlags & MethodImplAttributes.InternalCall) != 0) writer.Write(" internalcall");
-        if ((implFlags & MethodImplAttributes.Synchronized) != 0) writer.Write(" synchronized");
-        if ((implFlags & MethodImplAttributes.NoInlining) != 0) writer.Write(" noinlining");
-        if ((implFlags & MethodImplAttributes.NoOptimization) != 0) writer.Write(" nooptimization");
-        if ((implFlags & MethodImplAttributes.AggressiveInlining) != 0) writer.Write(" aggressiveinlining");
-        
-        writer.WriteLine();
-        writer.WriteLine($"{indent}{{");
-        
-        foreach (var attr in method.CustomAttributes)
-        {
-            writer.WriteLine($"{indent}    .custom {FormatCustomAttribute(attr)}");
-        }
-        
-        foreach (var param in method.ParamDefs)
-        {
-            if (param.HasCustomAttributes || param.HasConstant)
-            {
-                writer.WriteLine($"{indent}    .param [{param.Sequence}]");
-                foreach (var attr in param.CustomAttributes)
-                {
-                    writer.WriteLine($"{indent}        .custom {FormatCustomAttribute(attr)}");
-                }
-                if (param.HasConstant)
-                {
-                    writer.WriteLine($"{indent}        = {FormatConstant(param.Constant.Value, null)}");
-                }
-            }
-        }
-        
-        foreach (var ovr in method.Overrides)
-        {
-            writer.WriteLine($"{indent}    .override {FormatMethodRef(ovr.MethodDeclaration, 0)}");
-        }
-        
-        if (method.HasBody && method.Body != null)
-        {
-            var body = method.Body;
-            
-            writer.WriteLine($"{indent}    .maxstack {body.MaxStack}");
-            
-            if (body.HasVariables)
-            {
-                writer.Write($"{indent}    .locals ");
-                if (body.InitLocals) writer.Write("init ");
-                writer.WriteLine("(");
-                
-                for (int i = 0; i < body.Variables.Count; i++)
-                {
-                    var local = body.Variables[i];
-                    var comma = i < body.Variables.Count - 1 ? "," : "";
-                    var name = string.IsNullOrEmpty(local.Name) ? "" : $" {local.Name}";
-                    writer.WriteLine($"{indent}        [{i}] {FormatTypeSig(local.Type, 0)}{name}{comma}");
-                }
-                
-                writer.WriteLine($"{indent}    )");
-            }
-            
-            if (module != null && method == module.EntryPoint)
-            {
-                writer.WriteLine($"{indent}    .entrypoint");
-            }
-            
-            writer.WriteLine();
-            
-            // IL инструкции с улучшенными комментариями
-            foreach (var instr in body.Instructions)
-            {
-                var label = $"IL_{instr.Offset:X4}";
-                var operand = FormatOperand(instr);
-                
-                // Добавляем комментарии для ключевых инструкций
-                string comment = GetInstructionComment(instr);
-                
-                if (!string.IsNullOrEmpty(comment))
-                {
-                    writer.WriteLine($"{indent}    {label}: {instr.OpCode.Name,-12} {operand,-50} // {comment}");
-                }
-                else
-                {
-                    writer.WriteLine($"{indent}    {label}: {instr.OpCode.Name,-12} {operand}");
-                }
-            }
-            
-            if (body.HasExceptionHandlers)
-            {
-                writer.WriteLine();
-                foreach (var eh in body.ExceptionHandlers)
-                {
-                    writer.WriteLine($"{indent}    .try IL_{eh.TryStart?.Offset:X4} to IL_{eh.TryEnd?.Offset:X4}");
-                    
-                    switch (eh.HandlerType)
-                    {
-                        case ExceptionHandlerType.Catch:
-                            writer.WriteLine($"{indent}        catch {FormatTypeRef(eh.CatchType, 0)} handler IL_{eh.HandlerStart?.Offset:X4} to IL_{eh.HandlerEnd?.Offset:X4}");
-                            break;
-                        case ExceptionHandlerType.Finally:
-                            writer.WriteLine($"{indent}        finally handler IL_{eh.HandlerStart?.Offset:X4} to IL_{eh.HandlerEnd?.Offset:X4}");
-                            break;
-                        case ExceptionHandlerType.Fault:
-                            writer.WriteLine($"{indent}        fault handler IL_{eh.HandlerStart?.Offset:X4} to IL_{eh.HandlerEnd?.Offset:X4}");
-                            break;
-                        case ExceptionHandlerType.Filter:
-                            writer.WriteLine($"{indent}        filter IL_{eh.FilterStart?.Offset:X4} handler IL_{eh.HandlerStart?.Offset:X4} to IL_{eh.HandlerEnd?.Offset:X4}");
-                            break;
-                    }
-                }
-            }
-        }
-        else
-        {
-            writer.WriteLine($"{indent}    // No method body");
-        }
-        
-        writer.WriteLine($"{indent}}} // end of method {method.DeclaringType?.Name}::{method.Name}");
-        writer.WriteLine();
-    }
-    
-    // ==================== INSTRUCTION COMMENTS ====================
-    
-    static string GetInstructionComment(Instruction instr)
-    {
-        // Комментарии для async state machine
-        if (instr.Operand is IField field)
-        {
-            if (field.Name == "<>1__state")
-                return "load/store async state";
-            if (field.Name.Contains("<>t__builder"))
-                return "async builder";
-            if (field.Name.Contains("<>u__"))
-                return "awaiter";
-        }
-        
-        // Комментарии для вызовов
-        if (instr.Operand is IMethod method)
-        {
-            var methodName = method.Name;
-            
-            if (methodName == "GetAwaiter")
-                return "начало await";
-            if (methodName == "get_IsCompleted")
-                return "проверка завершения await";
-            if (methodName == "GetResult")
-                return "получение результата await";
-            if (methodName == "AwaitUnsafeOnCompleted" || methodName == "AwaitOnCompleted")
-                return "регистрация continuation";
-            if (methodName == "SetResult")
-                return "завершение async метода";
-            if (methodName == "SetException")
-                return "исключение в async методе";
-            if (methodName == "WriteLiteral")
-                return "вывод HTML";
-            if (methodName == "Write")
-                return "вывод значения";
-        }
-        
-        return "";
-    }
-    
-    // ==================== GENERIC CONSTRAINTS ====================
-    
-    static void WriteGenericParamConstraints(StreamWriter writer, GenericParam gp)
-    {
-        var constraints = new List<string>();
-        
-        if (gp.HasReferenceTypeConstraint) constraints.Add("class");
-        if (gp.HasNotNullableValueTypeConstraint) constraints.Add("valuetype");
-        if (gp.HasDefaultConstructorConstraint) constraints.Add(".ctor");
-        
-        foreach (var gc in gp.GenericParamConstraints)
-        {
-            constraints.Add($"({FormatTypeRef(gc.Constraint, 0)})");
-        }
-        
-        if (constraints.Count > 0)
-        {
-            writer.Write($"({string.Join(", ", constraints)}) ");
-        }
-    }
-    
-    // ==================== FORMATTING ====================
-    
-    static string FormatTypeSig(TypeSig? sig, int depth)
-    {
-        if (sig == null) return "void";
-        
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {sig.FullName}";
-        }
-        
-        return sig switch
-        {
-            CorLibTypeSig corLib => corLib.TypeDefOrRef.Name,
-            GenericInstSig genInst => FormatGenericInstSig(genInst, depth + 1),
-            ByRefSig byRef => $"{FormatTypeSig(byRef.Next, depth + 1)}&",
-            PtrSig ptr => $"{FormatTypeSig(ptr.Next, depth + 1)}*",
-            SZArraySig szArray => $"{FormatTypeSig(szArray.Next, depth + 1)}[]",
-            ArraySig array => FormatArraySig(array, depth + 1),
-            GenericVar genVar => $"!{genVar.Number}",
-            GenericMVar genMVar => $"!!{genMVar.Number}",
-            PinnedSig pinned => $"{FormatTypeSig(pinned.Next, depth + 1)} pinned",
-            CModReqdSig modReq => $"{FormatTypeSig(modReq.Next, depth + 1)} modreq({FormatTypeRef(modReq.Modifier, depth + 1)})",
-            CModOptSig modOpt => $"{FormatTypeSig(modOpt.Next, depth + 1)} modopt({FormatTypeRef(modOpt.Modifier, depth + 1)})",
-            ValueTypeSig valType => $"valuetype {valType.TypeDefOrRef?.FullName ?? "???"}",
-            ClassSig classSig => $"class {classSig.TypeDefOrRef?.FullName ?? "???"}",
-            FnPtrSig fnPtr => FormatFnPtrSig(fnPtr, depth + 1),
-            TypeDefOrRefSig typeDefOrRef => typeDefOrRef.TypeDefOrRef?.FullName ?? "???",
-            _ => sig.FullName
-        };
-    }
-    
-    static string FormatGenericInstSig(GenericInstSig genInst, int depth)
-    {
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {genInst.FullName}";
-        }
-        
-        var sb = new StringBuilder();
-        sb.Append(FormatTypeRef(genInst.GenericType?.TypeDefOrRef, depth));
-        sb.Append("<");
-        
-        for (int i = 0; i < genInst.GenericArguments.Count; i++)
-        {
-            if (i > 0) sb.Append(", ");
-            sb.Append(FormatTypeSig(genInst.GenericArguments[i], depth + 1));
-        }
-        
-        sb.Append(">");
-        return sb.ToString();
-    }
-    
-    static string FormatArraySig(ArraySig array, int depth)
-    {
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {array.FullName}";
-        }
-        
-        var sb = new StringBuilder();
-        sb.Append(FormatTypeSig(array.Next, depth + 1));
-        sb.Append("[");
-        
-        for (uint i = 0; i < array.Rank; i++)
-        {
-            if (i > 0) sb.Append(",");
-            
-            if (i < (uint)array.LowerBounds.Count || i < (uint)array.Sizes.Count)
-            {
-                int lower = i < (uint)array.LowerBounds.Count ? array.LowerBounds[(int)i] : 0;
-                uint size = i < (uint)array.Sizes.Count ? array.Sizes[(int)i] : 0;
-                
-                if (lower != 0 || size != 0)
-                {
-                    sb.Append(lower);
-                    sb.Append("...");
-                    if (size != 0)
-                        sb.Append(lower + (int)size - 1);
-                }
-            }
-        }
-        
-        sb.Append("]");
-        return sb.ToString();
-    }
-    
-    static string FormatFnPtrSig(FnPtrSig fnPtr, int depth)
-    {
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return "/* TOO DEEP */ method ...";
-        }
-        
-        var sb = new StringBuilder();
-        sb.Append("method ");
-        
-        var methodSig = fnPtr.MethodSig;
-        if (methodSig.HasThis) sb.Append("instance ");
-        
-        sb.Append(FormatTypeSig(methodSig.RetType, depth + 1));
-        sb.Append(" *(");
-        
-        for (int i = 0; i < methodSig.Params.Count; i++)
-        {
-            if (i > 0) sb.Append(", ");
-            sb.Append(FormatTypeSig(methodSig.Params[i], depth + 1));
-        }
-        
-        sb.Append(")");
-        return sb.ToString();
-    }
-    
-    static string FormatTypeRef(ITypeDefOrRef? type, int depth)
-    {
-        if (type == null) return "???";
-        
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {type.FullName}";
-        }
-        
-        if (type is TypeSpec ts && ts.TypeSig != null)
-        {
-            return FormatTypeSig(ts.TypeSig, depth + 1);
-        }
-        
-        return type.FullName;
-    }
-    
-    static string FormatMethodRef(IMethod? method, int depth)
-    {
-        if (method == null) return "???";
-        
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return $"/* TOO DEEP */ {method.FullName}";
-        }
-        
-        var sb = new StringBuilder();
-        
-        if (method.MethodSig?.HasThis == true)
-            sb.Append("instance ");
-        
-        sb.Append($"{FormatTypeSig(method.MethodSig?.RetType, depth + 1)} ");
-        sb.Append($"{FormatTypeRef(method.DeclaringType, depth + 1)}::{method.Name}");
-        
-        if (method is MethodSpec ms && ms.GenericInstMethodSig != null)
-        {
-            sb.Append("<");
-            for (int i = 0; i < ms.GenericInstMethodSig.GenericArguments.Count; i++)
-            {
-                if (i > 0) sb.Append(", ");
-                sb.Append(FormatTypeSig(ms.GenericInstMethodSig.GenericArguments[i], depth + 1));
-            }
-            sb.Append(">");
-        }
-        
-        sb.Append("(");
-        var paramTypes = method.MethodSig?.Params;
-        if (paramTypes != null)
-        {
-            for (int i = 0; i < paramTypes.Count; i++)
-            {
-                if (i > 0) sb.Append(", ");
-                sb.Append(FormatTypeSig(paramTypes[i], depth + 1));
-            }
-        }
-        sb.Append(")");
-        
-        return sb.ToString();
-    }
-    
-    static string FormatOperand(Instruction instr)
-    {
-        if (instr.Operand == null) return "";
-        
-        return instr.Operand switch
-        {
-            Instruction target => $"IL_{target.Offset:X4}",
-            Instruction[] targets => "(" + string.Join(", ", targets.Select(t => $"IL_{t.Offset:X4}")) + ")",
-            string s => $"\"{EscapeString(s)}\"",
-            int i => i.ToString(),
-            long l => l.ToString(),
-            float f => $"{f:R}",
-            double d => $"{d:R}",
-            sbyte sb => sb.ToString(),
-            byte b => b.ToString(),
-            IField field => FormatFieldRef(field),
-            IMethod method => FormatMethodRef(method, 0),
-            ITypeDefOrRef type => FormatTypeRef(type, 0),
-            Local local => $"V_{local.Index}",
-            Parameter param => $"A_{param.Index}",
-            MethodSig msig => FormatMethodSig(msig),
-            _ => instr.Operand.ToString() ?? ""
-        };
-    }
-    
-    static string FormatFieldRef(IField? field)
-    {
-        if (field == null) return "???";
-        return $"{FormatTypeSig(field.FieldSig?.Type, 0)} {FormatTypeRef(field.DeclaringType, 0)}::{field.Name}";
-    }
-    
-    static string FormatMethodSig(MethodSig sig)
-    {
-        var sb = new StringBuilder();
-        if (sig.HasThis) sb.Append("instance ");
-        sb.Append(FormatTypeSig(sig.RetType, 0));
-        sb.Append(" *(");
-        
-        for (int i = 0; i < sig.Params.Count; i++)
-        {
-            if (i > 0) sb.Append(", ");
-            sb.Append(FormatTypeSig(sig.Params[i], 0));
-        }
-        
-        sb.Append(")");
-        return sb.ToString();
-    }
-    
-    static string FormatCustomAttribute(CustomAttribute attr)
-    {
-        var sb = new StringBuilder();
-        sb.Append($"instance void {attr.Constructor?.DeclaringType?.FullName ?? "???"}::.ctor(");
-        
-        if (attr.Constructor?.MethodSig?.Params != null)
-        {
-            for (int i = 0; i < attr.Constructor.MethodSig.Params.Count; i++)
-            {
-                if (i > 0) sb.Append(", ");
-                sb.Append(FormatTypeSig(attr.Constructor.MethodSig.Params[i], 0));
-            }
-        }
-        
-        sb.Append(")");
-        
-        if (attr.HasConstructorArguments || attr.HasNamedArguments)
-        {
-            sb.Append(" = { ");
-            
-            var parts = new List<string>();
-            
-            foreach (var arg in attr.ConstructorArguments)
-            {
-                parts.Add(FormatCAArgument(arg, 0));
-            }
-            
-            foreach (var arg in attr.NamedArguments)
-            {
-                var prefix = arg.IsField ? "field" : "property";
-                parts.Add($"{prefix} {FormatTypeSig(arg.Type, 0)} {arg.Name} = {FormatCAArgument(arg.Argument, 0)}");
-            }
-            
-            sb.Append(string.Join(", ", parts));
-            sb.Append(" }");
-        }
-        
-        return sb.ToString();
-    }
-    
-    static string FormatCAArgument(CAArgument arg, int depth)
-    {
-        if (arg.Value == null) return "nullref";
-        
-        if (depth > MAX_GENERIC_DEPTH)
-        {
-            return "/* TOO DEEP */";
-        }
-        
-        return arg.Value switch
-        {
-            string s => $"\"{EscapeString(s)}\"",
-            bool b => b ? "true" : "false",
-            UTF8String u => $"\"{EscapeString(u.String)}\"",
-            TypeSig t => $"typeof({FormatTypeSig(t, depth + 1)})",
-            IList<CAArgument> list => "{" + string.Join(", ", list.Select(a => FormatCAArgument(a, depth + 1))) + "}",
-            CAArgument nested => FormatCAArgument(nested, depth + 1),
-            _ => arg.Value.ToString() ?? "null"
-        };
-    }
-    
-    static string FormatConstant(object? value, TypeSig? type)
-    {
-        if (value == null) return "nullref";
-        
-        return value switch
-        {
-            string s => $"\"{EscapeString(s)}\"",
-            char c => $"char(0x{(int)c:X4})",
-            bool b => b ? "bool(true)" : "bool(false)",
-            float f => $"float32({f:R})",
-            double d => $"float64({d:R})",
-            sbyte sb => $"int8({sb})",
-            byte b => $"uint8({b})",
-            short sh => $"int16({sh})",
-            ushort us => $"uint16({us})",
-            int i => $"int32({i})",
-            uint u => $"uint32({u})",
-            long l => $"int64({l})",
-            ulong ul => $"uint64({ul})",
-            byte[] bytes => "(" + BitConverter.ToString(bytes).Replace("-", " ") + ")",
-            _ => value.ToString() ?? "null"
-        };
-    }
-    
-    static string EscapeString(string s)
-    {
-        var sb = new StringBuilder();
-        foreach (var c in s)
-        {
-            switch (c)
-            {
-                case '\\': sb.Append("\\\\"); break;
-                case '"': sb.Append("\\\""); break;
-                case '\n': sb.Append("\\n"); break;
-                case '\r': sb.Append("\\r"); break;
-                case '\t': sb.Append("\\t"); break;
-                case '\0': sb.Append("\\0"); break;
-                default:
-                    if (c < 32 || c > 126)
-                        sb.Append($"\\u{(int)c:X4}");
-                    else
-                        sb.Append(c);
-                    break;
-            }
-        }
-        return sb.ToString();
-    }
-    
-    static string SanitizeName(string name)
-    {
-        var invalid = Path.GetInvalidFileNameChars();
-        foreach (var c in invalid)
-            name = name.Replace(c, '_');
-        
-        name = name.Replace('<', '_').Replace('>', '_').Replace('`', '_');
-        
-        return name;
+    # Robots.txt
+    location = /robots.txt {
+        log_not_found off;
+        access_log off;
     }
 }
+
+# Проверяем конфигурацию
+sudo nginx -t
+
+# Если всё OK, перезапускаем
+sudo systemctl restart nginx
+
+# Проверяем статус
+sudo systemctl status nginx
+================
+cd /var/www
+
+# Меняем URL на новый домен с HTTPS
+sudo -u nginx wp option update home 'https://ea.ty.ea' --allow-root
+sudo -u nginx wp option update siteurl 'https://ea.ty.ea' --allow-root
+
+# Проверяем
+sudo -u nginx wp option get home --allow-root
+sudo -u nginx wp option get siteurl --allow-root
+==================
+sudo nano /var/www/wp-config.php
+
+/** SSL и HTTPS настройки */
+define('FORCE_SSL_ADMIN', true);
+define('FORCE_SSL_LOGIN', true);
+
+// Определяем HTTPS
+if (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+    $_SERVER['HTTPS'] = 'on';
+}
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    $_SERVER['HTTPS'] = 'on';
+}
+if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443) {
+    $_SERVER['HTTPS'] = 'on';
+}
+
+// Новый домен
+define('WP_HOME', 'https://ea.ty.ea');
+define('WP_SITEURL', 'https://ea.ty.ea');
+==================
+cd /var/www
+
+# Заменяем старые URL на новые (если были другие)
+sudo -u nginx wp search-replace 'http://10.13.20.51' 'https://ea.ty.ea' --allow-root
+
+# Заменяем HTTP на HTTPS
+sudo -u nginx wp search-replace 'http://ea.ty.ea' 'https://ea.ty.ea' --allow-root
+
+# Очищаем кэш
+sudo -u nginx wp cache flush --allow-root 2>/dev/null || true
+==================
+# Удаляем кэши WordPress
+sudo rm -rf /var/www/wp-content/cache/*
+sudo rm -rf /var/www/wp-content/uploads/elementor/css/*
+
+# Перезапускаем PHP-FPM
+sudo systemctl restart php-fpm
+======================
+# Проверяем HTTP (должен редиректить на HTTPS)
+curl -I http://ea.ty.ea
+
+# Проверяем HTTPS
+curl -I https://ea.ty.ea
+
+# Если сертификат от корпоративного CA и curl не доверяет ему
+curl -Ik https://ea.ty.ea
+
+# Проверяем SSL подробно
+openssl s_client -connect ea.ty.ea:443 -servername ea.ty.ea < /dev/null 2>/dev/null | openssl x509 -noout -subject -dates

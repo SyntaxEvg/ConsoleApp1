@@ -295,3 +295,15 @@ SELECT option_name, option_value FROM wp_options WHERE option_name = 'elementor_
 
 -- Выходим
 EXIT;
+
+cd /var/www && sudo -u nginx /usr/local/bin/wp  elementor --allow-root
+usage: wp elementor experiments <command>
+   or: wp elementor flush_css
+   or: wp elementor import_library
+   or: wp elementor kit <command>
+   or: wp elementor library <command>
+   or: wp elementor replace_urls
+   or: wp elementor sync_library
+   or: wp elementor system_info
+   or: wp elementor update <command>
+

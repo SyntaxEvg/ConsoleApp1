@@ -281,3 +281,18 @@ Error: 'regenerate-css' is not a registered subcommand of 'elementor'. See 'wp h
 cd /var/www && sudo -u nginx /usr/local/bin/wp elementor sync-library --allow-root
 Error: Cannot sync library.
 
+# Сбрасываем кэш Elementor в базе данных
+mysql -u uka_user -pdfvr4vre uka_site << 'EOF'
+-- Удаляем метаданные CSS кэша
+DELETE FROM wp_postmeta WHERE meta_key LIKE '_elementor_css%';
+
+-- Обновляем версию Elementor (триггерит регенерацию)
+UPDATE wp_options 
+SET option_value = CONCAT(option_value, '.1') 
+WHERE option_name = 'elementor_version';
+
+-- Проверяем
+SELECT option_name, option_value FROM wp_options WHERE option_name = 'elementor_version';
+EOF
+
+echo "✅ Кэш Elementor сброшен в БД"

@@ -1,1 +1,16 @@
-Warning: The magic method Preloader_Plus\Preloader_Plus::__wakeup() must have public visibility in /var/www/wp-content/plugins/inc/preloader-plus.php on line 94
+sudo -u nginx /usr/local/bin/wp plugin status
+16 installed plugins:
+  A ajax-search-lite               4.13.4
+  A elementor                      3.33.0
+  A go-live-update-urls            7.0.6
+  A image-hover-effects            5.6
+  A one-click-demo-import          3.4.0
+  A ooohboi-steroids-for-elementor 2.1.23
+  A preloader-plus                 2.2.1
+  A redux-framework                4.5.8
+  A rs-addon                       1.0.4
+  A rs-framework                   1.0.1
+  A tablepress                     3.2.5
+  A header-footer-elementor        2.7.0
+  A wp-mail-smtp                   4.7.0
+  A security-safe                  2.6.6

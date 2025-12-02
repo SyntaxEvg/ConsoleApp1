@@ -1,5 +1,1 @@
-Fatal error: Multiple access type modifiers are not allowed in /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php on line 59
-
-Warning: Trying to access array offset on value of type bool in /var/www/wp-includes/class-wp-recovery-mode-email-service.php on line 367
-
-Warning: Trying to access array offset on value of type bool in /var/www/wp-includes/class-wp-recovery-mode-email-service.php on line 368
+Warning: The magic method Preloader_Plus\Preloader_Plus::__wakeup() must have public visibility in /var/www/wp-content/plugins/inc/preloader-plus.php on line 94

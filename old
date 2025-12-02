@@ -1,23 +1,4 @@
-GET https://test.eaportal.nornik.ru/wp-content/themes/bizup/assets/css/admin-style.css?ver=20251202133 net::ERR_ABORTED 404 (Not Found)
-8Tracking Prevention blocked access to storage for <URL>.
-load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2  jQuery.Deferred exception: $(...).accordion(...).sortable is not a function TypeError: $(...).accordion(...).sortable is not a function
-    at create_accordian (https://test.eaportal.nornik.ru/wp-content/plugins/image-hover-effects/admin/admin.js?ver=20251202133:137:14)
-    at HTMLDocument.<anonymous> (https://test.eaportal.nornik.ru/wp-content/plugins/image-hover-effects/admin/admin.js?ver=20251202133:147:5)
-    at e (https://test.eaportal.nornik.ru/wp-admin/load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2:27028)
-    at t (https://test.eaportal.nornik.ru/wp-admin/load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2:27330) undefined
-ce.Deferred.exceptionHook @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-t @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-setTimeout
-(anonymous) @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-c @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-fireWith @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-fire @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-c @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-fireWith @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-ready @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-P @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
-load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2  Uncaught TypeError: $(...).accordion(...).sortable is not a function
-    at create_accordian (admin.js?ver=20251202133:137:14)
-    at HTMLDocument.<anonymous> (admin.js?ver=20251202133:147:5)
-    at e (load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2:27028)
-    at t (load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2:27330)
+# Ищем HTTP ссылки в базе данных
+mysql -u uka_user -pdfvr4vre uka_site -e "SELECT COUNT(*) FROM wp_options WHERE option_value LIKE '%http://test.eaportal.nornik.ru%';" -s -N
+
+# Если больше 0, нужно заменить

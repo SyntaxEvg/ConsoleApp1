@@ -1,1 +1,16 @@
-🔍 FUNCTION: plugins_api CALL STACK: #0 plugins_api() in wp-content/plugins/header-footer-elementor/inc/widgets-manager/base/hfe-helper.php:446 #1 HFE\WidgetsManager\Base\HFE_Helper::get_rollback_versions() in wp-content/plugins/header-footer-elementor/inc/widgets-manager/base/hfe-helper.php:408 #2 HFE\WidgetsManager\Base\HFE_Helper::get_rollback_versions_options() in wp-content/plugins/header-footer-elementor/inc/class-hfe-settings-page.php:352 #3 HFE\Themes\HFE_Settings_Page::enqueue_admin_scripts() in wp-includes/class-wp-hook.php:324 #4 WP_Hook::apply_filters() in wp-includes/class-wp-hook.php:348 #5 WP_Hook::do_action() in wp-includes/plugin.php:517 #6 do_action() in wp-admin/admin-header.php:123 #7 require_once() in wp-admin/admin.php:240
+sudo nano /var/www/wp-content/plugins/header-footer-elementor/inc/widgets-manager/base/hfe-helper.php
+
+public static function get_rollback_versions() {
+    $rollback_versions = get_transient( self::TRANSIENT_KEY );
+
+    if ( false === $rollback_versions ) {
+        $max_versions = 30;
+
+        require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
+
+        $plugin_information = plugins_api(   // <-- ЭТА СТРОКА 446 ВЫЗЫВАЕТ ОШИБКУ
+Замените всю функцию на:
+phppublic static function get_rollback_versions() {
+    // Отключено для корпоративной среды без доступа к WordPress.org
+    return [];
+}

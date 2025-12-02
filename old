@@ -1,224 +1,29 @@
-server {
-    listen 80;
-    server_name ea.ty.ea 10.13.20.51;
-    
-    # Редирект на HTTPS
-    return 301 https://ea.ty.ea$request_uri;
-}
+# Сохраняем новый конфиг
+sudo nano /etc/nginx/conf.d/wordpress-ssl.conf
+# Вставьте конфиг выше, сохраните (Ctrl+O, Enter, Ctrl+X)
 
-server {
-    listen 443 ssl;
-    http2 on;
-    server_name ea.ty.ea 10.13.20.51;
+# Проверяем синтаксис
+sudo nginx -t
 
-    root /var/www;
-    index index.php index.html index.htm;
-    
-    # SSL сертификаты
-    ssl_certificate /etc/nginx/ssl/ea.ty.ea.crt;
-    ssl_certificate_key /etc/nginx/ssl/ea.ty.ea.key;
-    
-    # Современные SSL настройки
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
-    
-    # SSL сессии
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 1d;
-    ssl_session_tickets off;
-    
-    # OCSP Stapling (если CA поддерживает)
-    # ssl_stapling on;
-    # ssl_stapling_verify on;
-    # ssl_trusted_certificate /etc/nginx/ssl/ca-bundle-ea.ty.ea.crt;
-    
-    # Логи
-    access_log /var/log/nginx/wordpress_access.log combined buffer=32k flush=5m;
-    error_log /var/log/nginx/wordpress_error.log warn;
-    
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    
-    # Hide nginx version
-    server_tokens off;
-    
-    # Upload size limit
-    client_max_body_size 164M;
-    client_body_buffer_size 128k;
-    
-    # Условия пропуска кеша
-    set $skip_cache 0;
-    
-    # POST requests и URL с query strings не кешируем
-    if ($request_method = POST) {
-        set $skip_cache 1;
-    }
-    
-    if ($query_string != "") {
-        set $skip_cache 1;
-    }
-    
-    # Не кешируем админку, RSS, sitemap
-    if ($request_uri ~* "/wp-admin/|/xmlrpc.php|wp-.*.php|/feed/|index.php|sitemap(_index)?.xml") {
-        set $skip_cache 1;
-    }
-    
-    # НОВОЕ: Не кешируем Elementor endpoints
-    if ($request_uri ~* "/wp-json/elementor/|/elementor/|elementor-preview") {
-        set $skip_cache 1;
-    }
-    
-    # Не кешируем для залогиненных пользователей и комментаторов
-    if ($http_cookie ~* "comment_author|wordpress_[a-f0-9]+|wp-postpass|wordpress_no_cache|wordpress_logged_in") {
-        set $skip_cache 1;
-    }
-    
-    # Для клоакинга - не кешируем если есть твои custom cookies
-    if ($http_cookie ~* "bot_check|user_verified") {
-        set $skip_cache 1;
-    }
-    
-    # Root location
-    location / {
-        try_files $uri $uri/ /index.php$is_args$args;
-        limit_req zone=general burst=20 nodelay;
-    }
-    
-    # Блокировка доступа к скрытым файлам
-    location ~ /\. {
-        deny all;
-        access_log off;
-        log_not_found off;
-    }
-    
-    # Блокировка доступа к важным файлам
-    location ~* /(?:wp-config\.php|readme\.html|license\.txt) {
-        deny all;
-    }
-    
-    location = /wp-login.php {
-        limit_req zone=login burst=2 nodelay;
-        
-        fastcgi_pass unix:/run/php-fpm/www.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        
-        fastcgi_buffer_size 128k;
-        fastcgi_buffers 256 16k;
-        fastcgi_busy_buffers_size 256k;
-        fastcgi_temp_file_write_size 256k;
-        fastcgi_read_timeout 300;
-    }
-    
-    location = /xmlrpc.php {
-        limit_req zone=xmlrpc burst=1 nodelay;
-        
-        fastcgi_pass unix:/run/php-fpm/www.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-    
-    # Статические файлы с длительным кешированием
-    location ~* \.(jpg|jpeg|png|gif|ico|webp)$ {
-        expires 365d;
-        add_header Cache-Control "public, immutable";
-        add_header Vary "Accept-Encoding";
-        access_log off;
-        log_not_found off;
-    }
-    
-    location ~* \.(css|js)$ {
-        expires 30d;
-        add_header Cache-Control "public, must-revalidate";
-        add_header Vary "Accept-Encoding";
-        access_log off;
-    }
-    
-    location ~* \.(svg|woff|woff2|ttf|eot|otf)$ {
-        expires 365d;
-        add_header Cache-Control "public, immutable";
-        access_log off;
-        log_not_found off;
-    }
-    
-    location ~* \.(pdf|doc|docx|xls|xlsx)$ {
-        expires 30d;
-        add_header Cache-Control "public, must-revalidate";
-    }
-    
-    # PHP файлы с FastCGI cache
-    location ~ \.php$ {
-        try_files $uri =404;
-        
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        fastcgi_pass unix:/run/php-fpm/www.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-        fastcgi_param HTTPS on;
-        
-        # FastCGI оптимизация
-        fastcgi_buffer_size 128k;
-        fastcgi_buffers 256 16k;
-        fastcgi_busy_buffers_size 256k;
-        fastcgi_temp_file_write_size 256k;
-        fastcgi_read_timeout 300;
-        fastcgi_connect_timeout 60;
-        fastcgi_send_timeout 180;
-        
-        # FastCGI cache
-        fastcgi_cache WORDPRESS;
-        fastcgi_cache_valid 200 301 302 60m;
-        fastcgi_cache_valid 404 10m;
-        fastcgi_cache_bypass $skip_cache;
-        fastcgi_no_cache $skip_cache;
-        fastcgi_cache_use_stale error timeout updating invalid_header http_500 http_503;
-        fastcgi_cache_background_update on;
-        fastcgi_cache_lock on;
-        
-        # Добавляем header для отладки кеша
-        add_header X-FastCGI-Cache $upstream_cache_status;
-    }
-    
-    # Блокировка выполнения PHP в uploads
-    location ~* /(?:uploads|files)/.*\.php$ {
-        deny all;
-    }
-    
-    # Оптимизация для WP REST API
-    location ~ ^/wp-json/ {
-        try_files $uri $uri/ /index.php?$args;
-        limit_req zone=general burst=10 nodelay;
-    }
-    
-    # robots.txt
-    location = /robots.txt {
-        allow all;
-        log_not_found off;
-        access_log off;
-    }
-    
-    # favicon
-    location = /favicon.ico {
-        log_not_found off;
-        access_log off;
-        expires 30d;
-    }
-}
+# Если OK, применяем
+sudo systemctl reload nginx
 
-# Отдельный server block для очистки кеша (опционально)
-#server {
-#    listen 127.0.0.1:8080;
-#    server_name localhost;
-    
-#    location /purge_cache {
-#       fastcgi_cache_purge WORDPRESS "$scheme$request_method$host$request_uri";
-#        access_log off;
-#    }
-#}
+# Очищаем кэш
+sudo rm -rf /var/cache/nginx/wordpress/*
+sudo systemctl restart nginx
+
+# Регенерируем CSS Elementor
+cd /var/www
+sudo -u nginx wp elementor flush_css --allow-root
+
+# Перезапускаем PHP-FPM
+sudo systemctl restart php-fpm
+
+# Триггерим создание CSS
+curl -sk https://ea.ty.ea > /dev/null
+sleep 2
+
+# Проверяем
+ls -la /var/www/wp-content/uploads/elementor/css/
+
+echo "✅ Конфиг обновлён! Откройте https://ea.ty.ea"

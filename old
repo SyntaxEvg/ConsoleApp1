@@ -1,16 +1,2 @@
-sudo nano /var/www/wp-content/plugins/header-footer-elementor/inc/widgets-manager/base/hfe-helper.php
-
-public static function get_rollback_versions() {
-    $rollback_versions = get_transient( self::TRANSIENT_KEY );
-
-    if ( false === $rollback_versions ) {
-        $max_versions = 30;
-
-        require_once ABSPATH . 'wp-admin/includes/plugin-install.php';
-
-        $plugin_information = plugins_api(   // <-- ЭТА СТРОКА 446 ВЫЗЫВАЕТ ОШИБКУ
-Замените всю функцию на:
-phppublic static function get_rollback_versions() {
-    // Отключено для корпоративной среды без доступа к WordPress.org
-    return [];
-}
+Severity	Code	Description	Project	File	Line	Suppression State
+Error (active)	CS0246	The type or namespace name 'ClientInputViewModel' could not be found (are you missing a using directive or an assembly reference?)	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS-CSHTML no job\Areas\Admin\Views\Client\Edit.cshtml	40	

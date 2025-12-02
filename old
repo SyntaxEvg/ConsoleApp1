@@ -1,3 +1,10 @@
+# Исправляем preloader-plus
+sudo sed -i '94s/function __wakeup/public function __wakeup/' /var/www/wp-content/plugins/preloader-plus/inc/preloader-plus.php
 
-Warning: The magic method Preloader_Plus\Preloader_Plus::__wakeup() must have public visibility in /var/www/wp-content/plugins/inc/preloader-plus.php on line 94
-Warning: The magic method Preloader_Plus_Pro\Preloader_Plus_Pro::__wakeup() must have public visibility in /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php on line 59
+# Исправляем preloader-plus-pro
+sudo sed -i '59s/function __wakeup/public function __wakeup/' /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php
+
+# Перезапускаем PHP-FPM
+sudo systemctl restart php-fpm
+
+echo "✅ Магические методы исправлены!"

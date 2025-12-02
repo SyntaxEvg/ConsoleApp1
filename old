@@ -1,16 +1,57 @@
-sudo -u nginx /usr/local/bin/wp plugin status
-16 installed plugins:
-  A ajax-search-lite               4.13.4
-  A elementor                      3.33.0
-  A go-live-update-urls            7.0.6
-  A image-hover-effects            5.6
-  A one-click-demo-import          3.4.0
-  A ooohboi-steroids-for-elementor 2.1.23
-  A preloader-plus                 2.2.1
-  A redux-framework                4.5.8
-  A rs-addon                       1.0.4
-  A rs-framework                   1.0.1
-  A tablepress                     3.2.5
-  A header-footer-elementor        2.7.0
-  A wp-mail-smtp                   4.7.0
-  A security-safe                  2.6.6
+#!/bin/bash
+
+echo "=== Исправление header-footer-elementor ==="
+
+cd /var/www
+
+# 1. Проверка зависимости
+echo "1. Проверяю Elementor (зависимость)..."
+if ! sudo -u nginx wp plugin is-active elementor --allow-root 2>/dev/null; then
+    echo "⚠️  Elementor не активен! Активирую..."
+    sudo -u nginx wp plugin activate elementor --allow-root
+fi
+
+# 2. Очистка всех кэшей
+echo "2. Очищаю кэши..."
+sudo rm -rf /var/cache/nginx/wordpress/*
+sudo rm -rf /var/www/wp-content/cache/*
+sudo -u nginx wp cache flush --allow-root 2>/dev/null || true
+sudo -u nginx wp transient delete --all --allow-root 2>/dev/null || true
+
+# Удаляем кэш меню
+mysql -u uka_user -pdfvr4vre uka_site -e "DELETE FROM wp_options WHERE option_name LIKE '%_transient_%';" 2>/dev/null
+mysql -u uka_user -pdfvr4vre uka_site -e "DELETE FROM wp_usermeta WHERE meta_key LIKE '%meta-box%';" 2>/dev/null
+
+# 3. Права
+echo "3. Исправляю права..."
+sudo chown -R nginx:nginx /var/www/wp-content/plugins/
+sudo find /var/www/wp-content/plugins/header-footer-elementor -type d -exec chmod 755 {} \; 2>/dev/null
+sudo find /var/www/wp-content/plugins/header-footer-elementor -type f -exec chmod 644 {} \; 2>/dev/null
+
+# 4. Реактивация
+echo "4. Реактивирую плагин..."
+sudo -u nginx wp plugin deactivate header-footer-elementor --allow-root 2>/dev/null
+sleep 2
+sudo -u nginx wp plugin activate header-footer-elementor --allow-root
+
+# 5. Перезапуск
+echo "5. Перезапускаю сервисы..."
+sudo systemctl restart php-fpm nginx
+
+# 6. Проверка
+echo ""
+echo "========================================="
+echo "Результат:"
+echo "========================================="
+echo ""
+sudo -u nginx wp plugin list --allow-root --fields=name,status,version | grep -E "elementor|header-footer"
+
+echo ""
+echo "✅ Готово!"
+echo ""
+echo "Откройте админку в режиме ИНКОГНИТО:"
+echo "https://ea.ty.ea/wp-admin/plugins.php"
+echo ""
+echo "Если не помогло, включите отладку:"
+echo "sudo nano /var/www/wp-config.php"
+echo "define('WP_DEBUG', true);"

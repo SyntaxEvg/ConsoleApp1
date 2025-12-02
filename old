@@ -1,10 +1,5 @@
-# Исправляем preloader-plus
-sudo sed -i '94s/function __wakeup/public function __wakeup/' /var/www/wp-content/plugins/preloader-plus/inc/preloader-plus.php
+Fatal error: Multiple access type modifiers are not allowed in /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php on line 59
 
-# Исправляем preloader-plus-pro
-sudo sed -i '59s/function __wakeup/public function __wakeup/' /var/www/wp-content/plugins/preloader-plus-pro/inc/preloader-plus-pro.php
+Warning: Trying to access array offset on value of type bool in /var/www/wp-includes/class-wp-recovery-mode-email-service.php on line 367
 
-# Перезапускаем PHP-FPM
-sudo systemctl restart php-fpm
-
-echo "✅ Магические методы исправлены!"
+Warning: Trying to access array offset on value of type bool in /var/www/wp-includes/class-wp-recovery-mode-email-service.php on line 368

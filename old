@@ -1,2 +1,8 @@
 Severity	Code	Description	Project	File	Line	Suppression State
-Error (active)	CS0246	The type or namespace name 'ClientInputViewModel' could not be found (are you missing a using directive or an assembly reference?)	HAS.Modules.UAS	C:\DotnetFolder\source\HAS.Modules.UAS-master\HAS.Modules.UAS-CSHTML no job\Areas\Admin\Views\Client\Edit.cshtml	40	
+Error (active)	CS1963	An expression tree may not contain a dynamic operation	HAS.Modules.UAS	 Edit.cshtml	20	
+Error (active)	CS1963	An expression tree may not contain a dynamic operation	HAS.Modules.UAS	 Edit.cshtml	7	
+Error (active)	CS1963	An expression tree may not contain a dynamic operation	HAS.Modules.UAS	 Edit.cshtml	10	
+Error (active)	CS1963	An expression tree may not contain a dynamic operation	HAS.Modules.UAS	 Edit.cshtml	13	
+Error (active)	CS1963	An expression tree may not contain a dynamic operation	HAS.Modules.UAS	 Edit.cshtml	30	
+Error (active)	CS1963	An expression tree may not contain a dynamic operation	HAS.Modules.UAS	 Edit.cshtml	33	
+Error (active)	CS1963	An expression tree may not contain a dynamic operation	HAS.Modules.UAS	 Edit.cshtml	36	

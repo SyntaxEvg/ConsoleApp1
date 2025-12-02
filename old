@@ -1,45 +1,23 @@
-# Создаём новый файл с правильным форматом
-cat > scriptchangeplug.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Исправление header-footer-elementor ==="
-
-cd /var/www
-
-echo "1. Проверяю Elementor (зависимость)..."
-if ! sudo -u nginx wp plugin is-active elementor --allow-root 2>/dev/null; then
-    echo "Elementor не активен! Активирую..."
-    sudo -u nginx wp plugin activate elementor --allow-root
-fi
-
-echo "2. Очищаю кэши..."
-sudo rm -rf /var/cache/nginx/wordpress/*
-sudo rm -rf /var/www/wp-content/cache/*
-sudo -u nginx wp cache flush --allow-root 2>/dev/null || true
-sudo -u nginx wp transient delete --all --allow-root 2>/dev/null || true
-
-mysql -u uka_user -pdfvr4vre uka_site -e "DELETE FROM wp_options WHERE option_name LIKE '%_transient_%';" 2>/dev/null
-mysql -u uka_user -pdfvr4vre uka_site -e "DELETE FROM wp_usermeta WHERE meta_key LIKE '%meta-box%';" 2>/dev/null
-
-echo "3. Исправляю права..."
-sudo chown -R nginx:nginx /var/www/wp-content/plugins/
-sudo find /var/www/wp-content/plugins/header-footer-elementor -type d -exec chmod 755 {} \; 2>/dev/null
-sudo find /var/www/wp-content/plugins/header-footer-elementor -type f -exec chmod 644 {} \; 2>/dev/null
-
-echo "4. Реактивирую плагин..."
-sudo -u nginx wp plugin deactivate header-footer-elementor --allow-root 2>/dev/null
-sleep 2
-sudo -u nginx wp plugin activate header-footer-elementor --allow-root
-
-echo "5. Перезапускаю сервисы..."
-sudo systemctl restart php-fpm nginx
-
-echo ""
-echo "========================================="
-echo "Результат:"
-echo "========================================="
-sudo -u nginx wp plugin list --allow-root --fields=name,status,version | grep -E "elementor|header-footer"
-EOF
-
-# Делаем исполняемым
-chmod +x scriptchangeplug.sh
+GET https://test.eaportal.nornik.ru/wp-content/themes/bizup/assets/css/admin-style.css?ver=20251202133 net::ERR_ABORTED 404 (Not Found)
+8Tracking Prevention blocked access to storage for <URL>.
+load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2  jQuery.Deferred exception: $(...).accordion(...).sortable is not a function TypeError: $(...).accordion(...).sortable is not a function
+    at create_accordian (https://test.eaportal.nornik.ru/wp-content/plugins/image-hover-effects/admin/admin.js?ver=20251202133:137:14)
+    at HTMLDocument.<anonymous> (https://test.eaportal.nornik.ru/wp-content/plugins/image-hover-effects/admin/admin.js?ver=20251202133:147:5)
+    at e (https://test.eaportal.nornik.ru/wp-admin/load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2:27028)
+    at t (https://test.eaportal.nornik.ru/wp-admin/load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2:27330) undefined
+ce.Deferred.exceptionHook @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+t @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+setTimeout
+(anonymous) @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+c @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+fireWith @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+fire @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+c @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+fireWith @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+ready @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+P @ load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2
+load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2  Uncaught TypeError: $(...).accordion(...).sortable is not a function
+    at create_accordian (admin.js?ver=20251202133:137:14)
+    at HTMLDocument.<anonymous> (admin.js?ver=20251202133:147:5)
+    at e (load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2:27028)
+    at t (load-scripts.php?c=1&load%5Bchunk_0%5D=jquery-core,jquery-migrate,utils&ver=6.8.3:2:27330)

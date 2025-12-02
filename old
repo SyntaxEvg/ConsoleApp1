@@ -1,6 +1,45 @@
+# Создаём новый файл с правильным форматом
+cat > scriptchangeplug.sh << 'EOF'
+#!/bin/bash
 
-scriptchangeplug.sh: строка 2: $'\r': команда не найдена
-=== ▒▒▒▒▒▒▒▒▒▒▒ header-footer-elementor ===
-scriptchangeplug.sh: строка 4: $'\r': команда не найдена
-scriptchangeplug.sh: строка 5: cd: $'/var/www\r': Нет такого файла или каталога
-scriptchangeplug.sh: строка 6: $'\r': команда не найдена
+echo "=== Исправление header-footer-elementor ==="
+
+cd /var/www
+
+echo "1. Проверяю Elementor (зависимость)..."
+if ! sudo -u nginx wp plugin is-active elementor --allow-root 2>/dev/null; then
+    echo "Elementor не активен! Активирую..."
+    sudo -u nginx wp plugin activate elementor --allow-root
+fi
+
+echo "2. Очищаю кэши..."
+sudo rm -rf /var/cache/nginx/wordpress/*
+sudo rm -rf /var/www/wp-content/cache/*
+sudo -u nginx wp cache flush --allow-root 2>/dev/null || true
+sudo -u nginx wp transient delete --all --allow-root 2>/dev/null || true
+
+mysql -u uka_user -pdfvr4vre uka_site -e "DELETE FROM wp_options WHERE option_name LIKE '%_transient_%';" 2>/dev/null
+mysql -u uka_user -pdfvr4vre uka_site -e "DELETE FROM wp_usermeta WHERE meta_key LIKE '%meta-box%';" 2>/dev/null
+
+echo "3. Исправляю права..."
+sudo chown -R nginx:nginx /var/www/wp-content/plugins/
+sudo find /var/www/wp-content/plugins/header-footer-elementor -type d -exec chmod 755 {} \; 2>/dev/null
+sudo find /var/www/wp-content/plugins/header-footer-elementor -type f -exec chmod 644 {} \; 2>/dev/null
+
+echo "4. Реактивирую плагин..."
+sudo -u nginx wp plugin deactivate header-footer-elementor --allow-root 2>/dev/null
+sleep 2
+sudo -u nginx wp plugin activate header-footer-elementor --allow-root
+
+echo "5. Перезапускаю сервисы..."
+sudo systemctl restart php-fpm nginx
+
+echo ""
+echo "========================================="
+echo "Результат:"
+echo "========================================="
+sudo -u nginx wp plugin list --allow-root --fields=name,status,version | grep -E "elementor|header-footer"
+EOF
+
+# Делаем исполняемым
+chmod +x scriptchangeplug.sh

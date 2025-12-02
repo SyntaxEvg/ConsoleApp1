@@ -282,7 +282,6 @@ cd /var/www && sudo -u nginx /usr/local/bin/wp elementor sync-library --allow-ro
 Error: Cannot sync library.
 
 # Сбрасываем кэш Elementor в базе данных
-mysql -u uka_user -pdfvr4vre uka_site << 'EOF'
 -- Удаляем метаданные CSS кэша
 DELETE FROM wp_postmeta WHERE meta_key LIKE '_elementor_css%';
 
@@ -293,6 +292,6 @@ WHERE option_name = 'elementor_version';
 
 -- Проверяем
 SELECT option_name, option_value FROM wp_options WHERE option_name = 'elementor_version';
-EOF
 
-echo "✅ Кэш Elementor сброшен в БД"
+-- Выходим
+EXIT;

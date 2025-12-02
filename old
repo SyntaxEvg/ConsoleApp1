@@ -245,10 +245,10 @@ sudo chown -R nginx:nginx /var/www/wp-content/uploads/elementor
 sudo chmod -R 775 /var/www/wp-content/uploads/elementor
 
 # 3. Регенерируем CSS Elementor
-sudo -u nginx wp elementor flush-css --allow-root
+ cd /var/www && sudo -u nginx /usr/local/bin/wp elementor flush-css --allow-root
 
 # 4. Очищаем весь кэш
-sudo -u nginx wp cache flush --allow-root 2>/dev/null || true
+ cd /var/www && sudo -u nginx /usr/local/bin/wp cache flush --allow-root 2>/dev/null || true
 
 # 5. Перезапускаем PHP-FPM
 sudo systemctl restart php-fpm
@@ -269,10 +269,15 @@ sudo find /var/www/wp-content/themes/bizup -type f -exec chmod 644 {} \;
 cd /var/www
 
 # Обновляем все страницы Elementor
-sudo -u nginx wp elementor regenerate-css --allow-root
+ cd /var/www && sudo -u nginx /usr/local/bin/wp elementor regenerate-css --allow-root
 
 # Синхронизируем библиотеку
-sudo -u nginx wp elementor sync-library --allow-root
+cd /var/www && sudo -u nginx /usr/local/bin/wp elementor sync-library --allow-root
 ﻿
 
+
+cd /var/www && sudo -u nginx /usr/local/bin/wp elementor regenerate-css --allow-root
+Error: 'regenerate-css' is not a registered subcommand of 'elementor'. See 'wp help elementor' for available subcommands.
+cd /var/www && sudo -u nginx /usr/local/bin/wp elementor sync-library --allow-root
+Error: Cannot sync library.
 

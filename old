@@ -234,25 +234,45 @@ curl -Ik https://test.eaportal.nornik.ru
 openssl s_client -connect test.eaportal.nornik.ru:443 -servername test.eaportal.nornik.ru < /dev/null 2>/dev/null | openssl x509 -noout -subject -dates
 
 =============================
-﻿
-(index):58 
- 
- GET https://test.eaportal.nornik.ru/wp-content/uploads/elementor/css/post-10.css?ver=20251202113 net::ERR_ABORTED 404 (Not Found)
-(index):65 
- 
- GET https://test.eaportal.nornik.ru/wp-content/uploads/elementor/css/post-29007.css?ver=20251202113 net::ERR_ABORTED 404 (Not Found)
-(index):66 
- 
- GET https://test.eaportal.nornik.ru/wp-content/uploads/elementor/css/post-34716.css?ver=20251202113 net::ERR_ABORTED 404 (Not Found)
-(index):67 
- 
- GET https://test.eaportal.nornik.ru/wp-content/uploads/elementor/css/post-34744.css?ver=20251202113 net::ERR_ABORTED 404 (Not Found)
-slick.css?ver=20251202113:1 
- 
- GET https://test.eaportal.nornik.ru/wp-content/themes/bizup/assets/css/ajax-loader.gif 404 (Not Found)
-favicon.ico:1 
- 
- GET https://test.eaportal.nornik.ru/favicon.ico 404 (Not Found)
+cd /var/www
+
+# 1. Удаляем старый кэш CSS
+sudo rm -rf /var/www/wp-content/uploads/elementor/css/*
+
+# 2. Создаём папку заново с правильными правами
+sudo mkdir -p /var/www/wp-content/uploads/elementor/css
+sudo chown -R nginx:nginx /var/www/wp-content/uploads/elementor
+sudo chmod -R 775 /var/www/wp-content/uploads/elementor
+
+# 3. Регенерируем CSS Elementor
+sudo -u nginx wp elementor flush-css --allow-root
+
+# 4. Очищаем весь кэш
+sudo -u nginx wp cache flush --allow-root 2>/dev/null || true
+
+# 5. Перезапускаем PHP-FPM
+sudo systemctl restart php-fpm
+
+echo "✅ CSS файлы Elementor регенерированы"
+# Проверяем права на uploads
+ls -la /var/www/wp-content/uploads/
+
+# Исправляем права на всю папку uploads
+sudo chown -R nginx:nginx /var/www/wp-content/uploads/
+sudo chmod -R 775 /var/www/wp-content/uploads/
+
+# Проверяем права на папку темы
+sudo chown -R nginx:nginx /var/www/wp-content/themes/bizup/
+sudo find /var/www/wp-content/themes/bizup -type d -exec chmod 755 {} \;
+sudo find /var/www/wp-content/themes/bizup -type f -exec chmod 644 {} \;
+
+cd /var/www
+
+# Обновляем все страницы Elementor
+sudo -u nginx wp elementor regenerate-css --allow-root
+
+# Синхронизируем библиотеку
+sudo -u nginx wp elementor sync-library --allow-root
 ﻿
 
 

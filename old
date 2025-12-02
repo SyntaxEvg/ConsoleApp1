@@ -1,4 +1,1 @@
-# Ищем HTTP ссылки в базе данных
-mysql -u uka_user -pdfvr4vre uka_site -e "SELECT COUNT(*) FROM wp_options WHERE option_value LIKE '%http://test.eaportal.nornik.ru%';" -s -N
-
-# Если больше 0, нужно заменить
+2025/12/02 17:18:31 [error] 961513#961513: *67 limiting requests, excess: 2.864 by zone "login", client: 172.19.11.137, server: test.eaportal.nornik.ru, request: "POST /wp-login.php HTTP/2.0", host: "test.eaportal.nornik.ru", referrer: "https://test.eaportal.nornik.ru/wp-login.php?loggedout=true&wp_lang=ru_RU"

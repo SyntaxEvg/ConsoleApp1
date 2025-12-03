@@ -5,15 +5,25 @@
 		$home_screen_data['get_started'] = [];
 	}
 public function transform( array $home_screen_data ): array {
-		$new_get_started = [];
-
-		foreach ( $home_screen_data['get_started'] as $index => $item ) {
-			if ( $this->is_valid_item( $item ) ) {
-				$new_get_started[] = $item;
-			}
-		}
-
-		$home_screen_data['get_started'] = reset( $new_get_started );
-
-		return $home_screen_data;
-	}
+    // Гарантируем что $home_screen_data имеет правильную структуру
+    if ( ! is_array( $home_screen_data ) ) {
+        $home_screen_data = [];
+    }
+    
+    if ( ! isset( $home_screen_data['get_started'] ) || ! is_array( $home_screen_data['get_started'] ) ) {
+        $home_screen_data['get_started'] = [];
+    }
+    
+    $new_get_started = [];
+    
+    foreach ( $home_screen_data['get_started'] as $index => $item ) {
+        // Дополнительная проверка элемента
+        if ( is_array( $item ) && $this->is_valid_item( $item ) ) {
+            $new_get_started[] = $item;
+        }
+    }
+    
+    $home_screen_data['get_started'] = ! empty( $new_get_started ) ? reset( $new_get_started ) : [];
+    
+    return $home_screen_data;
+}

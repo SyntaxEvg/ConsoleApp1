@@ -1,1 +1,6 @@
-Warning: Undefined array key "get_started" in /var/www/wp-content/plugins/elementor/modules/home/transformations/filter-get-started-by-license.php on line 29
+/var/www/wp-content/plugins/elementor/modules/home/transformations/
+
+// Проверяем существование ключа 'get_started'
+	if ( ! isset( $home_screen_data['get_started'] ) || ! is_array( $home_screen_data['get_started'] ) ) {
+		$home_screen_data['get_started'] = [];
+	}

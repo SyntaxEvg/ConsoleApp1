@@ -92,4 +92,3 @@ class Filter_Plugins extends Transformations_Abstract {
 		$transformed_add_ons[] = $add_on;
 	}
 }
-

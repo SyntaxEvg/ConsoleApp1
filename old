@@ -68,7 +68,7 @@ class Filter_Plugins extends Transformations_Abstract {
 
 	private function handle_plugin_add_on( array $add_on, array &$transformed_add_ons ): void {
 		$installation_status = $this->get_plugin_installation_status( $add_on );
-
+ы
 		if ( self::PLUGIN_IS_ACTIVATED === $installation_status ) {
 			return;
 		}

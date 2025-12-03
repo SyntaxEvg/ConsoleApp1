@@ -1,3 +1,9 @@
-	if ( ! isset( $home_screen_data['add_ons'] ) || ! is_array( $home_screen_data['add_ons'] ) ) {
-		$home_screen_data['add_ons'] = [];
+public function transform( array $home_screen_data ): array {
+	if ( isset( $home_screen_data['add_ons']['repeater'] ) && is_array( $home_screen_data['add_ons']['repeater'] ) ) {
+		$home_screen_data['add_ons']['repeater'] = $this->get_add_ons_installation_status( $home_screen_data['add_ons']['repeater'] );
+	} else {
+		$home_screen_data['add_ons']['repeater'] = [];
 	}
+	
+	return $home_screen_data;
+}

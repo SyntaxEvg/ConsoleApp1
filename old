@@ -1,9 +1,1 @@
-public function transform( array $home_screen_data ): array {
-	if ( isset( $home_screen_data['add_ons']['repeater'] ) && is_array( $home_screen_data['add_ons']['repeater'] ) ) {
-		$home_screen_data['add_ons']['repeater'] = $this->get_add_ons_installation_status( $home_screen_data['add_ons']['repeater'] );
-	} else {
-		$home_screen_data['add_ons']['repeater'] = [];
-	}
-	
-	return $home_screen_data;
-}
+Warning: Undefined array key "get_started" in /var/www/wp-content/plugins/elementor/modules/home/transformations/filter-get-started-by-license.php on line 29

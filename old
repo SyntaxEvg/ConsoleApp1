@@ -1,5 +1,35 @@
-[error] 980649#980649: *1062 FastCGI sent in stderr: "arset=UTF-8PHP message:   server: Microsoft-HTTPAPI/2.0PHP message:   strict-transport-security: max-age = 31536000PHP message:   x-content-type-options: nosniffPHP message:   x-xss-protection: 1; mode=blockPHP message:   content-security-policy: default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data:;PHP message:   date: Thu, 04 Dec 2025 14:33:40 GMTPHP message: ADFS: Тело ответа (полное):PHP message: {"sub":"P8ce17ACUOGpHHWWIhYs7n7Awqg7CgMeObIm/jxYUCU="}PHP message: ADFS: Размер тела ответа: 54 байтPHP message: ADFS: ========== ДЕТАЛИ ЗАПРОСА ==========PHP message: ADFS: Используемый транспорт: WP_HTTP_Requests_ResponsePHP message: ADFS: Парсинг JSON ответа...PHP message: ADFS: ✓ JSON успешно распарсенPHP message: ADFS: Полученные данные пользователя:PHP message: Array
-(
-    [sub] => P8ce17ACUOGpHHWWIhYs7n7Awqg7CgMeObIm/jxYUCU=
-)
-PHP message: ADFS: Проверка обязательных полей:PHP message:   email: ❌ ОТСУТСТВУЕТPHP message:   name: ❌ ОТСУТСТВУЕТPHP message:   sub: P8ce17ACUOGpHHWWIhYs7n7Awqg7CgMeObIm/jxYUCU=PHP message: ADFS: ✓ Данные пользователя полученыPHP message: ADFS: Email: НЕТPHP message: ADFS: ❌ Ошибка при создании/обновлении пользователя!" while reading response header from upstream, client: 172.19.10.186, server: test.eaportal.nornik.ru, request: "GET /adfs-callback/?code=oWMdTBBRWkm6ie7ovkgflw.XnnoHkIz3giMBxi3sjtbcOJPxC4.L4XcT9JUF9JvPTLJcnBe_0yawOlKrTyYUkuLF5qy0352_x0VE0IFRAJ3PlCrBjlx7vT72BmRhHU_VAiUokdkDR2v7gieR3yaWnQUeEIsAwMwS20r_TRm1JRlJJ0xzN3rekhUROfC_sOUCx8OMAGoID_bHQ7Rk2WM14eINcES1qJG6a-eNIMH2yW4dhJ9sRu0LZy8EUjssyCE2amE2BlVOLICu87EV35_hoHqhUFAFGD5PA3x3lUUCC3h0kWY56--gTCxNT2NpEcwkXkUcoC_Xm-aG2cQX-Dt02344RjTYoJpCZB28YyT2MqKWmiZP8khDfIPInoUT1qLkRxhK5xPJg&state=f
+// Получаем токен
+$token_data = ADFS_SSO_Auth::get_access_token($code);
+
+if (is_wp_error($token_data)) {
+    // ... обработка ошибки ...
+}
+
+// ДОБАВЬТЕ ЭТО:
+error_log('ADFS: ========================================');
+error_log('ADFS: ПРОВЕРКА ID TOKEN');
+error_log('ADFS: ========================================');
+
+if (!empty($token_data['id_token_payload'])) {
+    error_log('ADFS: ✓ ID Token найден!');
+    error_log('ADFS: Содержимое ID Token:');
+    error_log(print_r($token_data['id_token_payload'], true));
+    
+    // Используем данные из ID Token вместо UserInfo
+    error_log('ADFS: 💡 Используем данные из ID Token вместо UserInfo!');
+    $user_info = $token_data['id_token_payload'];
+} else {
+    error_log('ADFS: ❌ ID Token отсутствует, используем UserInfo');
+    
+    // Получаем информацию о пользователе
+    $user_info = ADFS_SSO_Auth::get_user_info($token_data['access_token']);
+    
+    if (is_wp_error($user_info)) {
+        // ... обработка ошибки ...
+    }
+}
+
+error_log('ADFS: ========================================');
+error_log('ADFS: ИТОГОВЫЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ:');
+error_log('ADFS: ========================================');
+error_log(print_r($user_info, true));

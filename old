@@ -1,3 +1,16 @@
+$ClientId = "a3071ce5-2875-4541-90fb-53c1a5e46aaf"
+$WebApi = Get-AdfsWebApiApplication | Where-Object { $_.Identifier -contains $ClientId }
+$CurrentRules = $WebApi.IssuanceTransformRules
+$GroupRule = @"
+@RuleName = "Send Group Membership"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+ => issue(store = "Active Directory", types = ("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "groups"), query = ";tokenGroups;{0}", param = c.Value);
+"@
+$NewRules = $CurrentRules + $GroupRule
+Set-AdfsWebApiApplication -TargetName $WebApi.Name -IssuanceTransformRules $NewRules
+Write-Host "Claim Rule add!" -ForegroundColor Green
+
+==================================================
 Полная реализация всех методов - готовая к использованию
 Вы правы! Вот все методы целиком.
 

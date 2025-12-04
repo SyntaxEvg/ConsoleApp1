@@ -891,8 +891,11 @@ public function show_adfs_groups_in_profile($user) {
 phppublic function __construct() {
     // ... существующие хуки ...
     
-    // Показываем группы в профиле
-    add_action('show_user_profile', array($this, 'show_adfs_groups_in_profile'));
-    add_action('edit_user_profile', array($this, 'show_adfs_groups_in_profile'));
+     // Показываем группы в профиле
+     add_action('show_user_profile', array($this, 'show_adfs_groups_in_profile'));
+     add_action('edit_user_profile', array($this, 'show_adfs_groups_in_profile'));
 }
 Теперь в профиле пользователя будут видны его группы AD!
+
+
+Fatal error: Uncaught TypeError: call_user_func_array(): Argument #1 ($callback) must be a valid callback, class ADFS_SSO_Login does not have a method "show_adfs_groups_in_profile" in /var/www/wp-includes/class-wp-hook.php:324 Stack trace: #0 /var/www/wp-includes/class-wp-hook.php(348): WP_Hook->apply_filters() #1 /var/www/wp-includes/plugin.php(517): WP_Hook->do_action() #2 /var/www/wp-admin/user-edit.php(884): do_action() #3 /var/www/wp-admin/profile.php(18): require_once('...') #4 {main} thrown in /var/www/wp-includes/class-wp-hook.php on line 324

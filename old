@@ -1,2 +1,9 @@
-MSIS9604: An error occurred. The authorization server was not able to fulfill the request.
-Эта ошибка означает что Redirect URI не совпадает с тем, что зарегистрировано в ADFS.
+$ClientId = "a3071ce5-2875-4541-90fb-53c1a5e46aaf"
+Write-Host ""
+$ServerApp = Get-AdfsServerApplication | Where-Object { $_.Identifier -eq $ClientId }
+if ($ServerApp) {
+    Write-Host "Server Application: $($ServerApp.Name)" -ForegroundColor Green
+    Write-Host "Текущий Redirect URI:" -ForegroundColor Yellow
+    Write-Host "  $($ServerApp.RedirectUri)" -ForegroundColor White
+    Write-Host ""
+}

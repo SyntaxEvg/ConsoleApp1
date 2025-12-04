@@ -1,45 +1,68 @@
-An error occurred during processing of a token request. The data in this event may have the identity of the caller (application) that made this request. The data includes an Activity ID that you can cross-reference to error or warning events to help diagnose the problem that caused this error.  
-Additional Data 
+🎯 НАШЛИ ПРОБЛЕМУ! Неправильный синтаксис Claim Rules!
+Ошибка в Event Viewer показывает:
+POLICY3825: The LDAP query 'mail;abs\userAb' is missing one or more required parts.
+Проблема: LDAP запрос должен иметь 3 части, разделённые точкой с запятой, а сейчас только 2 части!
 
-Caller:
-abs\userAb
+Правильный формат LDAP запроса в ADFS
+ADFS требует формат:
+filter;attributes;username
+Где:
 
-
-OnBehalfOf user:
-ActAs user:
-  
-
-Target Relying Party:
-a3071ce5-2875-4541-90fb-53c1a5e46aaf 
-
-Device identity:
-  
-
-User action: 
-Use the Activity ID data in this message to search and correlate the data to events in the Event log using Event Viewer. This Activity ID will also be shown as additional information in the error page when an error occurs in the federation passive Web application.
-===
-Encountered error during OAuth authorization request. 
-
-Additional Data 
-
-Exception details: 
-Microsoft.IdentityServer.ClaimsPolicy.Language.PolicyEvaluationException: POLICY0018: Query 'mail;{0}' to attribute store 'Active Directory' failed: 'POLICY3825: The LDAP query 'mail;abs\userAb' is missing one or more required parts. POLICY3824: The LDAP query to the Active Directory attribute store must have three parts separated by semicolons. The first part is the LDAP query filter, the second part is a comma-separated list of LDAP attribute names, and the third part is the user name in 'domain\user' format.'. ---> Microsoft.IdentityServer.ClaimsPolicy.Engine.AttributeStore.AttributeStoreQueryFormatException: POLICY3825: The LDAP query 'mail;abs\userAb' is missing one or more required parts. POLICY3824: The LDAP query to the Active Directory attribute store must have three parts separated by semicolons. The first part is the LDAP query filter, the second part is a comma-separated list of LDAP attribute names, and the third part is the user name in 'domain\user' format.
-   at Microsoft.IdentityServer.ClaimsPolicy.Engine.AttributeStore.Ldap.EnterpriseLdapAttributeStore.ParseQueryString(String query, String[] queryParams, Boolean allowDefaultFilter, String& filter, String[]& attributes, String& userName)
-   at Microsoft.IdentityServer.ClaimsPolicy.Engine.AttributeStore.Ldap.LdapAttributeStore.BeginExecuteQuery(String query, String[] parameters, Boolean overrideLocation, String location, SearchScope scope, AsyncCallback callback, Object state)
-   at Microsoft.IdentityServer.ClaimsPolicy.Engine.AttributeStore.Ldap.LdapAttributeStore.BeginExecuteQuery(String query, String[] parameters, AsyncCallback callback, Object state)
-   at Microsoft.IdentityServer.ClaimsPolicy.Language.AttributeLookupIssuanceStatement.BeginEvaluate(IEnumerable`1 matchedClaims, PolicyContext policyContext, AsyncCallback callback, Object state)
-   --- End of inner exception stack trace ---
-   at Microsoft.IdentityModel.Threading.AsyncResult.End(IAsyncResult result)
-   at Microsoft.IdentityModel.Threading.TypedAsyncResult`1.End(IAsyncResult result)
-   at Microsoft.IdentityServer.Web.WSTrust.SecurityTokenServiceManager.Issue(RequestSecurityToken request, IList`1& identityClaimSet, List`1 additionalClaims)
-   at Microsoft.IdentityServer.Web.WSTrust.SecurityTokenServiceManager.Issue(RequestSecurityToken request, List`1 additionalClaims)
-   at Microsoft.IdentityServer.Web.Protocols.OAuth.OAuthProtocolHandler.RequestBearerToken(MSISRequestSecurityToken signInRequest, List`1 additionalClaims)
-   at Microsoft.IdentityServer.Web.Protocols.OAuth.OAuthProtocolHandler.BuildTokenResponseWithSerializedToken(OAuthProtocolContext context, WrappedHttpListenerContext httpContext, Uri originalRequestBaseUri, SecurityTokenElement signOnTokenElement, ArtifactSecurityTokenType originalTokenType, String clientId, String clientRedirectUri, String resource, String ScopeFromClient, Boolean isKmsiRequested, String authMethod)
-   at Microsoft.IdentityServer.Web.Protocols.OAuth.OAuthAuthorization.OAuthAuthorizatioabsotocolHandler.CreateAuthorizationResponseMessage(OAuthAuthorizationRequestContext authorizationContext, SecurityToken ssoSecurityToken, Boolean ssoSignInAttempted)
-Microsoft.IdentityServer.ClaimsPolicy.Engine.AttributeStore.AttributeStoreQueryFormatException: POLICY3825: The LDAP query 'mail;abs\userAb' is missing one or more required parts. POLICY3824: The LDAP query to the Active Directory attribute store must have three parts separated by semicolons. The first part is the LDAP query filter, the second part is a comma-separated list of LDAP attribute names, and the third part is the user name in 'domain\user' format.
-   at Microsoft.IdentityServer.ClaimsPolicy.Engine.AttributeStore.Ldap.EnterpriseLdapAttributeStore.ParseQueryString(String query, String[] queryParams, Boolean allowDefaultFilter, String& filter, String[]& attributes, String& userName)
-   at Microsoft.IdentityServer.ClaimsPolicy.Engine.AttributeStore.Ldap.LdapAttributeStore.BeginExecuteQuery(String query, String[] parameters, Boolean overrideLocation, String location, SearchScope scope, AsyncCallback callback, Object state)
-   at Microsoft.IdentityServer.ClaimsPolicy.Engine.AttributeStore.Ldap.LdapAttributeStore.BeginExecuteQuery(String query, String[] parameters, AsyncCallback callback, Object state)
-   at Microsoft.IdentityServer.ClaimsPolicy.Language.AttributeLookupIssuanceStatement.BeginEvaluate(IEnumerable`1 matchedClaims, PolicyContext policyContext, AsyncCallback callback, Object state)
+filter - LDAP фильтр (может быть пустым)
+attributes - список атрибутов (например: mail)
+username - имя пользователя ({0} = параметр из incoming claim)
 
 
+Исправление Claim Rules в PowerShell
+powershellImport-Module ADFS
+
+$ClientId = "a3071ce5-2875-4541-90fb-53c1a5e46aaf"
+
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "  ИСПРАВЛЕНИЕ CLAIM RULES (ПРАВИЛЬНЫЙ СИНТАКСИС)" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+
+$WebApi = Get-AdfsWebApiApplication | Where-Object { $_.Identifier -contains $ClientId }
+
+if (!$WebApi) {
+    Write-Host "❌ Web API не найден!" -ForegroundColor Red
+    exit
+}
+
+Write-Host "✓ Web API: $($WebApi.Name)" -ForegroundColor Green
+Write-Host ""
+
+# ПРАВИЛЬНЫЕ Claim Rules с корректным синтаксисом LDAP запросов
+$ClaimRules = @"
+@RuleName = "Send Email"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+ => issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", "email"), query = ";mail;{0}", param = c.Value);
+
+@RuleName = "Send Display Name"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+ => issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name", "name"), query = ";displayName;{0}", param = c.Value);
+
+@RuleName = "Send Given Name"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+ => issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname", "given_name"), query = ";givenName;{0}", param = c.Value);
+
+@RuleName = "Send Surname"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+ => issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname", "family_name"), query = ";sn;{0}", param = c.Value);
+
+@RuleName = "Send UPN"
+c:[Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/windowsaccountname", Issuer == "AD AUTHORITY"]
+ => issue(store = "Active Directory", types = ("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn", "preferred_username"), query = ";userPrincipalName;{0}", param = c.Value);
+"@
+
+Write-Host "Применяю исправленные Claim Rules..." -ForegroundColor Yellow
+
+try {
+    Set-AdfsWebApiApplication -TargetName $WebApi.Name -IssuanceTransformRules $ClaimRules
+    Write-Host "✓ Claim Rules обновлены с правильным синтаксисом!" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Ошибка: $_" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "Попробуйте исправить через GUI (инструкция ниже)" -ForegroundColor Yellow
+}

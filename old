@@ -1,84 +1,24 @@
-Import-Module ADFS
-
-$ClientId = "a3071ce5-2875-4541-90fb-53c1a5e46aaf"
-$TestUser = "userAb"  # Пользователь который пытается войти
-
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "  ПОЛНАЯ ДИАГНОСТИКА ADFS" -ForegroundColor Cyan
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host ""
-
-# 1. Пользователь в AD
-Write-Host "1. Проверка пользователя в AD..." -ForegroundColor Yellow
-try {
-    $User = Get-ADUser -Identity $TestUser -Properties mail, displayName
-    
-    if ($User.mail) {
-        Write-Host "   ✓ Email: $($User.mail)" -ForegroundColor Green
-    } else {
-        Write-Host "   ❌ EMAIL ОТСУТСТВУЕТ В AD!" -ForegroundColor Red
-        Write-Host "   Выполните: Set-ADUser -Identity $TestUser -EmailAddress 'email@company.com'" -ForegroundColor Yellow
-    }
-} catch {
-    Write-Host "   ⚠️  Не удалось проверить (нет доступа к AD)" -ForegroundColor Yellow
-}
-
-Write-Host ""
-
-# 2. Web API
-Write-Host "2. Проверка Web API..." -ForegroundColor Yellow
-$WebApi = Get-AdfsWebApiApplication | Where-Object { $_.Identifier -contains $ClientId }
-
-if ($WebApi) {
-    Write-Host "   ✓ Web API: $($WebApi.Name)" -ForegroundColor Green
-} else {
-    Write-Host "   ❌ Web API не найден!" -ForegroundColor Red
-}
-
-Write-Host ""
-
-# 3. Claim Rules
-Write-Host "3. Проверка Claim Rules..." -ForegroundColor Yellow
-
-if ($WebApi.IssuanceTransformRules) {
-    if ($WebApi.IssuanceTransformRules -match ';mail;') {
-        Write-Host "   ✓ Claim Rules настроены правильно" -ForegroundColor Green
-    } else {
-        Write-Host "   ❌ Синтаксис Claim Rules неправильный!" -ForegroundColor Red
-    }
-} else {
-    Write-Host "   ❌ Claim Rules отсутствуют!" -ForegroundColor Red
-}
-
-Write-Host ""
-
-# 4. AlwaysSendClientClaimsInIdToken
-Write-Host "4. Проверка AlwaysSendClientClaimsInIdToken..." -ForegroundColor Yellow
-
-if ($WebApi.AlwaysSendClientClaimsInIdToken) {
-    Write-Host "   ✓ Включено" -ForegroundColor Green
-} else {
-    Write-Host "   ❌ Отключено! Включаю..." -ForegroundColor Red
-    Set-AdfsWebApiApplication -TargetName $WebApi.Name -AlwaysSendClientClaimsInIdToken $true
-    Write-Host "   ✓ Включено" -ForegroundColor Green
-}
-
-Write-Host ""
-
-# 5. Application Permissions
-Write-Host "5. Проверка Permissions..." -ForegroundColor Yellow
-$Perms = Get-AdfsApplicationPermission | Where-Object { $_.ClientRoleIdentifier -eq $ClientId }
-
-if ($Perms) {
-    Write-Host "   ✓ Scopes: $($Perms.ScopeNames -join ', ')" -ForegroundColor Green
-} else {
-    Write-Host "   ❌ Permissions не настроены!" -ForegroundColor Red
-}
-
-Write-Host ""
-Write-Host "============================================" -ForegroundColor Cyan
-Write-Host "РЕКОМЕНДАЦИИ:" -ForegroundColor Yellow
-Write-Host "  1. Проверьте Event Viewer (Event ID 342)" -ForegroundColor White
-Write-Host "  2. Убедитесь что у пользователя $TestUser есть email в AD" -ForegroundColor White
-Write-Host "  3. Попробуйте войти снова после исправления" -ForegroundColor White
-Write-Host "============================================" -ForegroundColor Cyan
+ Содержимое ID Token:
+Array
+(
+    [aud] => a3071ce5-2875-4541-90fb-53c1a5e46aaf
+    [iss] => https://fedsvc.aaa.ru/adfs
+    [iat] => 1764859606
+    [nbf] => 1764859606
+    [exp] => 1764863206
+    [auth_time] => 1764841415
+    [sub] => P8ce17ACUOGpHHWWIhYs7n7Awqg7CgMeObIm/jxYUCU=
+    [pwd_exp] => 2660589
+    [sid] => S-1-5-21-1427493287-2892074134-283380318-676856
+    [upn] => user22@aaa.ru
+    [unique_name] => dff sf ewdew
+    [email] => user22@aaa.ru
+    [given_name] => Евгений Владимирович
+    [family_name] => Агашко
+    [preferred_username] => user22@aaa.ru
+    [apptype] => Confidential
+    [appid] => a3071ce5-2875-4541-90fb-53c1a5e46aaf
+    [authmethod] => http://schemas.microsoft.com/ws/2008/06/identity/authenticationmethod/windows
+    [ver] => 1.0
+    [scp] => email profile openid
+)

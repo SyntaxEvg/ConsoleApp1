@@ -1,25 +1,9 @@
-/**
- * Парсит JWT токен
- */
-public static function parse_jwt($jwt) {
-    $parts = explode('.', $jwt);
-    
-    if (count($parts) !== 3) {
-        error_log('ADFS: Неверный формат JWT: ' . count($parts) . ' частей вместо 3');
-        return false;
-    }
-    
-    // Декодируем payload (вторая часть)
-    $payload_base64 = strtr($parts[1], '-_', '+/');
-    $payload_json = base64_decode($payload_base64);
-    $payload = json_decode($payload_json, true);
-    
-    if (!$payload) {
-        error_log('ADFS: Ошибка парсинга JWT payload');
-        return false;
-    }
-    
-    error_log('ADFS: ID Token payload: ' . print_r($payload, true));
-    
-    return $payload;
-}
+2025/12/04 16:50:21 [error] 980649#980649: *966 FastCGI sent in stderr: "PHP message: ADFS: Сгенерирован URL для авторизации: https://fedsvc.nornik.ru/adfs/oauth2/authorize?response_type=code&client_id=a3071ce5-2875-4541-90fb-53c1a5e46aaf&redirect_uri=https%3A%2F%2Ffed.ea.yu%2Fadfs-callback%2F&scope=openid+profile+email&state=fd28ae2bae" while reading response header from upstream, client: 172.19.10.186, server: fed.ea.yu, request: "GET /wp-login.php HTTP/2.0", upstream: "fastcgi://unix:/run/php-fpm/www.sock:", host: "fed.ea.yu"
+2025/12/04 16:51:01 [error] 980649#980649: *966 FastCGI sent in stderr: "PHP message: ========================================PHP message: ADFS: Получен callback от ADFSPHP message: ADFS: REQUEST_URI: /adfs-callback/?error=server_error&error_description=MSIS9604%3a+An+error+occurred.+The+authorization+server+was+not+able+to+fulfill+the+request.&state=fd28ae2bae&client-request-id=a7102e4b-60ea-471d-1b33-00800300008ePHP message: ADFS: Все параметры GET: Array
+(
+    [error] => server_error
+    [error_description] => MSIS9604: An error occurred. The authorization server was not able to fulfill the request.
+    [state] => fd28ae2bae
+    [client-request-id] => a7102e4b-60ea-471d-1b33-00800300008e
+)
+PHP message: ========================================PHP message: ADFS: ❌ Получена ошибка от ADFS!PHP message: ADFS: Error: server_errorPHP message: ADFS: Description: MSIS9604: An error occurred. The authorization server was not able to fulfill the request" while reading response header from upstream, client: 172.19.10.186, server: fed.ea.yu, request: "GET /adfs-callback/?error=server_error&error_description=MSIS9604%3a+An+error+occurred.+The+authorization+server+was+not+able+to+fulfill+the+request.&state=fd28ae2bae&client-request-id=a7102e4b-60ea-471d-1b33-00800300008e HTTP/2.0", upstream: "fastcgi://unix:/run/php-fpm/www.sock:", host: "fed.ea.yu", referrer: "https://fed.ea.yu/"

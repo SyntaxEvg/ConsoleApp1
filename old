@@ -1,374 +1,84 @@
-public function handle_adfs_callback() {
-    // Проверяем, что это наш callback endpoint
-    if (strpos($_SERVER['REQUEST_URI'], '/adfs-callback/') === false) {
-        return;
-    }
-    
-    error_log('========================================');
-    error_log('ADFS: Получен callback от ADFS');
-    error_log('ADFS: REQUEST_URI: ' . $_SERVER['REQUEST_URI']);
-    error_log('ADFS: Все параметры GET: ' . print_r($_GET, true));
-    error_log('========================================');
-    
-    // Проверяем наличие ошибки от ADFS
-    if (isset($_GET['error'])) {
-        $error_code = sanitize_text_field($_GET['error']);
-        $error_description = isset($_GET['error_description']) ? sanitize_text_field($_GET['error_description']) : 'Нет описания';
-        $error_uri = isset($_GET['error_uri']) ? esc_url_raw($_GET['error_uri']) : '';
-        
-        error_log('ADFS: ❌ Получена ошибка от ADFS!');
-        error_log('ADFS: Error: ' . $error_code);
-        error_log('ADFS: Description: ' . $error_description);
-        
-        wp_die(
-            '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">' .
-            '<h1 style="color: #dc3545; margin-top: 0;">❌ Ошибка авторизации ADFS</h1>' .
-            '<div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin: 20px 0;">' .
-            '<p style="margin: 0;"><strong>Код ошибки:</strong> <code>' . esc_html($error_code) . '</code></p>' .
-            '</div>' .
-            '<div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0;">' .
-            '<p style="margin: 0;"><strong>Описание:</strong></p>' .
-            '<p style="margin: 10px 0 0 0;">' . esc_html($error_description) . '</p>' .
-            '</div>' .
-            ($error_uri ? '<p><strong>Дополнительная информация:</strong> <a href="' . esc_url($error_uri) . '" target="_blank">' . esc_html($error_uri) . '</a></p>' : '') .
-            '<hr style="margin: 30px 0;">' .
-            '<details style="margin: 20px 0;">' .
-            '<summary style="cursor: pointer; color: #0073aa; font-weight: bold;">🔍 Технические детали</summary>' .
-            '<pre style="background: #f5f5f5; padding: 15px; overflow: auto; border-radius: 4px; margin-top: 10px;">' . print_r($_GET, true) . '</pre>' .
-            '</details>' .
-            '<div style="margin-top: 30px; text-align: center;">' .
-            '<a href="' . wp_login_url() . '" class="button button-primary" style="padding: 10px 20px; font-size: 14px;">← Вернуться на страницу входа</a>' .
-            '</div>' .
-            '</div>',
-            'Ошибка ADFS',
-            array('response' => 400)
-        );
-    }
-    
-    // Проверяем наличие кода авторизации
-    if (!isset($_GET['code'])) {
-        error_log('ADFS: ❌ Отсутствует код авторизации!');
-        
-        wp_die(
-            '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px;">' .
-            '<h1 style="color: #dc3545;">❌ Ошибка</h1>' .
-            '<p>Не получен код авторизации от ADFS.</p>' .
-            '<details><summary>Параметры запроса</summary>' .
-            '<pre style="background: #f5f5f5; padding: 10px;">' . print_r($_GET, true) . '</pre>' .
-            '</details>' .
-            '<p><a href="' . wp_login_url() . '">← Вернуться</a></p>' .
-            '</div>'
-        );
-    }
-    
-    if (!isset($_GET['state'])) {
-        error_log('ADFS: ❌ Отсутствует state параметр!');
-        
-        wp_die(
-            '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white;">' .
-            '<h1 style="color: #dc3545;">❌ Ошибка</h1>' .
-            '<p>Отсутствует state параметр. Возможная CSRF атака.</p>' .
-            '<p><a href="' . wp_login_url() . '">← Вернуться</a></p>' .
-            '</div>'
-        );
-    }
-    
-    // Проверяем state для защиты от CSRF
-    if (!wp_verify_nonce($_GET['state'], 'adfs_login_state')) {
-        error_log('ADFS: ❌ Неверный state! Возможная CSRF атака!');
-        error_log('ADFS: Полученный state: ' . $_GET['state']);
-        
-        wp_die(
-            '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white;">' .
-            '<h1 style="color: #dc3545;">🔒 Ошибка безопасности</h1>' .
-            '<p>Неверный state параметр. Возможная CSRF атака.</p>' .
-            '<p><strong>State:</strong> <code>' . esc_html($_GET['state']) . '</code></p>' .
-            '<p><a href="' . wp_login_url() . '">← Вернуться</a></p>' .
-            '</div>'
-        );
-    }
-    
-    $code = sanitize_text_field($_GET['code']);
-    
-    error_log('ADFS: ✓ State проверен успешно');
-    error_log('ADFS: Authorization code получен: ' . substr($code, 0, 30) . '...');
-    
-    // Получаем токен
-    $token_data = ADFS_SSO_Auth::get_access_token($code);
-    
-    if (is_wp_error($token_data)) {
-        error_log('ADFS: ❌ Ошибка при получении токена!');
-        
-        $logs = @file_get_contents('/var/log/php-fpm/www-error.log');
-        $adfs_logs = '';
-        if ($logs) {
-            $lines = explode("\n", $logs);
-            $adfs_lines = array_filter($lines, function($line) {
-                return stripos($line, 'ADFS') !== false;
-            });
-            $adfs_logs = implode("\n", array_slice($adfs_lines, -30));
-        }
-        
-        wp_die(
-            '<div style="max-width: 900px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">' .
-            '<h1 style="color: #dc3545; margin-top: 0;">❌ Ошибка получения токена</h1>' .
-            '<div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">' .
-            '<p style="margin: 0;"><strong>Код ошибки:</strong> <code>' . esc_html($token_data->get_error_code()) . '</code></p>' .
-            '</div>' .
-            '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">' .
-            '<p style="margin: 0;"><strong>Сообщение:</strong></p>' .
-            '<p style="margin: 10px 0 0 0;">' . esc_html($token_data->get_error_message()) . '</p>' .
-            '</div>' .
-            '<details style="margin: 20px 0;"><summary style="cursor: pointer; font-weight: bold; color: #0073aa;">📋 Логи ADFS (последние 30 строк)</summary>' .
-            '<pre style="background: #2c3e50; color: #ecf0f1; padding: 15px; overflow: auto; max-height: 400px; border-radius: 4px; margin-top: 10px; font-size: 12px;">' . 
-            esc_html($adfs_logs ? $adfs_logs : 'Логи недоступны') . 
-            '</pre></details>' .
-            '<div style="margin-top: 30px; text-align: center;">' .
-            '<a href="' . wp_login_url() . '" class="button button-primary" style="padding: 10px 20px;">← Вернуться на страницу входа</a>' .
-            '</div>' .
-            '</div>',
-            'Ошибка получения токена ADFS',
-            array('response' => 500)
-        );
-    }
-    
-    error_log('ADFS: ✓ Access token получен успешно');
-    
-    // НОВОЕ: Показываем содержимое токена на экране (только для отладки)
-    $debug_mode = defined('WP_DEBUG') && WP_DEBUG;
-    
-    if ($debug_mode) {
-        echo '<div style="max-width: 1200px; margin: 20px auto; padding: 20px; background: #f0f0f0; border: 2px solid #0073aa; border-radius: 8px; font-family: monospace; font-size: 12px;">';
-        echo '<h2 style="color: #0073aa; margin-top: 0;">🔍 DEBUG: Данные от Token Endpoint</h2>';
-        
-        // Показываем все ключи токена
-        echo '<div style="background: white; padding: 15px; border-radius: 4px; margin: 10px 0;">';
-        echo '<strong>Полученные поля:</strong> ' . implode(', ', array_keys($token_data));
-        echo '</div>';
-        
-        // Показываем каждое поле
-        foreach ($token_data as $key => $value) {
-            echo '<div style="background: white; padding: 10px; margin: 5px 0; border-left: 3px solid #0073aa;">';
-            echo '<strong style="color: #0073aa;">' . esc_html($key) . ':</strong> ';
-            
-            if (in_array($key, ['access_token', 'refresh_token', 'id_token'])) {
-                echo '<code style="color: #666;">' . esc_html(substr($value, 0, 100)) . '...</code>';
-                echo ' <em>(длина: ' . strlen($value) . ' символов)</em>';
-            } else {
-                echo '<code>' . esc_html($value) . '</code>';
-            }
-            echo '</div>';
-        }
-        
-        // Если есть ID Token - декодируем и показываем
-        if (!empty($token_data['id_token'])) {
-            echo '<h3 style="color: #d63638; margin: 20px 0 10px 0;">🎫 Содержимое ID Token:</h3>';
-            
-            $id_parts = explode('.', $token_data['id_token']);
-            if (count($id_parts) === 3) {
-                $payload_base64 = strtr($id_parts[1], '-_', '+/');
-                $payload_json = base64_decode($payload_base64);
-                $id_payload = json_decode($payload_json, true);
-                
-                if ($id_payload) {
-                    echo '<div style="background: #fff3cd; padding: 15px; border-radius: 4px; border: 2px solid #ffc107;">';
-                    echo '<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">';
-                    print_r($id_payload);
-                    echo '</pre>';
-                    echo '</div>';
-                    
-                    // Проверяем наличие email в ID Token
-                    if (!empty($id_payload['email'])) {
-                        echo '<div style="background: #d1f2dd; padding: 10px; margin: 10px 0; border-radius: 4px; color: #0f5132;">';
-                        echo '✅ <strong>Email найден в ID Token:</strong> ' . esc_html($id_payload['email']);
-                        echo '</div>';
-                    } else {
-                        echo '<div style="background: #f8d7da; padding: 10px; margin: 10px 0; border-radius: 4px; color: #842029;">';
-                        echo '❌ <strong>Email отсутствует в ID Token!</strong>';
-                        echo '</div>';
-                    }
-                }
-            }
-        }
-        
-        echo '</div>';
-        flush();
-    }
-    
-    // Получаем информацию о пользователе
-    $user_info = ADFS_SSO_Auth::get_user_info($token_data['access_token']);
-    
-    if (is_wp_error($user_info)) {
-        error_log('ADFS: ❌ Ошибка при получении данных пользователя!');
-        
-        $logs = @file_get_contents('/var/log/php-fpm/www-error.log');
-        $adfs_logs = '';
-        if ($logs) {
-            $lines = explode("\n", $logs);
-            $adfs_lines = array_filter($lines, function($line) {
-                return stripos($line, 'ADFS') !== false;
-            });
-            $adfs_logs = implode("\n", array_slice($adfs_lines, -50));
-        }
-        
-        wp_die(
-            '<div style="max-width: 900px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">' .
-            '<h1 style="color: #dc3545; margin-top: 0;">❌ Ошибка получения данных пользователя</h1>' .
-            '<div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">' .
-            '<p style="margin: 0;"><strong>Код ошибки:</strong> <code>' . esc_html($user_info->get_error_code()) . '</code></p>' .
-            '</div>' .
-            '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">' .
-            '<p style="margin: 0;"><strong>Сообщение:</strong></p>' .
-            '<p style="margin: 10px 0 0 0;">' . esc_html($user_info->get_error_message()) . '</p>' .
-            '</div>' .
-            '<details open style="margin: 20px 0;"><summary style="cursor: pointer; font-weight: bold; color: #0073aa;">🔑 Access Token (первые 100 символов)</summary>' .
-            '<code style="display: block; background: #f5f5f5; padding: 10px; margin-top: 10px; word-break: break-all; font-size: 11px;">' . 
-            esc_html(substr($token_data['access_token'], 0, 100)) . '...' .
-            '</code></details>' .
-            '<details open style="margin: 20px 0;"><summary style="cursor: pointer; font-weight: bold; color: #0073aa;">📋 Логи ADFS (последние 50 строк)</summary>' .
-            '<pre style="background: #2c3e50; color: #ecf0f1; padding: 15px; overflow: auto; max-height: 400px; border-radius: 4px; margin-top: 10px; font-size: 11px;">' . 
-            esc_html($adfs_logs ? $adfs_logs : 'Логи недоступны') . 
-            '</pre></details>' .
-            '<div style="margin-top: 30px; text-align: center;">' .
-            '<a href="' . wp_login_url() . '" class="button button-primary" style="padding: 10px 20px;">← Вернуться на страницу входа</a>' .
-            '</div>' .
-            '</div>',
-            'Ошибка ADFS UserInfo',
-            array('response' => 500)
-        );
-    }
-    
-    error_log('ADFS: ✓ Данные пользователя получены');
-    error_log('ADFS: Email: ' . ($user_info['email'] ?? 'НЕТ'));
-    
-    // НОВОЕ: Показываем ответ от UserInfo на экране (только для отладки)
-    if ($debug_mode) {
-        echo '<div style="max-width: 1200px; margin: 20px auto; padding: 20px; background: #f0f0f0; border: 2px solid #d63638; border-radius: 8px; font-family: monospace; font-size: 12px;">';
-        echo '<h2 style="color: #d63638; margin-top: 0;">🔍 DEBUG: Ответ от UserInfo Endpoint</h2>';
-        
-        echo '<div style="background: white; padding: 15px; border-radius: 4px; margin: 10px 0;">';
-        echo '<strong>Полученные поля:</strong> ' . implode(', ', array_keys($user_info));
-        echo '</div>';
-        
-        echo '<div style="background: #fff; padding: 15px; border-radius: 4px; border: 2px solid #d63638;">';
-        echo '<pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word;">';
-        print_r($user_info);
-        echo '</pre>';
-        echo '</div>';
-        
-        // Проверяем каждое поле
-        $required_fields = ['sub', 'email', 'name', 'given_name', 'family_name', 'preferred_username'];
-        echo '<h3 style="margin: 20px 0 10px 0;">Проверка обязательных полей:</h3>';
-        echo '<div style="background: white; padding: 15px; border-radius: 4px;">';
-        
-        foreach ($required_fields as $field) {
-            $exists = !empty($user_info[$field]);
-            $color = $exists ? '#0f5132' : '#842029';
-            $bg = $exists ? '#d1f2dd' : '#f8d7da';
-            $icon = $exists ? '✅' : '❌';
-            
-            echo '<div style="background: ' . $bg . '; padding: 8px; margin: 5px 0; border-radius: 4px; color: ' . $color . ';">';
-            echo $icon . ' <strong>' . $field . ':</strong> ';
-            echo $exists ? esc_html($user_info[$field]) : '<em>ОТСУТСТВУЕТ</em>';
-            echo '</div>';
-        }
-        
-        echo '</div>';
-        
-        // Если email отсутствует - показываем подсказки
-        if (empty($user_info['email'])) {
-            echo '<div style="background: #fff3cd; padding: 20px; margin: 20px 0; border-radius: 8px; border: 2px solid #ffc107;">';
-            echo '<h3 style="color: #856404; margin-top: 0;">⚠️ ПРОБЛЕМА: Email отсутствует!</h3>';
-            echo '<p style="margin: 10px 0;"><strong>Возможные причины:</strong></p>';
-            echo '<ol style="margin: 10px 0; padding-left: 20px;">';
-            echo '<li>У пользователя не заполнен email в Active Directory</li>';
-            echo '<li>Claim Rules на ADFS не настроены правильно</li>';
-            echo '<li>Claim Rules не применяются к UserInfo endpoint</li>';
-            echo '<li>Синтаксис LDAP запроса в Claim Rules неправильный</li>';
-            echo '</ol>';
-            echo '<p style="margin: 15px 0 5px 0;"><strong>Что проверить на ADFS:</strong></p>';
-            echo '<pre style="background: #2c3e50; color: #ecf0f1; padding: 10px; border-radius: 4px; font-size: 11px; overflow: auto;">';
-            echo '# PowerShell на ADFS сервере:
-            
-# 1. Проверить email пользователя в AD:
-Get-ADUser -Identity userAb -Properties mail | Select-Object SamAccountName, mail
+Import-Module ADFS
 
-# 2. Проверить Claim Rules:
-$WebApi = Get-AdfsWebApiApplication | Where-Object { $_.Identifier -contains "a3071ce5-2875-4541-90fb-53c1a5e46aaf" }
-$WebApi.IssuanceTransformRules
+$ClientId = "a3071ce5-2875-4541-90fb-53c1a5e46aaf"
+$TestUser = "userAb"  # Пользователь который пытается войти
 
-# 3. Проверить Event Viewer:
-# Applications and Services Logs → AD FS → Admin
-# Найти Event ID 342 (Token issued)';
-            echo '</pre>';
-            echo '</div>';
-        }
-        
-        echo '</div>';
-        flush();
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "  ПОЛНАЯ ДИАГНОСТИКА ADFS" -ForegroundColor Cyan
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host ""
+
+# 1. Пользователь в AD
+Write-Host "1. Проверка пользователя в AD..." -ForegroundColor Yellow
+try {
+    $User = Get-ADUser -Identity $TestUser -Properties mail, displayName
+    
+    if ($User.mail) {
+        Write-Host "   ✓ Email: $($User.mail)" -ForegroundColor Green
+    } else {
+        Write-Host "   ❌ EMAIL ОТСУТСТВУЕТ В AD!" -ForegroundColor Red
+        Write-Host "   Выполните: Set-ADUser -Identity $TestUser -EmailAddress 'email@company.com'" -ForegroundColor Yellow
     }
-    
-    // Создаём или обновляем пользователя WordPress
-    $user = $this->create_or_update_user($user_info);
-    
-    if (is_wp_error($user)) {
-        error_log('ADFS: ❌ Ошибка при создании/обновлении пользователя!');
-        
-        wp_die(
-            '<div style="max-width: 900px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">' .
-            '<h1 style="color: #dc3545;">❌ Ошибка создания пользователя</h1>' .
-            '<div style="background: #f8d7da; padding: 15px; margin: 20px 0; border-radius: 4px;">' .
-            '<p style="margin: 0;"><strong>Код ошибки:</strong> <code>' . esc_html($user->get_error_code()) . '</code></p>' .
-            '</div>' .
-            '<div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-radius: 4px;">' .
-            '<p style="margin: 0;"><strong>Сообщение:</strong></p>' .
-            '<p style="margin: 10px 0 0 0;">' . esc_html($user->get_error_message()) . '</p>' .
-            '</div>' .
-            '<details open style="margin: 20px 0;"><summary style="cursor: pointer; font-weight: bold; color: #0073aa;">📄 Данные от ADFS</summary>' .
-            '<pre style="background: #f5f5f5; padding: 15px; overflow: auto; border-radius: 4px; margin-top: 10px;">' . 
-            print_r($user_info, true) . 
-            '</pre></details>' .
-            '<div style="margin-top: 30px; text-align: center;">' .
-            '<a href="' . wp_login_url() . '" class="button button-primary">← Вернуться</a>' .
-            '</div>' .
-            '</div>'
-        );
-    }
-    
-    error_log('ADFS: ✓ Пользователь создан/обновлён: ' . $user->user_login);
-    
-    // НОВОЕ: Показываем успешное создание пользователя (только для отладки)
-    if ($debug_mode) {
-        echo '<div style="max-width: 1200px; margin: 20px auto; padding: 20px; background: #d1f2dd; border: 2px solid #0f5132; border-radius: 8px; font-family: monospace; font-size: 12px;">';
-        echo '<h2 style="color: #0f5132; margin-top: 0;">✅ DEBUG: Пользователь создан/обновлён</h2>';
-        
-        echo '<div style="background: white; padding: 15px; border-radius: 4px; margin: 10px 0;">';
-        echo '<strong>User ID:</strong> ' . $user->ID . '<br>';
-        echo '<strong>Username:</strong> ' . esc_html($user->user_login) . '<br>';
-        echo '<strong>Email:</strong> ' . esc_html($user->user_email) . '<br>';
-        echo '<strong>Display Name:</strong> ' . esc_html($user->display_name) . '<br>';
-        echo '<strong>Role:</strong> ' . implode(', ', $user->roles);
-        echo '</div>';
-        
-        echo '<p style="margin: 15px 0; text-align: center;">';
-        echo '<strong>Редирект в админку через 5 секунд...</strong>';
-        echo '</p>';
-        echo '</div>';
-        flush();
-        
-        // Задержка чтобы увидеть debug информацию
-        sleep(5);
-    }
-    
-    // Авторизуем пользователя
-    wp_set_current_user($user->ID);
-    wp_set_auth_cookie($user->ID, true);
-    do_action('wp_login', $user->user_login, $user);
-    
-    error_log('ADFS: ✓ Пользователь успешно авторизован!');
-    error_log('========================================');
-    
-    // Редирект в админку
-    wp_safe_redirect(admin_url());
-    exit;
+} catch {
+    Write-Host "   ⚠️  Не удалось проверить (нет доступа к AD)" -ForegroundColor Yellow
 }
+
+Write-Host ""
+
+# 2. Web API
+Write-Host "2. Проверка Web API..." -ForegroundColor Yellow
+$WebApi = Get-AdfsWebApiApplication | Where-Object { $_.Identifier -contains $ClientId }
+
+if ($WebApi) {
+    Write-Host "   ✓ Web API: $($WebApi.Name)" -ForegroundColor Green
+} else {
+    Write-Host "   ❌ Web API не найден!" -ForegroundColor Red
+}
+
+Write-Host ""
+
+# 3. Claim Rules
+Write-Host "3. Проверка Claim Rules..." -ForegroundColor Yellow
+
+if ($WebApi.IssuanceTransformRules) {
+    if ($WebApi.IssuanceTransformRules -match ';mail;') {
+        Write-Host "   ✓ Claim Rules настроены правильно" -ForegroundColor Green
+    } else {
+        Write-Host "   ❌ Синтаксис Claim Rules неправильный!" -ForegroundColor Red
+    }
+} else {
+    Write-Host "   ❌ Claim Rules отсутствуют!" -ForegroundColor Red
+}
+
+Write-Host ""
+
+# 4. AlwaysSendClientClaimsInIdToken
+Write-Host "4. Проверка AlwaysSendClientClaimsInIdToken..." -ForegroundColor Yellow
+
+if ($WebApi.AlwaysSendClientClaimsInIdToken) {
+    Write-Host "   ✓ Включено" -ForegroundColor Green
+} else {
+    Write-Host "   ❌ Отключено! Включаю..." -ForegroundColor Red
+    Set-AdfsWebApiApplication -TargetName $WebApi.Name -AlwaysSendClientClaimsInIdToken $true
+    Write-Host "   ✓ Включено" -ForegroundColor Green
+}
+
+Write-Host ""
+
+# 5. Application Permissions
+Write-Host "5. Проверка Permissions..." -ForegroundColor Yellow
+$Perms = Get-AdfsApplicationPermission | Where-Object { $_.ClientRoleIdentifier -eq $ClientId }
+
+if ($Perms) {
+    Write-Host "   ✓ Scopes: $($Perms.ScopeNames -join ', ')" -ForegroundColor Green
+} else {
+    Write-Host "   ❌ Permissions не настроены!" -ForegroundColor Red
+}
+
+Write-Host ""
+Write-Host "============================================" -ForegroundColor Cyan
+Write-Host "РЕКОМЕНДАЦИИ:" -ForegroundColor Yellow
+Write-Host "  1. Проверьте Event Viewer (Event ID 342)" -ForegroundColor White
+Write-Host "  2. Убедитесь что у пользователя $TestUser есть email в AD" -ForegroundColor White
+Write-Host "  3. Попробуйте войти снова после исправления" -ForegroundColor White
+Write-Host "============================================" -ForegroundColor Cyan

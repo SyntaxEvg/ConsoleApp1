@@ -1,35 +1,218 @@
-// Получаем токен
-$token_data = ADFS_SSO_Auth::get_access_token($code);
-
-if (is_wp_error($token_data)) {
-    // ... обработка ошибки ...
-}
-
-// ДОБАВЬТЕ ЭТО:
-error_log('ADFS: ========================================');
-error_log('ADFS: ПРОВЕРКА ID TOKEN');
-error_log('ADFS: ========================================');
-
-if (!empty($token_data['id_token_payload'])) {
-    error_log('ADFS: ✓ ID Token найден!');
-    error_log('ADFS: Содержимое ID Token:');
-    error_log(print_r($token_data['id_token_payload'], true));
-    
-    // Используем данные из ID Token вместо UserInfo
-    error_log('ADFS: 💡 Используем данные из ID Token вместо UserInfo!');
-    $user_info = $token_data['id_token_payload'];
-} else {
-    error_log('ADFS: ❌ ID Token отсутствует, используем UserInfo');
-    
-    // Получаем информацию о пользователе
-    $user_info = ADFS_SSO_Auth::get_user_info($token_data['access_token']);
-    
-    if (is_wp_error($user_info)) {
-        // ... обработка ошибки ...
+public function handle_adfs_callback() {
+        // Проверяем, что это наш callback endpoint
+        if (strpos($_SERVER['REQUEST_URI'], '/adfs-callback/') === false) {
+            return;
+        }
+        
+        error_log('========================================');
+        error_log('ADFS: Получен callback от ADFS');
+        error_log('ADFS: REQUEST_URI: ' . $_SERVER['REQUEST_URI']);
+        error_log('ADFS: Все параметры GET: ' . print_r($_GET, true));
+        error_log('========================================');
+        
+        // Проверяем наличие ошибки от ADFS
+        if (isset($_GET['error'])) {
+            $error_code = sanitize_text_field($_GET['error']);
+            $error_description = isset($_GET['error_description']) ? sanitize_text_field($_GET['error_description']) : 'Нет описания';
+            $error_uri = isset($_GET['error_uri']) ? esc_url_raw($_GET['error_uri']) : '';
+            
+            error_log('ADFS: ❌ Получена ошибка от ADFS!');
+            error_log('ADFS: Error: ' . $error_code);
+            error_log('ADFS: Description: ' . $error_description);
+            
+            // Красивый вывод ошибки
+            wp_die(
+                '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">' .
+                '<h1 style="color: #dc3545; margin-top: 0;">❌ Ошибка авторизации ADFS</h1>' .
+                '<div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 4px; margin: 20px 0;">' .
+                '<p style="margin: 0;"><strong>Код ошибки:</strong> <code>' . esc_html($error_code) . '</code></p>' .
+                '</div>' .
+                '<div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 4px; margin: 20px 0;">' .
+                '<p style="margin: 0;"><strong>Описание:</strong></p>' .
+                '<p style="margin: 10px 0 0 0;">' . esc_html($error_description) . '</p>' .
+                '</div>' .
+                ($error_uri ? '<p><strong>Дополнительная информация:</strong> <a href="' . esc_url($error_uri) . '" target="_blank">' . esc_html($error_uri) . '</a></p>' : '') .
+                '<hr style="margin: 30px 0;">' .
+                '<details style="margin: 20px 0;">' .
+                '<summary style="cursor: pointer; color: #0073aa; font-weight: bold;">🔍 Технические детали</summary>' .
+                '<pre style="background: #f5f5f5; padding: 15px; overflow: auto; border-radius: 4px; margin-top: 10px;">' . print_r($_GET, true) . '</pre>' .
+                '</details>' .
+                '<div style="margin-top: 30px; text-align: center;">' .
+                '<a href="' . wp_login_url() . '" class="button button-primary" style="padding: 10px 20px; font-size: 14px;">← Вернуться на страницу входа</a>' .
+                '</div>' .
+                '</div>',
+                'Ошибка ADFS',
+                array('response' => 400)
+            );
+        }
+        
+        // Проверяем наличие кода авторизации
+        if (!isset($_GET['code'])) {
+            error_log('ADFS: ❌ Отсутствует код авторизации!');
+            
+            wp_die(
+                '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px;">' .
+                '<h1 style="color: #dc3545;">❌ Ошибка</h1>' .
+                '<p>Не получен код авторизации от ADFS.</p>' .
+                '<details><summary>Параметры запроса</summary>' .
+                '<pre style="background: #f5f5f5; padding: 10px;">' . print_r($_GET, true) . '</pre>' .
+                '</details>' .
+                '<p><a href="' . wp_login_url() . '">← Вернуться</a></p>' .
+                '</div>'
+            );
+        }
+        
+        if (!isset($_GET['state'])) {
+            error_log('ADFS: ❌ Отсутствует state параметр!');
+            
+            wp_die(
+                '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white;">' .
+                '<h1 style="color: #dc3545;">❌ Ошибка</h1>' .
+                '<p>Отсутствует state параметр. Возможная CSRF атака.</p>' .
+                '<p><a href="' . wp_login_url() . '">← Вернуться</a></p>' .
+                '</div>'
+            );
+        }
+        
+        // Проверяем state для защиты от CSRF
+        if (!wp_verify_nonce($_GET['state'], 'adfs_login_state')) {
+            error_log('ADFS: ❌ Неверный state! Возможная CSRF атака!');
+            error_log('ADFS: Полученный state: ' . $_GET['state']);
+            
+            wp_die(
+                '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white;">' .
+                '<h1 style="color: #dc3545;">🔒 Ошибка безопасности</h1>' .
+                '<p>Неверный state параметр. Возможная CSRF атака.</p>' .
+                '<p><strong>State:</strong> <code>' . esc_html($_GET['state']) . '</code></p>' .
+                '<p><a href="' . wp_login_url() . '">← Вернуться</a></p>' .
+                '</div>'
+            );
+        }
+        
+        $code = sanitize_text_field($_GET['code']);
+        
+        error_log('ADFS: ✓ State проверен успешно');
+        error_log('ADFS: Authorization code получен: ' . substr($code, 0, 30) . '...');
+        
+        // Получаем токен
+        $token_data = ADFS_SSO_Auth::get_access_token($code);
+        
+        if (is_wp_error($token_data)) {
+            error_log('ADFS: ❌ Ошибка при получении токена!');
+            
+            // Получаем логи
+            $logs = @file_get_contents('/var/log/php-fpm/www-error.log');
+            $adfs_logs = '';
+            if ($logs) {
+                $lines = explode("\n", $logs);
+                $adfs_lines = array_filter($lines, function($line) {
+                    return stripos($line, 'ADFS') !== false;
+                });
+                $adfs_logs = implode("\n", array_slice($adfs_lines, -30));
+            }
+            
+            wp_die(
+                '<div style="max-width: 900px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">' .
+                '<h1 style="color: #dc3545; margin-top: 0;">❌ Ошибка получения токена</h1>' .
+                '<div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">' .
+                '<p style="margin: 0;"><strong>Код ошибки:</strong> <code>' . esc_html($token_data->get_error_code()) . '</code></p>' .
+                '</div>' .
+                '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">' .
+                '<p style="margin: 0;"><strong>Сообщение:</strong></p>' .
+                '<p style="margin: 10px 0 0 0;">' . esc_html($token_data->get_error_message()) . '</p>' .
+                '</div>' .
+                '<details style="margin: 20px 0;"><summary style="cursor: pointer; font-weight: bold; color: #0073aa;">📋 Логи ADFS (последние 30 строк)</summary>' .
+                '<pre style="background: #2c3e50; color: #ecf0f1; padding: 15px; overflow: auto; max-height: 400px; border-radius: 4px; margin-top: 10px; font-size: 12px;">' . 
+                esc_html($adfs_logs ? $adfs_logs : 'Логи недоступны') . 
+                '</pre></details>' .
+                '<div style="margin-top: 30px; text-align: center;">' .
+                '<a href="' . wp_login_url() . '" class="button button-primary" style="padding: 10px 20px;">← Вернуться на страницу входа</a>' .
+                '</div>' .
+                '</div>',
+                'Ошибка получения токена ADFS',
+                array('response' => 500)
+            );
+        }
+        
+        error_log('ADFS: ✓ Access token получен успешно');
+        
+        // Получаем информацию о пользователе
+        $user_info = ADFS_SSO_Auth::get_user_info($token_data['access_token']);
+        
+        if (is_wp_error($user_info)) {
+            error_log('ADFS: ❌ Ошибка при получении данных пользователя!');
+            
+            // Получаем логи
+            $logs = @file_get_contents('/var/log/php-fpm/www-error.log');
+            $adfs_logs = '';
+            if ($logs) {
+                $lines = explode("\n", $logs);
+                $adfs_lines = array_filter($lines, function($line) {
+                    return stripos($line, 'ADFS') !== false;
+                });
+                $adfs_logs = implode("\n", array_slice($adfs_lines, -30));
+            }
+            
+            wp_die(
+                '<div style="max-width: 900px; margin: 50px auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">' .
+                '<h1 style="color: #dc3545; margin-top: 0;">❌ Ошибка получения данных пользователя</h1>' .
+                '<div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;">' .
+                '<p style="margin: 0;"><strong>Код ошибки:</strong> <code>' . esc_html($user_info->get_error_code()) . '</code></p>' .
+                '</div>' .
+                '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">' .
+                '<p style="margin: 0;"><strong>Сообщение:</strong></p>' .
+                '<p style="margin: 10px 0 0 0;">' . esc_html($user_info->get_error_message()) . '</p>' .
+                '</div>' .
+                '<details style="margin: 20px 0;"><summary style="cursor: pointer; font-weight: bold; color: #0073aa;">🔑 Access Token (первые 50 символов)</summary>' .
+                '<code style="display: block; background: #f5f5f5; padding: 10px; margin-top: 10px; word-break: break-all;">' . 
+                esc_html(substr($token_data['access_token'], 0, 50)) . '...' .
+                '</code></details>' .
+                '<details style="margin: 20px 0;"><summary style="cursor: pointer; font-weight: bold; color: #0073aa;">📋 Логи ADFS (последние 30 строк)</summary>' .
+                '<pre style="background: #2c3e50; color: #ecf0f1; padding: 15px; overflow: auto; max-height: 400px; border-radius: 4px; margin-top: 10px; font-size: 12px;">' . 
+                esc_html($adfs_logs ? $adfs_logs : 'Логи недоступны') . 
+                '</pre></details>' .
+                '<div style="margin-top: 30px; text-align: center;">' .
+                '<a href="' . wp_login_url() . '" class="button button-primary" style="padding: 10px 20px;">← Вернуться на страницу входа</a>' .
+                '</div>' .
+                '</div>',
+                'Ошибка ADFS UserInfo',
+                array('response' => 500)
+            );
+        }
+        
+        error_log('ADFS: ✓ Данные пользователя получены');
+        error_log('ADFS: Email: ' . ($user_info['email'] ?? 'НЕТ'));
+        
+        // Создаём или обновляем пользователя WordPress
+        $user = $this->create_or_update_user($user_info);
+        
+        if (is_wp_error($user)) {
+            error_log('ADFS: ❌ Ошибка при создании/обновлении пользователя!');
+            
+            wp_die(
+                '<div style="max-width: 800px; margin: 50px auto; padding: 30px; background: white;">' .
+                '<h1 style="color: #dc3545;">❌ Ошибка создания пользователя</h1>' .
+                '<p><strong>Код:</strong> ' . esc_html($user->get_error_code()) . '</p>' .
+                '<p><strong>Сообщение:</strong> ' . esc_html($user->get_error_message()) . '</p>' .
+                '<details><summary>Данные от ADFS</summary>' .
+                '<pre style="background: #f5f5f5; padding: 10px;">' . print_r($user_info, true) . '</pre>' .
+                '</details>' .
+                '<p><a href="' . wp_login_url() . '">← Вернуться</a></p>' .
+                '</div>'
+            );
+        }
+        
+        error_log('ADFS: ✓ Пользователь создан/обновлён: ' . $user->user_login);
+        
+        // Авторизуем пользователя
+        wp_set_current_user($user->ID);
+        wp_set_auth_cookie($user->ID, true);
+        do_action('wp_login', $user->user_login, $user);
+        
+        error_log('ADFS: ✓ Пользователь успешно авторизован!');
+        error_log('========================================');
+        
+        // Редирект в админку
+        wp_safe_redirect(admin_url());
+        exit;
     }
-}
-
-error_log('ADFS: ========================================');
-error_log('ADFS: ИТОГОВЫЕ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ:');
-error_log('ADFS: ========================================');
-error_log(print_r($user_info, true));

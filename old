@@ -629,3 +629,270 @@ phpprivate function create_or_update_user($user_info) {
     
     return $user;
 }
+-----------------------------------------------
+Шаг 3: Обновляем код WordPress для обработки групп
+bashsudo nano /var/www/wp-content/plugins/adfs-sso-login/includes/adfs-auth.php
+В конце функции get_access_token() после парсинга ID Token добавьте:
+php// ... существующий код парсинга ID Token ...
+
+if ($id_payload && json_last_error() === JSON_ERROR_NONE) {
+    error_log('ADFS: ✓ ID Token успешно распарсен!');
+    error_log('ADFS: Содержимое ID Token:');
+    error_log(print_r($id_payload, true));
+    
+    // ДОБАВЬТЕ ЭТО:
+    // Нормализуем группы
+    $groups = array();
+    
+    // Проверяем разные форматы групп
+    if (!empty($id_payload['groups'])) {
+        $groups = is_array($id_payload['groups']) ? $id_payload['groups'] : array($id_payload['groups']);
+        error_log('ADFS: ✅ Группы найдены (короткий формат): ' . implode(', ', $groups));
+    } elseif (!empty($id_payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'])) {
+        $role_claim = $id_payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        $groups = is_array($role_claim) ? $role_claim : array($role_claim);
+        error_log('ADFS: ✅ Группы найдены (полный URI): ' . implode(', ', $groups));
+    }
+    
+    // Сохраняем группы
+    if (!empty($groups)) {
+        $id_payload['adfs_groups'] = $groups;
+        error_log('ADFS: Сохранено групп: ' . count($groups));
+    }
+    
+    $data['id_token_payload'] = $id_payload;
+    // ... остальной код ...
+}
+---------------------------
+Шаг 4: Обновляем создание пользователя для маппинга ролей
+bashsudo nano /var/www/wp-content/plugins/adfs-sso-login/adfs-sso-login.php
+Добавьте новую функцию для маппинга групп на роли:
+php/**
+ * Маппинг групп AD на роли WordPress
+ */
+private function map_groups_to_role($groups) {
+    if (empty($groups) || !is_array($groups)) {
+        return 'subscriber'; // Роль по умолчанию
+    }
+    
+    error_log('ADFS: Маппинг групп на роли WordPress');
+    error_log('ADFS: Группы пользователя: ' . implode(', ', $groups));
+    
+    // НАСТРОЙТЕ ЭТО СООТВЕТСТВИЕ ПОД ВАШИ ГРУППЫ AD
+    $group_role_map = array(
+        // Группа AD => Роль WordPress
+        'Domain Admins' => 'administrator',
+        'WordPress Admins' => 'administrator',
+        'WordPress Editors' => 'editor',
+        'WordPress Authors' => 'author',
+        'WordPress Contributors' => 'contributor',
+        'IT Department' => 'editor',
+        'HR Department' => 'author',
+        // Добавьте свои группы здесь
+    );
+    
+    // Ищем самую высокую роль
+    $role_hierarchy = array(
+        'administrator' => 5,
+        'editor' => 4,
+        'author' => 3,
+        'contributor' => 2,
+        'subscriber' => 1,
+    );
+    
+    $assigned_role = 'subscriber';
+    $highest_level = 0;
+    
+    foreach ($groups as $group) {
+        // Убираем домен из имени группы если есть (например: DOMAIN\Group -> Group)
+        $group_clean = preg_replace('/^.*[\\\\\\/]/', '', $group);
+        
+        if (isset($group_role_map[$group_clean])) {
+            $role = $group_role_map[$group_clean];
+            $level = $role_hierarchy[$role] ?? 0;
+            
+            error_log('ADFS: Группа "' . $group_clean . '" -> Роль "' . $role . '" (уровень: ' . $level . ')');
+            
+            if ($level > $highest_level) {
+                $highest_level = $level;
+                $assigned_role = $role;
+            }
+        } else {
+            error_log('ADFS: Группа "' . $group_clean . '" не имеет маппинга');
+        }
+    }
+    
+    error_log('ADFS: ✓ Назначена роль: ' . $assigned_role);
+    
+    return $assigned_role;
+}
+Обновите функцию create_or_update_user():
+phpprivate function create_or_update_user($user_info) {
+    error_log('========================================');
+    error_log('ADFS: СОЗДАНИЕ/ОБНОВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ');
+    error_log('========================================');
+    
+    // ... существующий код проверки email ...
+    
+    // ДОБАВЬТЕ: Определяем роль на основе групп
+    $role = 'subscriber'; // По умолчанию
+    
+    if (!empty($user_info['adfs_groups'])) {
+        error_log('ADFS: Найдены группы AD: ' . implode(', ', $user_info['adfs_groups']));
+        $role = $this->map_groups_to_role($user_info['adfs_groups']);
+    } else {
+        error_log('ADFS: Группы AD отсутствуют, используется роль по умолчанию: ' . $role);
+    }
+    
+    error_log('ADFS: Назначаемая роль: ' . $role);
+    
+    // ... существующий код определения username, display_name ...
+    
+    if (!$user) {
+        // Создаём нового пользователя
+        error_log('ADFS: Создаю нового пользователя...');
+        
+        $user_data = array(
+            'user_login' => $username,
+            'user_email' => $email,
+            'display_name' => $display_name,
+            'first_name' => $user_info['given_name'] ?? '',
+            'last_name' => $user_info['family_name'] ?? '',
+            'role' => $role, // ИСПОЛЬЗУЕМ РОЛЬ ИЗ ГРУПП
+            'user_pass' => wp_generate_password(20, true, true),
+        );
+        
+        $user_id = wp_insert_user($user_data);
+        
+        if (is_wp_error($user_id)) {
+            error_log('ADFS: ❌ Ошибка создания: ' . $user_id->get_error_message());
+            return $user_id;
+        }
+        
+        $user = get_user_by('id', $user_id);
+        
+        // Метаданные
+        update_user_meta($user_id, 'adfs_user', true);
+        update_user_meta($user_id, 'adfs_sid', $user_info['sub'] ?? '');
+        update_user_meta($user_id, 'adfs_upn', $user_info['upn'] ?? '');
+        update_user_meta($user_id, 'adfs_groups', $user_info['adfs_groups'] ?? array());
+        
+        error_log('ADFS: ✅ Создан с ID: ' . $user_id . ', роль: ' . $role);
+        
+    } else {
+        // Обновляем существующего пользователя
+        error_log('ADFS: Обновляю существующего (ID: ' . $user->ID . ')');
+        
+        wp_update_user(array(
+            'ID' => $user->ID,
+            'display_name' => $display_name,
+            'first_name' => $user_info['given_name'] ?? $user->first_name,
+            'last_name' => $user_info['family_name'] ?? $user->last_name,
+        ));
+        
+        // ОБНОВЛЯЕМ РОЛЬ если группы изменились
+        $current_role = !empty($user->roles) ? $user->roles[0] : 'subscriber';
+        if ($current_role !== $role) {
+            error_log('ADFS: Изменение роли с "' . $current_role . '" на "' . $role . '"');
+            $user->set_role($role);
+        }
+        
+        update_user_meta($user->ID, 'adfs_user', true);
+        update_user_meta($user->ID, 'adfs_sid', $user_info['sub'] ?? '');
+        update_user_meta($user->ID, 'adfs_upn', $user_info['upn'] ?? '');
+        update_user_meta($user->ID, 'adfs_groups', $user_info['adfs_groups'] ?? array());
+        
+        error_log('ADFS: ✅ Обновлён, роль: ' . $role);
+    }
+    
+    error_log('========================================');
+    
+    return $user;
+}
+
+Шаг 5: Обновляем handle_adfs_callback для передачи групп
+php// В функции handle_adfs_callback() после нормализации данных из ID Token:
+
+if (!empty($id_payload['email']) || !empty($id_payload['upn'])) {
+    error_log('ADFS: 💡 ИСПОЛЬЗУЕМ ДАННЫЕ ИЗ ID TOKEN');
+    
+    // Нормализуем данные
+    $user_info = array(
+        'sub' => $id_payload['sub'] ?? null,
+        'email' => $id_payload['email'] ?? $id_payload['upn'] ?? null,
+        'name' => $id_payload['unique_name'] ?? $id_payload['name'] ?? null,
+        'given_name' => $id_payload['given_name'] ?? null,
+        'family_name' => $id_payload['family_name'] ?? null,
+        'preferred_username' => $id_payload['preferred_username'] ?? $id_payload['upn'] ?? $id_payload['email'] ?? null,
+        'upn' => $id_payload['upn'] ?? null,
+        'adfs_groups' => $id_payload['adfs_groups'] ?? array(), // ДОБАВЬТЕ ЭТО
+    );
+    
+    error_log('ADFS: Нормализованные данные из ID Token:');
+    error_log(print_r($user_info, true));
+}
+
+Настройка маппинга групп
+Отредактируйте массив $group_role_map под ваши группы AD:
+php$group_role_map = array(
+    // Ваши реальные группы из Active Directory
+    'Администраторы домена' => 'administrator',
+    'WordPress-Admins' => 'administrator',
+    'Редакторы контента' => 'editor',
+    'Авторы статей' => 'author',
+    'Сотрудники' => 'subscriber',
+);
+
+==================================
+Дополнительно: Просмотр групп пользователя
+Добавьте в админку WordPress:
+bashsudo nano /var/www/wp-content/plugins/adfs-sso-login/adfs-sso-login.php
+В конец класса добавьте:
+php/**
+ * Показывает группы ADFS в профиле пользователя
+ */
+public function show_adfs_groups_in_profile($user) {
+    if (!current_user_can('edit_user', $user->ID)) {
+        return;
+    }
+    
+    $adfs_groups = get_user_meta($user->ID, 'adfs_groups', true);
+    $adfs_upn = get_user_meta($user->ID, 'adfs_upn', true);
+    
+    if (empty($adfs_groups) && empty($adfs_upn)) {
+        return;
+    }
+    ?>
+    <h2>Информация ADFS</h2>
+    <table class="form-table">
+        <?php if ($adfs_upn) : ?>
+        <tr>
+            <th>UPN (Active Directory)</th>
+            <td><code><?php echo esc_html($adfs_upn); ?></code></td>
+        </tr>
+        <?php endif; ?>
+        
+        <?php if (!empty($adfs_groups) && is_array($adfs_groups)) : ?>
+        <tr>
+            <th>Группы Active Directory</th>
+            <td>
+                <ul style="margin: 0;">
+                    <?php foreach ($adfs_groups as $group) : ?>
+                        <li><code><?php echo esc_html($group); ?></code></li>
+                    <?php endforeach; ?>
+                </ul>
+            </td>
+        </tr>
+        <?php endif; ?>
+    </table>
+    <?php
+}
+В функции __construct() добавьте хук:
+phppublic function __construct() {
+    // ... существующие хуки ...
+    
+    // Показываем группы в профиле
+    add_action('show_user_profile', array($this, 'show_adfs_groups_in_profile'));
+    add_action('edit_user_profile', array($this, 'show_adfs_groups_in_profile'));
+}
+Теперь в профиле пользователя будут видны его группы AD!

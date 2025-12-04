@@ -1,24 +1,318 @@
- Содержимое ID Token:
-Array
-(
-    [aud] => a3071ce5-2875-4541-90fb-53c1a5e46aaf
-    [iss] => https://fedsvc.aaa.ru/adfs
-    [iat] => 1764859606
-    [nbf] => 1764859606
-    [exp] => 1764863206
-    [auth_time] => 1764841415
-    [sub] => P8ce17ACUOGpHHWWIhYs7n7Awqg7CgMeObIm/jxYUCU=
-    [pwd_exp] => 2660589
-    [sid] => S-1-5-21-1427493287-2892074134-283380318-676856
-    [upn] => user22@aaa.ru
-    [unique_name] => dff sf ewdew
-    [email] => user22@aaa.ru
-    [given_name] => dff sf ewdew
-    [family_name] => Агашко
-    [preferred_username] => user22@aaa.ru
-    [apptype] => Confidential
-    [appid] => a3071ce5-2875-4541-90fb-53c1a5e46aaf
-    [authmethod] => http://schemas.microsoft.com/ws/2008/06/identity/authenticationmethod/windows
-    [ver] => 1.0
-    [scp] => email profile openid
-)
+ОТЛИЧНО! Проблема найдена - используем ID Token!
+ID Token содержит ВСЕ данные, а UserInfo пустой. Переписываем код под ID Token.
+
+Шаг 1: Обновляем get_access_token() для парсинга ID Token
+bashsudo nano /var/www/wp-content/plugins/adfs-sso-login/includes/adfs-auth.php
+Найдите функцию get_access_token() и добавьте парсинг ID Token в конец (перед return $data;):
+phppublic static function get_access_token($code) {
+    // ... весь существующий код до return ...
+    
+    // Проверяем наличие access_token
+    if (empty($data['access_token'])) {
+        error_log('ADFS: ❌ В ответе нет access_token!');
+        // ... обработка ошибки ...
+    }
+    
+    error_log('ADFS: ✓ access_token получен!');
+    
+    // ДОБАВЬТЕ ЭТО ПЕРЕД return $data:
+    
+    // Парсим ID Token если есть
+    if (!empty($data['id_token'])) {
+        error_log('ADFS: ========================================');
+        error_log('ADFS: 🎫 ПАРСИНГ ID TOKEN');
+        error_log('ADFS: ========================================');
+        
+        $id_parts = explode('.', $data['id_token']);
+        
+        if (count($id_parts) === 3) {
+            // Декодируем payload (вторая часть JWT)
+            $payload_base64 = strtr($id_parts[1], '-_', '+/');
+            $payload_json = base64_decode($payload_base64);
+            $id_payload = json_decode($payload_json, true);
+            
+            if ($id_payload && json_last_error() === JSON_ERROR_NONE) {
+                error_log('ADFS: ✓ ID Token успешно распарсен!');
+                error_log('ADFS: Содержимое ID Token:');
+                error_log(print_r($id_payload, true));
+                
+                // Проверяем наличие email
+                if (!empty($id_payload['email'])) {
+                    error_log('ADFS: ✅ Email найден в ID Token: ' . $id_payload['email']);
+                }
+                
+                if (!empty($id_payload['upn'])) {
+                    error_log('ADFS: ✅ UPN найден в ID Token: ' . $id_payload['upn']);
+                }
+                
+                // Сохраняем payload для использования
+                $data['id_token_payload'] = $id_payload;
+                error_log('ADFS: ✓ ID Token payload сохранён для использования');
+            } else {
+                error_log('ADFS: ❌ Ошибка декодирования ID Token payload: ' . json_last_error_msg());
+            }
+        } else {
+            error_log('ADFS: ❌ ID Token имеет неправильный формат (частей: ' . count($id_parts) . ', ожидалось: 3)');
+        }
+        
+        error_log('ADFS: ========================================');
+    } else {
+        error_log('ADFS: ⚠️  ID Token не найден в ответе от ADFS');
+    }
+    
+    return $data;
+}
+
+Шаг 2: Обновляем handle_adfs_callback() для использования ID Token
+bashsudo nano /var/www/wp-content/plugins/adfs-sso-login/adfs-sso-login.php
+Найдите блок после get_access_token() и замените на:
+php// Получаем токен
+$token_data = ADFS_SSO_Auth::get_access_token($code);
+
+if (is_wp_error($token_data)) {
+    // ... обработка ошибки токена (не меняем) ...
+}
+
+error_log('ADFS: ✓ Access token получен успешно');
+
+// НОВЫЙ КОД: ПРИОРИТЕТ ID TOKEN
+error_log('ADFS: ========================================');
+error_log('ADFS: ОПРЕДЕЛЕНИЕ ИСТОЧНИКА ДАННЫХ ПОЛЬЗОВАТЕЛЯ');
+error_log('ADFS: ========================================');
+
+$user_info = null;
+
+// Проверяем наличие ID Token с данными
+if (!empty($token_data['id_token_payload'])) {
+    $id_payload = $token_data['id_token_payload'];
+    
+    error_log('ADFS: ✓ Найден ID Token payload');
+    
+    // Проверяем наличие обязательных данных в ID Token
+    if (!empty($id_payload['email']) || !empty($id_payload['upn'])) {
+        error_log('ADFS: 💡 ИСПОЛЬЗУЕМ ДАННЫЕ ИЗ ID TOKEN (UserInfo не требуется)');
+        
+        // Нормализуем данные из ID Token для WordPress
+        $user_info = array(
+            'sub' => $id_payload['sub'] ?? null,
+            'email' => $id_payload['email'] ?? $id_payload['upn'] ?? null,
+            'name' => $id_payload['unique_name'] ?? $id_payload['name'] ?? null,
+            'given_name' => $id_payload['given_name'] ?? null,
+            'family_name' => $id_payload['family_name'] ?? null,
+            'preferred_username' => $id_payload['preferred_username'] ?? $id_payload['upn'] ?? $id_payload['email'] ?? null,
+            'upn' => $id_payload['upn'] ?? null,
+        );
+        
+        error_log('ADFS: Нормализованные данные из ID Token:');
+        error_log(print_r($user_info, true));
+    } else {
+        error_log('ADFS: ⚠️  ID Token не содержит email или upn, придётся использовать UserInfo');
+    }
+}
+
+// Если в ID Token нет данных - запрашиваем UserInfo (запасной вариант)
+if (empty($user_info) || empty($user_info['email'])) {
+    error_log('ADFS: 🔄 Запрашиваю UserInfo endpoint (ID Token не содержит достаточно данных)');
+    
+    $userinfo_response = ADFS_SSO_Auth::get_user_info($token_data['access_token']);
+    
+    if (is_wp_error($userinfo_response)) {
+        // Если UserInfo не работает, но у нас есть данные из ID Token - используем их
+        if (!empty($user_info) && !empty($user_info['email'])) {
+            error_log('ADFS: ⚠️  UserInfo вернул ошибку, но ID Token содержит email - продолжаем с данными из ID Token');
+        } else {
+            // Если и ID Token и UserInfo не работают - показываем ошибку
+            error_log('ADFS: ❌ Ошибка при получении данных пользователя!');
+            
+            // ... (существующий код обработки ошибки UserInfo) ...
+        }
+    } else {
+        // Объединяем данные из ID Token и UserInfo (приоритет у UserInfo)
+        if (!empty($user_info)) {
+            $user_info = array_merge($user_info, array_filter($userinfo_response));
+            error_log('ADFS: ✓ Данные объединены из ID Token и UserInfo');
+        } else {
+            $user_info = $userinfo_response;
+            error_log('ADFS: ✓ Используем данные только из UserInfo');
+        }
+    }
+}
+
+error_log('ADFS: ========================================');
+error_log('ADFS: ИТОГОВЫЕ ДАННЫЕ ДЛЯ СОЗДАНИЯ ПОЛЬЗОВАТЕЛЯ:');
+error_log(print_r($user_info, true));
+error_log('ADFS: ========================================');
+
+error_log('ADFS: ✓ Данные пользователя получены');
+error_log('ADFS: Email: ' . ($user_info['email'] ?? 'НЕТ'));
+error_log('ADFS: Name: ' . ($user_info['name'] ?? 'НЕТ'));
+
+// НОВОЕ: Показываем ответ от UserInfo на экране (только для отладки)
+if ($debug_mode) {
+    // ... (существующий debug код для UserInfo) ...
+}
+
+// Создаём или обновляем пользователя WordPress
+$user = $this->create_or_update_user($user_info);
+
+// ... остальной код без изменений ...
+
+Шаг 3: Обновляем create_or_update_user() для лучшей обработки
+bashsudo nano /var/www/wp-content/plugins/adfs-sso-login/adfs-sso-login.php
+Найдите функцию create_or_update_user() и обновите:
+phpprivate function create_or_update_user($user_info) {
+    error_log('========================================');
+    error_log('ADFS: СОЗДАНИЕ/ОБНОВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ WORDPRESS');
+    error_log('========================================');
+    error_log('ADFS: Полученные данные: ' . print_r($user_info, true));
+    
+    // Проверяем наличие email
+    if (empty($user_info['email'])) {
+        error_log('ADFS: ❌ Email отсутствует!');
+        error_log('ADFS: Доступные поля: ' . implode(', ', array_keys($user_info)));
+        
+        return new WP_Error(
+            'no_email',
+            'ADFS не вернул email пользователя. Проверьте настройки Claim Rules на ADFS сервере.',
+            $user_info
+        );
+    }
+    
+    $email = sanitize_email($user_info['email']);
+    
+    // Определяем username (приоритет: preferred_username > upn > email)
+    if (!empty($user_info['preferred_username'])) {
+        $username = sanitize_user($user_info['preferred_username'], true);
+    } elseif (!empty($user_info['upn'])) {
+        $username = sanitize_user($user_info['upn'], true);
+    } else {
+        $username = sanitize_user($email, true);
+    }
+    
+    error_log('ADFS: Email: ' . $email);
+    error_log('ADFS: Username: ' . $username);
+    
+    // Определяем display name
+    if (!empty($user_info['name'])) {
+        $display_name = $user_info['name'];
+    } elseif (!empty($user_info['given_name']) && !empty($user_info['family_name'])) {
+        $display_name = $user_info['given_name'] . ' ' . $user_info['family_name'];
+    } else {
+        $display_name = $username;
+    }
+    
+    error_log('ADFS: Display Name: ' . $display_name);
+    
+    // Ищем существующего пользователя по email
+    $user = get_user_by('email', $email);
+    
+    // Если не найден по email, ищем по meta adfs_sid (sub)
+    if (!$user && !empty($user_info['sub'])) {
+        error_log('ADFS: Поиск пользователя по sub: ' . $user_info['sub']);
+        
+        $users = get_users(array(
+            'meta_key' => 'adfs_sid',
+            'meta_value' => $user_info['sub'],
+            'number' => 1,
+        ));
+        
+        if (!empty($users)) {
+            $user = $users[0];
+            error_log('ADFS: ✓ Пользователь найден по sub');
+        }
+    }
+    
+    if (!$user) {
+        // Создаём нового пользователя
+        error_log('ADFS: Создаю нового пользователя...');
+        
+        $user_data = array(
+            'user_login' => $username,
+            'user_email' => $email,
+            'display_name' => $display_name,
+            'first_name' => $user_info['given_name'] ?? '',
+            'last_name' => $user_info['family_name'] ?? '',
+            'role' => 'subscriber',
+            'user_pass' => wp_generate_password(20, true, true),
+        );
+        
+        error_log('ADFS: Данные для создания: ' . print_r($user_data, true));
+        
+        $user_id = wp_insert_user($user_data);
+        
+        if (is_wp_error($user_id)) {
+            error_log('ADFS: ❌ Ошибка создания пользователя: ' . $user_id->get_error_message());
+            return $user_id;
+        }
+        
+        $user = get_user_by('id', $user_id);
+        
+        // Сохраняем метаданные ADFS
+        update_user_meta($user_id, 'adfs_user', true);
+        update_user_meta($user_id, 'adfs_sid', $user_info['sub'] ?? '');
+        update_user_meta($user_id, 'adfs_upn', $user_info['upn'] ?? '');
+        
+        error_log('ADFS: ✅ Пользователь создан с ID: ' . $user_id);
+        
+    } else {
+        // Обновляем существующего пользователя
+        error_log('ADFS: ✓ Пользователь найден, обновляю данные...');
+        
+        $update_data = array(
+            'ID' => $user->ID,
+            'display_name' => $display_name,
+            'first_name' => $user_info['given_name'] ?? $user->first_name,
+            'last_name' => $user_info['family_name'] ?? $user->last_name,
+        );
+        
+        wp_update_user($update_data);
+        
+        // Обновляем метаданные
+        update_user_meta($user->ID, 'adfs_user', true);
+        update_user_meta($user->ID, 'adfs_sid', $user_info['sub'] ?? '');
+        update_user_meta($user->ID, 'adfs_upn', $user_info['upn'] ?? '');
+        
+        error_log('ADFS: ✅ Пользователь обновлён (ID: ' . $user->ID . ')');
+    }
+    
+    error_log('========================================');
+    
+    return $user;
+}
+
+Перезапускаем и тестируем
+bashsudo systemctl restart php-fpm
+sudo bash -c "> /var/log/php-fpm/www-error.log"
+```
+
+**Попробуйте войти:**
+```
+https://ea.ty.ea/wp-login.php
+```
+
+---
+
+## Что должно произойти:
+
+### В логах:
+```
+ADFS: ✓ ID Token успешно распарсен!
+ADFS: ✅ Email найден в ID Token: user22@aaa.ru
+ADFS: 💡 ИСПОЛЬЗУЕМ ДАННЫЕ ИЗ ID TOKEN (UserInfo не требуется)
+ADFS: Email: user22@aaa.ru
+ADFS: Name: dff sf ewdew
+ADFS: ✅ Пользователь создан с ID: 123
+ADFS: ✅ Пользователь успешно авторизован!
+```
+
+### На экране (если WP_DEBUG включен):
+- ✅ Email найден в ID Token
+- Итоговые данные для создания пользователя показывают все поля
+- Пользователь успешно создан
+
+### Результат:
+**Вход в WordPress должен работать!** 🎉
+
+---
+
+## Проверка созданного пользователя

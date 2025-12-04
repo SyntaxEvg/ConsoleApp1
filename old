@@ -1,132 +1,25 @@
-sudo nano /var/www/wp-content/plugins/adfs-sso-login/includes/adfs-auth.php
-
-public static function get_user_info($access_token) {
-    $config = ADFS_SSO_Config::get_config();
+/**
+ * Парсит JWT токен
+ */
+public static function parse_jwt($jwt) {
+    $parts = explode('.', $jwt);
     
-    if (empty($config['userinfo_url'])) {
-        error_log('ADFS: UserInfo URL не настроен');
-        return new WP_Error('adfs_config_error', 'UserInfo URL не настроен');
+    if (count($parts) !== 3) {
+        error_log('ADFS: Неверный формат JWT: ' . count($parts) . ' частей вместо 3');
+        return false;
     }
     
-    error_log('========================================');
-    error_log('ADFS: ЗАПРОС К USERINFO ENDPOINT');
-    error_log('========================================');
-    error_log('ADFS: URL: ' . $config['userinfo_url']);
-    error_log('ADFS: Access Token (первые 50): ' . substr($access_token, 0, 50) . '...');
+    // Декодируем payload (вторая часть)
+    $payload_base64 = strtr($parts[1], '-_', '+/');
+    $payload_json = base64_decode($payload_base64);
+    $payload = json_decode($payload_json, true);
     
-    $args = array(
-        'headers' => array(
-            'Authorization' => 'Bearer ' . $access_token,
-            'Accept'        => 'application/json',
-        ),
-        'timeout'   => 30,
-        'sslverify' => false,
-    );
-    
-    error_log('ADFS: Отправляю GET запрос...');
-    
-    $response = wp_remote_get($config['userinfo_url'], $args);
-    
-    if (is_wp_error($response)) {
-        error_log('ADFS: ❌ WP_Error: ' . $response->get_error_message());
-        return $response;
+    if (!$payload) {
+        error_log('ADFS: Ошибка парсинга JWT payload');
+        return false;
     }
     
-    $http_code = wp_remote_retrieve_response_code($response);
-    $body = wp_remote_retrieve_body($response);
+    error_log('ADFS: ID Token payload: ' . print_r($payload, true));
     
-    error_log('ADFS: HTTP код: ' . $http_code);
-    error_log('ADFS: RAW ответ от ADFS:');
-    error_log($body);
-    
-    if ($http_code !== 200) {
-        error_log('ADFS: ❌ Неожиданный HTTP код: ' . $http_code);
-        return new WP_Error('adfs_userinfo_error', 'HTTP ' . $http_code . ': ' . $body);
-    }
-    
-    // Парсим JSON
-    $user_data = json_decode($body, true);
-    
-    if (json_last_error() !== JSON_ERROR_NONE) {
-        error_log('ADFS: ❌ Ошибка парсинга JSON: ' . json_last_error_msg());
-        return new WP_Error('adfs_json_error', 'JSON error: ' . json_last_error_msg());
-    }
-    
-    error_log('ADFS: ========== РАСПАРСЕННЫЕ ДАННЫЕ ==========');
-    error_log('ADFS: Все ключи в ответе:');
-    error_log(print_r(array_keys($user_data), true));
-    error_log('ADFS: Полные данные:');
-    error_log(print_r($user_data, true));
-    
-    // КРИТИЧНО: Нормализуем данные - поддерживаем оба формата
-    $normalized = array(
-        'sub' => $user_data['sub'] ?? null
-    );
-    
-    // Проверяем короткие имена (OpenID Connect)
-    if (isset($user_data['email'])) {
-        $normalized['email'] = $user_data['email'];
-        error_log('ADFS: ✓ Найден email (короткое имя): ' . $user_data['email']);
-    }
-    
-    if (isset($user_data['name'])) {
-        $normalized['name'] = $user_data['name'];
-        error_log('ADFS: ✓ Найден name (короткое имя): ' . $user_data['name']);
-    }
-    
-    if (isset($user_data['given_name'])) {
-        $normalized['given_name'] = $user_data['given_name'];
-        error_log('ADFS: ✓ Найден given_name (короткое имя): ' . $user_data['given_name']);
-    }
-    
-    if (isset($user_data['family_name'])) {
-        $normalized['family_name'] = $user_data['family_name'];
-        error_log('ADFS: ✓ Найден family_name (короткое имя): ' . $user_data['family_name']);
-    }
-    
-    if (isset($user_data['preferred_username'])) {
-        $normalized['preferred_username'] = $user_data['preferred_username'];
-        error_log('ADFS: ✓ Найден preferred_username: ' . $user_data['preferred_username']);
-    }
-    
-    // Проверяем полные URI (старый формат ADFS)
-    if (empty($normalized['email']) && isset($user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'])) {
-        $normalized['email'] = $user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
-        error_log('ADFS: ✓ Найден email (полный URI): ' . $normalized['email']);
-    }
-    
-    if (empty($normalized['name']) && isset($user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'])) {
-        $normalized['name'] = $user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'];
-        error_log('ADFS: ✓ Найден name (полный URI): ' . $normalized['name']);
-    }
-    
-    if (empty($normalized['given_name']) && isset($user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'])) {
-        $normalized['given_name'] = $user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'];
-        error_log('ADFS: ✓ Найден given_name (полный URI): ' . $normalized['given_name']);
-    }
-    
-    if (empty($normalized['family_name']) && isset($user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'])) {
-        $normalized['family_name'] = $user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'];
-        error_log('ADFS: ✓ Найден family_name (полный URI): ' . $normalized['family_name']);
-    }
-    
-    if (empty($normalized['preferred_username']) && isset($user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn'])) {
-        $normalized['preferred_username'] = $user_data['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/upn'];
-        error_log('ADFS: ✓ Найден upn (полный URI): ' . $normalized['preferred_username']);
-    }
-    
-    error_log('ADFS: ========== НОРМАЛИЗОВАННЫЕ ДАННЫЕ ==========');
-    error_log(print_r($normalized, true));
-    
-    // Проверяем что получили хоть что-то
-    if (empty($normalized['email'])) {
-        error_log('ADFS: ❌ Email всё ещё отсутствует после нормализации!');
-        error_log('ADFS: Проверьте Claim Rules на ADFS сервере');
-    } else {
-        error_log('ADFS: ✓ Email успешно извлечён: ' . $normalized['email']);
-    }
-    
-    error_log('========================================');
-    
-    return $normalized;
+    return $payload;
 }
